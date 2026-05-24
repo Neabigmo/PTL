@@ -1,0 +1,8 @@
+approach,input_requirements,keep_abstain_decision,detects_novelty_failure,strength,limitation
+Random-split benchmark,Predictions and random train/test membership,No,Weak,Simple low-stress anchor,"Does not test perturbation, support, or dataset transfer"
+Naive confidence filtering,Predictor confidence or fidelity proxy,Yes,Weak,Easy to deploy,Can accept confident but non-transportable predictions
+Support/novelty heuristic,Training support and perturbation novelty fields,Yes,Moderate,Transparent operational rule,Ignores model output and calibration
+Calibrated logistic reliability model,Deployment features and transportability labels,Yes,Moderate,"Calibrated, interpretable baseline",Linear decision surface
+Model-specific calibration,One predictor family and its confidence outputs,Yes,Variable,Can exploit model-specific uncertainty,Hard to compare across predictor families
+External-only validation,Independent experimental screen,No,Strong at dataset level,Direct public experimental transfer test,Does not yield per-signature deployment decisions
+PTL workflow,"Stress splits, signatures, predictor outputs, labels, deployment features",Yes,Strong,Model-agnostic reliability audit with failure atlas,Requires labeled benchmark outputs and recalibration for new collections

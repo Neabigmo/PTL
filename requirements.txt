@@ -1,0 +1,10 @@
+anndata
+matplotlib
+numpy
+pandas
+pyarrow
+pytest
+pyyaml
+scanpy
+scikit-learn
+scipy
