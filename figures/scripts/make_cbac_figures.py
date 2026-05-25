@@ -15,15 +15,17 @@ import pandas as pd
 from figlib.export import save_figure
 from figlib.panels import (
     plot_context_enrichment,
+    plot_dataset_bar,
     plot_failure_heatmap,
     plot_failure_taxonomy,
+    plot_split_audit_heatmap,
+    plot_split_design_matrix,
     plot_severity_composition,
     read_table,
 )
 from figlib.palettes import BLACK, BLUE, GREEN, LIGHT_BLUE, LIGHT_GRAY, LIGHT_ORANGE, LIGHT_RED, LIGHT_TEAL, ORANGE, PURPLE, RED, RULE, TEAL, WHITE
 from figlib.schematic import arrow, icon_heatmap, rounded_box
 from figlib.style import apply_style, framed_panel
-from make_fig2_benchmark_audit import make as make_fig2
 from make_fig3_rank_instability import make as make_fig3
 from make_fig4_ptl_filtering import make as make_fig4
 from make_supplementary import make as make_supplementary_base
@@ -100,44 +102,51 @@ def make_fig1_cbac(output_dir: Path = OUTPUT) -> None:
     save_figure(fig, output_dir, "fig1_cbac_overview")
 
 
+def make_fig2_cbac(output_dir: Path = OUTPUT) -> None:
+    apply_style()
+    manifest = read_table(TABLES, "baseline_run_matrix.csv")
+    audit = read_table(TABLES, "split_audit.csv")
+    fig = plt.figure(figsize=(16.2, 6.2), facecolor=WHITE)
+    gs = fig.add_gridspec(1, 3, width_ratios=[1.02, 1.72, 1.08], wspace=0.30)
+    axes = [fig.add_subplot(gs[0, i]) for i in range(3)]
+    plot_dataset_bar(axes[0], manifest)
+    plot_split_design_matrix(axes[1])
+    plot_split_audit_heatmap(axes[2], audit, panel_label="C")
+    axes[1].set_title("Split families encode transfer questions", loc="left", x=0.070, pad=8, fontsize=10.5, fontweight="bold")
+    axes[2].set_title("Compact leakage and overlap audit", loc="left", x=0.070, pad=8, fontsize=10.5, fontweight="bold")
+    save_figure(fig, output_dir, "fig2_cbac_benchmark_design")
+
+
 def plot_case_examples(ax: plt.Axes, cases: pd.DataFrame, panel_label: str = "E") -> None:
-    framed_panel(ax, panel_label, "Case examples: retained and rejected perturbation predictions")
+    framed_panel(ax, panel_label, "Case examples: biological interpretation risk")
     ax.set_axis_off()
-    cols = ["case_type", "perturbation_label", "split_family", "cosine_similarity", "top8_direction_consistency", "shared_top_genes"]
-    labels = ["Case", "Perturbation", "Stress", "Cosine", "Top-gene\ndirection", "Shared top genes"]
-    table_data = []
-    for _, row in cases.iterrows():
-        table_data.append(
-            [
-                str(row["case_type"]).replace("_", "\n"),
-                str(row["perturbation_label"])[:18],
-                str(row["split_family"]).replace("_split", "").replace("_", "\n"),
-                f"{float(row['cosine_similarity']):.2f}",
-                f"{float(row['top8_direction_consistency']):.2f}",
-                str(row["shared_top_genes"]).replace(";", ", ")[:52],
-            ]
-        )
-    table = ax.table(cellText=table_data, colLabels=labels, cellLoc="center", loc="center", bbox=[0.02, 0.04, 0.96, 0.82])
-    table.auto_set_font_size(False)
-    table.set_fontsize(7.4)
-    table.scale(1.0, 1.30)
-    for (r, c), cell in table.get_celld().items():
-        cell.set_edgecolor(RULE)
-        cell.set_linewidth(0.45)
-        if r == 0:
-            cell.set_facecolor(LIGHT_GRAY)
-            cell.set_text_props(fontweight="bold")
-        elif c == 0:
-            color = [LIGHT_TEAL, LIGHT_ORANGE, LIGHT_RED][(r - 1) % 3]
-            cell.set_facecolor(color)
+    palette = {
+        "retained_high_transportability": (TEAL, LIGHT_TEAL, "Retained"),
+        "confidence_failure_rejected": (ORANGE, LIGHT_ORANGE, "High-confidence failure"),
+        "transfer_boundary_failure": (RED, LIGHT_RED, "Dataset-boundary failure"),
+    }
+    for i, (_, row) in enumerate(cases.iterrows()):
+        x = 0.035 + i * 0.315
+        edge, face, label = palette.get(str(row["case_type"]), (BLUE, LIGHT_BLUE, str(row["case_type"]).replace("_", " ")))
+        rounded_box(ax, (x, 0.12), (0.285, 0.68), edge=edge, face=face, radius=0.012, lw=0.95)
+        ax.text(x + 0.018, 0.73, label, ha="left", va="center", fontsize=9.0, color=edge, fontweight="bold")
+        ax.text(x + 0.018, 0.63, f"Perturbation: {row['perturbation_label']}", ha="left", va="center", fontsize=8.2, color=BLACK)
+        stress = str(row["split_family"]).replace("_split", "").replace("_", " ")
+        ax.text(x + 0.018, 0.54, f"Stress: {stress}", ha="left", va="center", fontsize=8.2, color=BLACK)
+        ax.text(x + 0.018, 0.43, f"cosine = {float(row['cosine_similarity']):.2f}", ha="left", va="center", fontsize=9.1, color=BLACK, fontweight="bold")
+        ax.text(x + 0.145, 0.43, f"top-gene direction = {float(row['top8_direction_consistency']):.2f}", ha="left", va="center", fontsize=8.2, color=BLACK)
+        genes = str(row["shared_top_genes"]).replace(";", ", ")
+        if len(genes) > 56:
+            genes = genes[:53] + "..."
+        ax.text(x + 0.018, 0.27, f"Shared top genes:\n{genes}", ha="left", va="center", fontsize=7.7, color=BLACK, linespacing=1.20)
 
 
 def make_fig5_cbac(output_dir: Path = OUTPUT) -> None:
     apply_style()
     atlas = read_table(TABLES, "failure_mode_atlas.csv")
     cases = read_table(TABLES, "cbac_case_examples.csv")
-    fig = plt.figure(figsize=(12.8, 8.8), facecolor=WHITE)
-    gs = fig.add_gridspec(3, 3, height_ratios=[1.00, 1.05, 1.08], width_ratios=[0.95, 1.25, 1.0], hspace=0.44, wspace=0.31)
+    fig = plt.figure(figsize=(13.8, 9.3), facecolor=WHITE)
+    gs = fig.add_gridspec(3, 3, height_ratios=[0.95, 1.02, 1.20], width_ratios=[0.95, 1.32, 1.0], hspace=0.46, wspace=0.33)
     axes = {
         "A": fig.add_subplot(gs[0, 0]),
         "B": fig.add_subplot(gs[0, 1:]),
@@ -161,12 +170,11 @@ def make(output_dir: Path = OUTPUT) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     make_graphical_abstract(output_dir)
     make_fig1_cbac(output_dir)
-    make_fig2(output_dir)
+    make_fig2_cbac(output_dir)
     make_fig3(output_dir)
     make_fig4(output_dir)
     make_fig5_cbac(output_dir)
     make_supplementary_base(output_dir)
-    _copy_stem(output_dir, "fig2_methods_benchmark_audit", "fig2_cbac_benchmark_design")
     _copy_stem(output_dir, "fig3_methods_rank_instability", "fig3_cbac_ranking_instability")
     _copy_stem(output_dir, "fig4_methods_ptl_reliability", "fig4_cbac_reliability_filtering")
     _copy_stem(output_dir, "supp_fig_s1_split_audit", "Supplementary_Figure_S1")
