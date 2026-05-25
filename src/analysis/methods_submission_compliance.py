@@ -174,7 +174,7 @@ def build_external_candidate_audit() -> pd.DataFrame:
                 "adoption_status": "candidate_not_claimed_in_main_results",
                 "reason": (
                     "GEO raw h5ad is publicly available but very large; local scPerturb proxy exposes perturbation and control fields. "
-                    "This is retained as an external candidate until raw-source processing and baseline rows are completed."
+                    "This is retained as an external candidate until raw-source processing and baseline rows are available."
                 ),
             }
         )

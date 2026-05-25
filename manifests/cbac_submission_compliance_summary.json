@@ -1,0 +1,9 @@
+{
+  "completed_case_count": 3,
+  "excluded_candidate_count": 0,
+  "case_types": [
+    "retained_high_transportability",
+    "confidence_failure_rejected",
+    "transfer_boundary_failure"
+  ]
+}
