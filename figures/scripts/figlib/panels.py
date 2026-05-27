@@ -247,10 +247,8 @@ def plot_roc_curve(ax: plt.Axes, oof: pd.DataFrame) -> None:
     ax.plot([0, 1], [0, 1], color=RULE, lw=0.6, ls=":")
     ax.set_xlabel("False positive rate")
     ax.set_ylabel("True positive rate")
-    legend = ax.legend(loc="lower right", frameon=True, handlelength=1.6)
-    legend.get_frame().set_facecolor(WHITE)
-    legend.get_frame().set_alpha(0.86)
-    legend.get_frame().set_edgecolor(WHITE)
+    legend = ax.legend(loc="upper center", bbox_to_anchor=(0.52, -0.22), ncol=1, frameon=False, handlelength=1.6, borderaxespad=0.0)
+    legend.set_in_layout(True)
     despine_data(ax)
 
 
@@ -267,10 +265,8 @@ def plot_pr_curve(ax: plt.Axes, oof: pd.DataFrame) -> None:
         ax.plot(recall, precision, color=color, ls="--" if "Naive" in label else "-", label=f"{label} (AP={auc(recall, precision):.2f})")
     ax.set_xlabel("Recall")
     ax.set_ylabel("Precision")
-    legend = ax.legend(loc="lower center", bbox_to_anchor=(0.56, 0.02), ncol=1, frameon=True, handlelength=1.6)
-    legend.get_frame().set_facecolor(WHITE)
-    legend.get_frame().set_alpha(0.86)
-    legend.get_frame().set_edgecolor(WHITE)
+    legend = ax.legend(loc="upper center", bbox_to_anchor=(0.54, -0.22), ncol=1, frameon=False, handlelength=1.6, borderaxespad=0.0)
+    legend.set_in_layout(True)
     despine_data(ax)
 
 
@@ -292,7 +288,7 @@ def plot_risk_coverage(ax: plt.Axes, selective: pd.DataFrame) -> None:
     ax.set_xlabel("Coverage")
     ax.set_ylabel("False-transportability rate")
     ax.set_xlim(0.15, 0.85)
-    ax.legend(frameon=False, loc="lower left", handlelength=1.6)
+    ax.legend(frameon=False, loc="upper center", bbox_to_anchor=(0.50, -0.20), ncol=3, handlelength=1.4, columnspacing=0.9, borderaxespad=0.0)
     despine_data(ax)
 
 
@@ -381,7 +377,19 @@ def plot_context_enrichment(ax: plt.Axes, atlas: pd.DataFrame) -> None:
     values = [m[1] for m in metrics]
     ax.scatter(values, y, s=max(50, n / 3), color=[RED, ORANGE, YELLOW, GREEN], edgecolor=BLACK, linewidth=0.45)
     for yi, (label, val) in zip(y, metrics):
-        ax.text(min(val + 0.025, 0.86), yi, f"n={int(sev['n_signatures'].sum()):,}", va="center", fontsize=6.8)
+        if val >= 0.72:
+            x_text, ha = val - 0.030, "right"
+        else:
+            x_text, ha = val + 0.035, "left"
+        ax.text(
+            x_text,
+            yi,
+            f"n={int(sev['n_signatures'].sum()):,}",
+            va="center",
+            ha=ha,
+            fontsize=6.8,
+            bbox={"facecolor": WHITE, "edgecolor": "none", "alpha": 0.78, "pad": 0.4},
+        )
     ax.set_yticks(y, [m[0] for m in metrics])
     ax.set_xlim(0, 1)
     ax.set_xlabel("Mean severe-failure context signal")

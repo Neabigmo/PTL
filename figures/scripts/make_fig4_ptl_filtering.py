@@ -35,8 +35,8 @@ def make(output_dir: Path = OUTPUT) -> None:
     selective = read_table(TABLES, "selective_prediction_summary.csv")
     oof = read_table(TABLES, "ptl_oof_predictions.csv")
     rel = _rel_table(metrics)
-    fig = plt.figure(figsize=(12.8, 8.6), facecolor=WHITE)
-    gs = fig.add_gridspec(3, 2, height_ratios=[1.00, 1.0, 1.0], width_ratios=[1.08, 1.0], hspace=0.44, wspace=0.31)
+    fig = plt.figure(figsize=(12.8, 9.2), facecolor=WHITE)
+    gs = fig.add_gridspec(3, 2, height_ratios=[1.00, 1.08, 1.0], width_ratios=[1.08, 1.0], hspace=0.68, wspace=0.32)
     axes = {
         "A": fig.add_subplot(gs[0, :]),
         "B": fig.add_subplot(gs[1, 0]),

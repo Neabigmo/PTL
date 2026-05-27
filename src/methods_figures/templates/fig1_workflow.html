@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>PTL workflow</title>
+  <style>
+    body { margin: 0; background: #fff; font-family: Arial, Helvetica, sans-serif; color: #111; }
+    .canvas { width: 1600px; height: 1040px; position: relative; background: #fff; }
+    h1 { position: absolute; left: 0; right: 0; top: 18px; text-align: center; margin: 0; font-size: 34px; font-weight: 700; }
+    .rail { position: absolute; left: 14px; top: 70px; width: 88px; height: 900px; border-radius: 10px; background: #dce9f7; display: flex; align-items: center; justify-content: center; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 34px; font-weight: 700; letter-spacing: 3px; }
+    .stage { position: absolute; top: 150px; height: 760px; border: 2px dashed #8c8c8c; border-radius: 28px; background: #fff; }
+    .s1 { left: 115px; width: 305px; }
+    .s2 { left: 445px; width: 350px; }
+    .s3 { left: 820px; width: 415px; }
+    .s4 { left: 1260px; width: 305px; }
+    .num { position: absolute; top: -58px; left: 30px; width: 34px; height: 34px; border-radius: 50%; background: #86aedc; text-align: center; line-height: 34px; font-size: 25px; font-weight: 700; }
+    .stagetitle { position: absolute; top: -58px; left: 78px; right: 18px; font-size: 22px; font-weight: 700; line-height: 1.25; }
+    .box { position: absolute; left: 18px; right: 18px; border: 1.6px solid; border-radius: 14px; background: #fff; padding: 14px; font-size: 15px; }
+    .blue { border-color: #1f5aa6; color: #003399; background: #f5f9ff; }
+    .orange { border-color: #e64b16; color: #d73a00; background: #fff8f3; }
+    .green { border-color: #1b7837; color: #116622; background: #f6fbf5; }
+    .purple { border-color: #6a3d9a; color: #4b148c; background: #fbf7ff; }
+    .red { border-color: #c81d25; color: #b00020; background: #fff6f6; }
+    .teal { border-color: #007c82; color: #00666b; background: #f4fbfc; }
+    .label { font-weight: 700; text-align: center; margin-bottom: 8px; }
+    .small { color: #111; font-size: 13px; line-height: 1.35; }
+    .matrix { display: grid; grid-template-columns: repeat(7, 24px); grid-auto-rows: 24px; gap: 2px; justify-content: center; margin-top: 8px; }
+    .cell { border: 1px solid #8c8c8c; background: #eef4fb; }
+    .cell.dark { background: #77a4da; }
+    .dots { text-align: center; font-size: 22px; letter-spacing: 12px; color: #1f5aa6; }
+    .formula { border: 2px dashed #6a3d9a; border-radius: 12px; padding: 14px; text-align: center; font-size: 24px; color: #4b148c; }
+    .splitrow { display: flex; align-items: center; gap: 10px; margin: 8px 0; color: #111; }
+    .icon { width: 34px; height: 26px; border-radius: 8px; border: 1px solid currentColor; text-align: center; line-height: 26px; font-weight: 700; }
+    .arrow { position: absolute; font-size: 34px; color: #111; }
+    .take { position: absolute; left: 125px; right: 35px; bottom: 18px; height: 46px; border: 1.3px solid #8c8c8c; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 21px; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <h1>Figure 1. Overview of the PTL workflow</h1>
+    <div class="rail">PTL Framework</div>
+    <div class="stage s1">
+      <div class="num">1</div><div class="stagetitle">Input contract</div>
+      <div class="box blue" style="top: 35px;"><div class="label">Perturbation-response data</div><div class="matrix"><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell dark"></div></div><div class="small">Expression matrix and feature names</div></div>
+      <div class="box orange" style="top: 220px;"><div class="label">Context metadata</div><div class="small">Dataset ID<br>Cell context/state<br>Matched control state<br>Support counts</div></div>
+      <div class="box green" style="top: 390px;"><div class="label">Prediction outputs</div><div class="matrix"><div class="cell dark"></div><div class="cell"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell dark"></div><div class="cell"></div></div><div class="small">Predicted and target signatures</div></div>
+      <div class="box purple" style="top: 575px;"><div class="label">Split manifest</div><div class="small">Train/test membership<br>Leakage audit<br>Support information</div></div>
+    </div>
+    <div class="arrow" style="left: 418px; top: 525px;">→</div>
+    <div class="stage s2">
+      <div class="num">2</div><div class="stagetitle">Reference-aware signature construction</div>
+      <div class="box blue" style="top: 52px;"><div class="label">Perturbed cells in context c</div><div class="dots">● ● ● ●</div><div class="small">Pseudobulk mean across perturbed cells</div></div>
+      <div class="box orange" style="top: 235px;"><div class="label">Matched control cells in context c</div><div class="dots" style="color:#e64b16;">● ● ● ●</div><div class="small">Pseudobulk mean across control cells</div></div>
+      <div class="box purple" style="top: 475px;"><div class="label">Delta signature</div><div class="formula">Δ<sub>p,c</sub> = x̄<sub>p,c</sub> − x̄<sub>0,c</sub></div></div>
+      <div class="box" style="top: 640px; border-color:#8c8c8c;"><div class="small" style="text-align:center;">Predictions and targets are compared at signature level.</div></div>
+    </div>
+    <div class="arrow" style="left: 798px; top: 525px;">→</div>
+    <div class="stage s3">
+      <div class="num">3</div><div class="stagetitle">Context-stress split generation and transportability labeling</div>
+      <div class="box blue" style="top: 34px; height: 350px;"><div class="label">A. Split families</div>
+        <div class="splitrow"><span class="icon">R</span>Random anchor</div>
+        <div class="splitrow"><span class="icon" style="color:#e64b16;">P</span>Held-out perturbation</div>
+        <div class="splitrow"><span class="icon" style="color:#6a3d9a;">C</span>Held-out combination</div>
+        <div class="splitrow"><span class="icon" style="color:#1b7837;">S</span>Low support</div>
+        <div class="splitrow"><span class="icon" style="color:#007c82;">D</span>Dataset heldout</div>
+        <div class="splitrow"><span class="icon" style="color:#c81d25;">E</span>External holdout</div>
+      </div>
+      <div class="box green" style="top: 420px;"><div class="label">B. Relative transportability labeling</div><div class="small">Prediction fidelity is compared with a split-specific anchor.<br><br><b>Transportable</b> if cosine ≥ τ × median anchor fidelity.</div></div>
+      <div class="box" style="top: 610px; border-color:#8c8c8c;"><div class="small" style="text-align:center;">Default τ = 0.8; sensitivity is reported for 0.6-0.9.</div></div>
+    </div>
+    <div class="arrow" style="left: 1238px; top: 525px;">→</div>
+    <div class="stage s4">
+      <div class="num">4</div><div class="stagetitle">PTL reliability layer and outputs</div>
+      <div class="box purple" style="top: 42px;"><div class="label">Completed model outputs</div><div class="small">Predicted signature, confidence, support, novelty, split family</div></div>
+      <div class="box blue" style="top: 210px;"><div class="label">Reliability model</div><div class="small">Deployment-available features only<br>Logistic / random forest baselines</div></div>
+      <div class="box green" style="top: 385px; left: 22px; right: 165px;"><div class="label">Keep</div><div class="small">retain prediction</div></div>
+      <div class="box red" style="top: 385px; left: 165px; right: 22px;"><div class="label">Abstain</div><div class="small">do not retain</div></div>
+      <div class="box teal" style="top: 565px;"><div class="label">Failure-mode atlas</div><div class="small">By split family, novelty type, support, severity, and biological preservation</div></div>
+    </div>
+    <div class="take">PTL turns perturbation prediction into an auditable keep/abstain reliability workflow.</div>
+  </div>
+</body>
+</html>

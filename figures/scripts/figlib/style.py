@@ -54,7 +54,7 @@ def apply_style() -> None:
     )
 
 
-def panel_label(ax: plt.Axes, label: str, x: float = 0.015, y: float = 0.975) -> None:
+def panel_label(ax: plt.Axes, label: str, x: float = 0.0, y: float = 1.055) -> None:
     ax.text(
         x,
         y,
@@ -62,9 +62,10 @@ def panel_label(ax: plt.Axes, label: str, x: float = 0.015, y: float = 0.975) ->
         transform=ax.transAxes,
         fontsize=PANEL_LABEL_FONT,
         fontweight="bold",
-        va="top",
+        va="bottom",
         ha="left",
         color=BLACK,
+        clip_on=False,
     )
 
 
@@ -123,4 +124,3 @@ def ordered_splits(values: Iterable[str]) -> list[str]:
 def lettered_panel_figure(width: float, height: float) -> plt.Figure:
     apply_style()
     return plt.figure(figsize=(width, height), facecolor=WHITE)
-

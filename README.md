@@ -25,6 +25,7 @@ separately as a Zenodo/Figshare-ready archive.
 - `src/analysis/cbac_case_examples.py`: CBAC case-example extraction.
 - `src/analysis/methods_submission_compliance.py`: public-screen and external-candidate summaries.
 - `figures/scripts/make_cbac_figures.py`: deterministic CBAC manuscript figures.
+- `figures/scripts/make_graphical_abstract_case_plots.py`: real-data scatter panels used in the graphical abstract.
 - `DATA_SOURCES.md`: source datasets and redistribution policy.
 
 ## Expected checks
@@ -33,6 +34,7 @@ separately as a Zenodo/Figshare-ready archive.
 python -m py_compile src/analysis/methods_submission_compliance.py
 python -m pytest tests/splits tests/models tests/data tests/evaluation tests/transportability
 python figures/scripts/make_cbac_figures.py
+python figures/scripts/make_graphical_abstract_case_plots.py
 ```
 
 The full manuscript results require the processed evidence tables and prediction
