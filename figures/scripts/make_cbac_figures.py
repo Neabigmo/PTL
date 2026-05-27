@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import shutil
+import textwrap
 from pathlib import Path
 
 import matplotlib
@@ -117,6 +118,26 @@ def make_fig2_cbac(output_dir: Path = OUTPUT) -> None:
     save_figure(fig, output_dir, "fig2_cbac_benchmark_design")
 
 
+def _wrap_semicolon_list(value: object, width: int = 36, max_items: int = 8) -> str:
+    genes = [g.strip() for g in str(value).split(";") if g.strip()]
+    if len(genes) > max_items:
+        genes = genes[:max_items] + ["..."]
+    return "\n".join(textwrap.wrap(", ".join(genes), width=width, break_long_words=False))
+
+
+def _pretty_case_type(value: object) -> str:
+    labels = {
+        "retained_high_transportability": "Retained",
+        "confidence_failure_rejected": "High-confidence failure",
+        "transfer_boundary_failure": "Dataset-boundary failure",
+    }
+    return labels.get(str(value), str(value).replace("_", " ").title())
+
+
+def _short_split(value: object) -> str:
+    return str(value).replace("_split", "").replace("_", " ")
+
+
 def plot_case_examples(ax: plt.Axes, cases: pd.DataFrame, panel_label: str = "E") -> None:
     framed_panel(ax, panel_label, "Case examples: biological interpretation risk")
     ax.set_axis_off()
@@ -131,14 +152,59 @@ def plot_case_examples(ax: plt.Axes, cases: pd.DataFrame, panel_label: str = "E"
         rounded_box(ax, (x, 0.12), (0.285, 0.68), edge=edge, face=face, radius=0.012, lw=0.95)
         ax.text(x + 0.018, 0.73, label, ha="left", va="center", fontsize=9.0, color=edge, fontweight="bold")
         ax.text(x + 0.018, 0.63, f"Perturbation: {row['perturbation_label']}", ha="left", va="center", fontsize=8.2, color=BLACK)
-        stress = str(row["split_family"]).replace("_split", "").replace("_", " ")
+        stress = _short_split(row["split_family"])
         ax.text(x + 0.018, 0.54, f"Stress: {stress}", ha="left", va="center", fontsize=8.2, color=BLACK)
         ax.text(x + 0.018, 0.43, f"cosine = {float(row['cosine_similarity']):.2f}", ha="left", va="center", fontsize=9.1, color=BLACK, fontweight="bold")
         ax.text(x + 0.145, 0.43, f"top-gene direction = {float(row['top8_direction_consistency']):.2f}", ha="left", va="center", fontsize=8.2, color=BLACK)
-        genes = str(row["shared_top_genes"]).replace(";", ", ")
-        if len(genes) > 56:
-            genes = genes[:53] + "..."
-        ax.text(x + 0.018, 0.27, f"Shared top genes:\n{genes}", ha="left", va="center", fontsize=7.7, color=BLACK, linespacing=1.20)
+        genes = _wrap_semicolon_list(row["shared_top_genes"], width=38, max_items=7)
+        ax.text(x + 0.018, 0.27, f"Shared top genes:\n{genes}", ha="left", va="center", fontsize=7.4, color=BLACK, linespacing=1.18)
+
+
+def plot_case_examples_supplement(ax: plt.Axes, cases: pd.DataFrame) -> None:
+    ax.set_axis_off()
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.text(0.02, 0.96, "S4", fontsize=14, fontweight="bold", ha="left", va="top", color=BLACK)
+    ax.text(0.095, 0.955, "Case-level biological diagnostics from completed output-contract files",
+            fontsize=11.5, fontweight="bold", ha="left", va="top", color=BLACK)
+    palette = {
+        "retained_high_transportability": (TEAL, LIGHT_TEAL),
+        "confidence_failure_rejected": (ORANGE, LIGHT_ORANGE),
+        "transfer_boundary_failure": (RED, LIGHT_RED),
+    }
+    columns = [
+        ("Case", 0.035),
+        ("Retained?", 0.255),
+        ("Cosine", 0.390),
+        ("Top-gene direction", 0.505),
+        ("Shared top genes", 0.675),
+    ]
+    header_y = 0.80
+    ax.add_patch(patches.Rectangle((0.02, header_y - 0.045), 0.96, 0.070, facecolor=LIGHT_GRAY, edgecolor=RULE, linewidth=0.6))
+    for label, x in columns:
+        ax.text(x, header_y, label, fontsize=8.6, fontweight="bold", ha="left", va="center", color=BLACK)
+    row_h = 0.205
+    y0 = 0.665
+    for idx, (_, row) in enumerate(cases.iterrows()):
+        y = y0 - idx * row_h
+        edge, face = palette.get(str(row["case_type"]), (BLUE, LIGHT_BLUE))
+        ax.add_patch(patches.Rectangle((0.02, y - 0.080), 0.96, 0.160, facecolor=face, edgecolor=edge, linewidth=0.8))
+        ax.text(0.035, y + 0.040, _pretty_case_type(row["case_type"]), fontsize=9.2,
+                fontweight="bold", color=edge, ha="left", va="center")
+        ax.text(0.035, y - 0.010, f"{row['perturbation_label']} | {_short_split(row['split_family'])}",
+                fontsize=7.7, color=BLACK, ha="left", va="center")
+        ax.text(0.255, y, "yes" if bool(row["transportable"]) else "no",
+                fontsize=8.5, color=TEAL if bool(row["transportable"]) else RED,
+                fontweight="bold", ha="left", va="center")
+        ax.text(0.390, y, f"{float(row['cosine_similarity']):.2f}",
+                fontsize=9.0, color=BLACK, fontweight="bold", ha="left", va="center")
+        ax.text(0.505, y, f"{float(row['top8_direction_consistency']):.2f}",
+                fontsize=9.0, color=BLACK, ha="left", va="center")
+        ax.text(0.675, y, _wrap_semicolon_list(row["shared_top_genes"], width=47, max_items=8),
+                fontsize=7.3, color=BLACK, ha="left", va="center", linespacing=1.12)
+    ax.text(0.02, 0.07,
+            "Cases are representative retained, high-confidence rejected, and dataset-boundary examples; all values are read from the case-example table.",
+            fontsize=8.0, color=BLACK, ha="left", va="center")
 
 
 def make_fig5_cbac(output_dir: Path = OUTPUT) -> None:
@@ -161,8 +227,8 @@ def make_fig5_cbac(output_dir: Path = OUTPUT) -> None:
     plot_case_examples(axes["E"], cases)
     save_figure(fig, output_dir, "fig5_cbac_failure_cases")
 
-    sfig, sax = plt.subplots(figsize=(11.0, 3.6), facecolor=WHITE)
-    plot_case_examples(sax, cases, panel_label="S4")
+    sfig, sax = plt.subplots(figsize=(12.4, 5.2), facecolor=WHITE)
+    plot_case_examples_supplement(sax, cases)
     save_figure(sfig, output_dir, "supp_fig_s4_case_examples")
 
 
