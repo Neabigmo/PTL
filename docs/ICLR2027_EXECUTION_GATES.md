@@ -7,7 +7,7 @@ because a command completed.
 
 | Gate | Scope | Status | Pass condition |
 |---|---|---|---|
-| G0 | Git/bootstrap | IN_PROGRESS | One Git root, safe ignore policy, v1 provenance, portable package skeleton |
+| G0 | Git/bootstrap | PASS | One Git root, safe ignore policy, v1 provenance, portable package skeleton |
 | G1 | Data registry | PENDING | Dataset/environment/biological-instance IDs and External-B rubric are explicit |
 | G2 | Predictor contract | PENDING | Simple, strong linear and official GEARS outputs share a prediction contract |
 | G3 | Uncertainty contract | PENDING | Native, ensemble and normalized UQ are separated and traceable |
