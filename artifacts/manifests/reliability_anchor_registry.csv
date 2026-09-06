@@ -1,0 +1,10 @@
+dataset_id,predictor,anchor_median_fidelity,n_anchor_predictions,anchor_split_family,anchor_definition,transportability_tau,transportability_threshold
+NormanWeissman2019_filtered,mean_global,0.4872400760650635,111,random_split,median familiar/random fidelity; frozen before PTL grouped cross-fitting,0.8,0.3897920608520508
+NormanWeissman2019_filtered,mean_matching,0.6728575229644775,111,random_split,median familiar/random fidelity; frozen before PTL grouped cross-fitting,0.8,0.5382860183715821
+NormanWeissman2019_filtered,ridge,0.6753034591674805,111,random_split,median familiar/random fidelity; frozen before PTL grouped cross-fitting,0.8,0.5402427673339844
+ReplogleWeissman2022_K562_essential,mean_global,0.18932020664215088,181,random_split,median familiar/random fidelity; frozen before PTL grouped cross-fitting,0.8,0.15145616531372072
+ReplogleWeissman2022_K562_essential,mean_matching,0.24998316168785095,181,random_split,median familiar/random fidelity; frozen before PTL grouped cross-fitting,0.8,0.19998652935028077
+ReplogleWeissman2022_K562_essential,ridge,0.32504701614379883,181,random_split,median familiar/random fidelity; frozen before PTL grouped cross-fitting,0.8,0.2600376129150391
+ReplogleWeissman2022_rpe1,mean_global,0.09695187956094742,112,random_split,median familiar/random fidelity; frozen before PTL grouped cross-fitting,0.8,0.07756150364875794
+ReplogleWeissman2022_rpe1,mean_matching,0.22519167512655258,112,random_split,median familiar/random fidelity; frozen before PTL grouped cross-fitting,0.8,0.18015334010124207
+ReplogleWeissman2022_rpe1,ridge,0.31424565613269806,112,random_split,median familiar/random fidelity; frozen before PTL grouped cross-fitting,0.8,0.25139652490615844

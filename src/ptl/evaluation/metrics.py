@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+from scipy.stats import spearmanr
 from sklearn.metrics import average_precision_score, log_loss, roc_auc_score
 
 
@@ -55,8 +56,11 @@ def evaluate_scores(
         "auroc": float(roc_auc_score(y, score)) if np.unique(y).size > 1 else float("nan"),
         "auprc": float(average_precision_score(y, score)) if np.unique(y).size > 1 else float("nan"),
     }
-    realized_order = np.argsort(risk)
-    result["spearman_continuous_risk"] = float(
-        np.corrcoef(np.argsort(np.argsort(-score)), np.argsort(np.argsort(risk)))[0, 1]
-    ) if len(y) > 2 and np.std(score) > 0 and np.std(risk) > 0 else float("nan")
+    result["spearman_predicted_risk_realized_risk"] = float(
+        spearmanr(-score, risk).statistic
+    ) if (
+        len(y) > 2
+        and np.unique(score).size > 1
+        and np.unique(risk).size > 1
+    ) else float("nan")
     return result

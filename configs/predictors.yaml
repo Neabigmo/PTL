@@ -25,9 +25,9 @@ predictors:
     family: graph_neural_network
     implementation: official_cell_gears
     repository: https://github.com/snap-stanford/GEARS.git
-    headline_status: contract_only_environment_importable_adapter_pending
+    headline_status: contract_pass_scientific_performance_pending
     environment_check: pytorch-clean_plus_sw_mgli_site_packages
-    status_reason: official_package_imports, but the legacy adapter still contains forbidden fallback paths and the v2 data adapter is not validated
+    status_reason: official package imports and fallback paths are disabled; the audited condition-holdout pilot validates the output contract, while final scientific performance remains pending
     forbidden_fallbacks:
       - self_loop_graph_replacement
       - zero_vector_prediction_fallback

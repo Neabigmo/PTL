@@ -48,6 +48,21 @@ PRIMARY_METRIC = "mean_cosine_similarity_non_control_test"
 PHASE_NAME = "Phase 05"
 EPS = 1e-8
 
+
+def resolve_artifact_path(value: object) -> Path:
+    """Resolve current-workspace artifacts while migrating old summaries."""
+
+    raw = Path(str(value))
+    if raw.is_file():
+        return raw
+    normalized = str(value).replace("\\", "/")
+    for marker in ("data/processed/", "results/"):
+        if marker in normalized:
+            candidate = ROOT / marker.rstrip("/") / normalized.split(marker, 1)[1]
+            if candidate.is_file():
+                return candidate
+    return raw
+
 SIGNATURE_METADATA_COLUMNS = {
     "dataset_id",
     "source_dataset",
@@ -150,7 +165,7 @@ class DataRepository:
 
     def feature_metadata_path_for(self, record: pd.Series) -> Path:
         feature_metadata_value = record["feature_metadata_path"] if "feature_metadata_path" in record.index else ""
-        return Path(str(feature_metadata_value)) if str(feature_metadata_value) and str(feature_metadata_value) != "nan" else Path("")
+        return resolve_artifact_path(feature_metadata_value) if str(feature_metadata_value) and str(feature_metadata_value) != "nan" else Path("")
 
     def available_genes(self, dataset_id: str) -> list[str]:
         if dataset_id in self._available_gene_cache:
@@ -161,7 +176,7 @@ class DataRepository:
             feature_frame = pd.read_parquet(feature_metadata_path)
             genes = feature_frame.index.astype(str).tolist()
         else:
-            signature_df = pd.read_parquet(Path(record["signature_path"]))
+            signature_df = pd.read_parquet(resolve_artifact_path(record["signature_path"]))
             genes = [
                 column
                 for column in signature_df.columns
@@ -176,8 +191,8 @@ class DataRepository:
             return self._cache[cache_key]
 
         record = self.summary_record(dataset_id)
-        signature_path = Path(record["signature_path"])
-        pseudobulk_path = Path(record["pseudobulk_path"])
+        signature_path = resolve_artifact_path(record["signature_path"])
+        pseudobulk_path = resolve_artifact_path(record["pseudobulk_path"])
 
         available_genes = self.available_genes(dataset_id)
         if gene_subset is not None:

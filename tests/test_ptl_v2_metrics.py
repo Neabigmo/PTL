@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy.stats import spearmanr
 
 from ptl.evaluation.bootstrap import paired_hierarchical_bootstrap, summarize_bootstrap_ci, summarize_paired_deltas
 from ptl.evaluation.metrics import evaluate_scores
@@ -13,6 +14,10 @@ def test_selective_metrics_have_primary_fields():
     for field in ["aurc", "excess_aurc", "risk_at_50", "risk_at_80", "ftr_at_50", "ftr_at_80", "brier", "log_loss"]:
         assert field in result
         assert np.isfinite(result[field])
+    assert np.isclose(
+        result["spearman_predicted_risk_realized_risk"],
+        spearmanr(-score, 1.0 - y).statistic,
+    )
 
 
 def test_paired_hierarchical_bootstrap_keeps_methods_paired():

@@ -14,7 +14,7 @@
   "biological_instances": 6884,
   "folds": 5,
   "cross_fit_workers": 5,
-  "cross_fit_parallelization": "source-disjoint outer folds with deterministic parent merge",
+  "cross_fit_parallelization": "biological-instance-disjoint grouped cross-fitting with deterministic parent merge",
   "split_families": [
     "random_split",
     "dataset_heldout_split",
@@ -27,8 +27,8 @@
     0.8,
     0.9
   ],
-  "gears": "not_run: official package imports in the project environment, but the v2 data adapter is not yet validated; legacy fallback paths remain excluded",
-  "k562_surface": "ReplogleWeissman2022_K562_essential legacy processed surface; GWPS deferred",
+  "gears": "official_gears_scientific_pilot_condition_holdout_completed; see artifacts/manifests/gears_pilot_audit.csv; G2 predictor contract passed independent review",
+  "k562_surface": "PTL baseline uses the ReplogleWeissman2022_K562_essential legacy surface; the separate GEARS pilot includes ReplogleWeissman2022_K562_gwps",
   "outputs": {
     "predictions": "artifacts/source_data/predictions_summary.csv",
     "prediction_uq_manifest": "artifacts/manifests/prediction_uq_manifest.csv",
@@ -44,6 +44,7 @@
     "fig2": "artifacts/source_data/figure2_confidence_source.csv",
     "fig3": "artifacts/source_data/figure3_selective_source.csv",
     "target_sensitivity": "artifacts/source_data/transportability_target_sensitivity.csv",
+    "anchor_registry": "artifacts/manifests/reliability_anchor_registry.csv",
     "summary": "artifacts/manifests/ptl_v2_g4_pilot_summary.json"
   }
 }

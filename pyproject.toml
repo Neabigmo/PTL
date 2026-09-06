@@ -16,6 +16,7 @@ core = [
   "scikit-learn>=1.3",
   "pyyaml>=6.0",
   "pyarrow>=12.0",
+  "scipy>=1.10",
 ]
 test = ["pytest>=8.0"]
 gears = ["torch>=2.1", "torch-geometric>=2.4"]

@@ -25,6 +25,17 @@ def test_prediction_ids_are_unique_at_signature_level():
     assert len(set(ids)) == len(ids)
 
 
+def test_id_components_do_not_collapse_distinct_punctuation():
+    environment = "env__norman__k562__rna__baseline"
+    left = biological_instance_id(environment, "A-B")
+    right = biological_instance_id(environment, "A_B")
+    missing = biological_instance_id(environment, None)
+    literal_na = biological_instance_id(environment, "na")
+    assert left != right
+    assert missing != literal_na
+    assert environment_id("a", "b__c", "d") != environment_id("a", "b", "c__d")
+
+
 def test_outcomes_cannot_enter_deployment_features():
     with pytest.raises(ValueError, match="outcome"):
         validate_feature_columns(["support_cells", "fidelity_delta_cosine"])

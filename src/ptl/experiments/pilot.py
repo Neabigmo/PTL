@@ -90,7 +90,7 @@ P_COLUMNS = [
     "prediction_norm",
     "prediction_sparsity",
     "prediction_concentration",
-    "prediction_geometry_distance",
+    "prediction_manifold_distance",
 ]
 S_COLUMNS = ["support_cells", "support_signatures", "reference_key_overlap"]
 N_COLUMNS = [
@@ -99,16 +99,19 @@ N_COLUMNS = [
     "combination_novelty",
     "perturbation_novelty",
 ]
-C_COLUMNS = [
-    "cell_context_code",
-    "perturbation_modality_code",
-    "readout_modality_code",
-    "condition_code",
-    "platform_code",
-    "batch_distance",
+CONTEXT_CATEGORICAL_COLUMNS = [
+    "cell_context",
+    "perturbation_modality",
+    "readout_modality",
+    "condition",
+    "platform",
 ]
-CONTEXT_COLUMNS = P_COLUMNS + S_COLUMNS + N_COLUMNS + C_COLUMNS
-ALL_NUMERIC_COLUMNS = UQ_COLUMNS + CONTEXT_COLUMNS
+C_COLUMNS = CONTEXT_CATEGORICAL_COLUMNS + ["batch_distance"]
+P_BASE_COLUMNS = [column for column in P_COLUMNS if column != "prediction_manifold_distance"]
+CONTEXT_NUMERIC_COLUMNS = P_BASE_COLUMNS + S_COLUMNS + N_COLUMNS + ["batch_distance"]
+NO_CONTEXT_NUMERIC_COLUMNS = P_BASE_COLUMNS + S_COLUMNS + N_COLUMNS
+CONTEXT_COLUMNS = CONTEXT_NUMERIC_COLUMNS + CONTEXT_CATEGORICAL_COLUMNS
+ALL_NUMERIC_COLUMNS = UQ_COLUMNS + CONTEXT_NUMERIC_COLUMNS
 SIGNATURE_METADATA_COLUMNS = [
     "signature_id", "reference_key", "perturbation_label", "is_control", "n_cells", "batch"
 ]
@@ -199,6 +202,18 @@ def _load_all_training_metadata(root_text: str) -> pd.DataFrame:
 def _components(label: object) -> list[str]:
     text = str(label)
     return [part.strip() for part in re.split(r"[+,;|]", text) if part.strip()]
+
+
+def _response_sketch(values: np.ndarray, n_blocks: int = 64) -> np.ndarray:
+    """Create a compact response-space representation for fold-local PCA."""
+
+    values = np.asarray(values, dtype=np.float32).ravel()
+    if not len(values):
+        return np.zeros(n_blocks, dtype=np.float32)
+    return np.asarray(
+        [chunk.mean(dtype=np.float64) for chunk in np.array_split(values, n_blocks)],
+        dtype=np.float32,
+    )
 
 
 def _training_features(
@@ -328,7 +343,7 @@ def _load_ensemble(root: Path, dataset_id: str, predictor: str, split_family: st
             "prediction_norm": prediction_norm,
             "prediction_sparsity": float((abs_mean < 1e-8).mean()),
             "prediction_concentration": concentration,
-            "prediction_geometry_distance": 1.0 - np.clip(concentration, 0.0, 1.0),
+            "prediction_response_sketch": _response_sketch(mean_prediction),
             "fidelity_delta_cosine": cosine,
         })
         for name, values_ in zip(UQ_COLUMNS, [
@@ -366,7 +381,7 @@ def _load_ensemble(root: Path, dataset_id: str, predictor: str, split_family: st
             "batch_distance": training["batch_distance"].to_numpy(),
             **{column: record_frame[column].to_numpy() for column in [
                 "prediction_norm", "prediction_sparsity", "prediction_concentration",
-                "prediction_geometry_distance", "fidelity_delta_cosine",
+                "prediction_response_sketch", "fidelity_delta_cosine",
             ]},
             "prediction_array_path": _relative(root, member_paths[0]),
             "gene_list_path": _relative(root, member_paths[0].with_name("genes.txt")),
@@ -390,21 +405,10 @@ def _load_ensemble(root: Path, dataset_id: str, predictor: str, split_family: st
 
 def _add_context_features(frame: pd.DataFrame) -> pd.DataFrame:
     frame = frame.copy()
-    def code_for(field: str) -> dict[str, float]:
-        values = sorted({str(details[field]) for details in PILOT_DATASETS.values()})
-        return {value: float(index) for index, value in enumerate(values, start=1)}
-
-    for field, column in [
-        ("cell_context", "cell_context_code"),
-        ("perturbation_modality", "perturbation_modality_code"),
-        ("readout_modality", "readout_modality_code"),
-        ("condition", "condition_code"),
-        ("platform", "platform_code"),
-    ]:
-        lookup = code_for(field)
-        frame[column] = frame["dataset_id"].map(
-            {dataset: lookup[str(details[field])] for dataset, details in PILOT_DATASETS.items()}
-        ).fillna(0.0)
+    for field in CONTEXT_CATEGORICAL_COLUMNS:
+        frame[field] = frame["dataset_id"].map(
+            {dataset: str(details[field]) for dataset, details in PILOT_DATASETS.items()}
+        ).fillna("unknown").astype(str)
     frame["fidelity_delta_cosine"] = frame["fidelity_delta_cosine"].clip(-1.0, 1.0)
     frame["continuous_risk"] = (1.0 - frame["fidelity_delta_cosine"]) / 2.0
     frame["uq_quantile"] = np.nan
@@ -412,7 +416,83 @@ def _add_context_features(frame: pd.DataFrame) -> pd.DataFrame:
     return frame
 
 
-def _fit_one_fold(args: tuple[object, ...]) -> tuple[int, np.ndarray, dict[str, np.ndarray], np.ndarray, np.ndarray]:
+def _fold_local_one_hot(train_values: np.ndarray, values: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Fit categorical vocabulary on the fold's training rows only."""
+
+    train_values = np.asarray(train_values, dtype=str)
+    values = np.asarray(values, dtype=str)
+    if train_values.ndim == 1:
+        train_values = train_values.reshape(-1, 1)
+    if values.ndim == 1:
+        values = values.reshape(-1, 1)
+    train_parts: list[np.ndarray] = []
+    value_parts: list[np.ndarray] = []
+    for column in range(train_values.shape[1]):
+        categories = sorted(set(train_values[:, column]))
+        lookup = {category: index for index, category in enumerate(categories)}
+        train_encoded = np.zeros((len(train_values), len(categories)), dtype=float)
+        value_encoded = np.zeros((len(values), len(categories)), dtype=float)
+        for row, category in enumerate(train_values[:, column]):
+            train_encoded[row, lookup[category]] = 1.0
+        for row, category in enumerate(values[:, column]):
+            index = lookup.get(category)
+            if index is not None:
+                value_encoded[row, index] = 1.0
+        train_parts.append(train_encoded)
+        value_parts.append(value_encoded)
+    return np.column_stack(train_parts), np.column_stack(value_parts)
+
+
+def _fold_local_manifold_distance(
+    reference: np.ndarray,
+    queries: np.ndarray,
+    reference_predictors: np.ndarray,
+    query_predictors: np.ndarray,
+    response_sketches: np.ndarray,
+    *,
+    exclude_self: bool = False,
+) -> np.ndarray:
+    """Measure nearest training response distance in a train-only PCA space."""
+
+    result = np.full(len(queries), np.nan, dtype=float)
+    for predictor in sorted(np.unique(query_predictors[queries])):
+        reference_local = reference[reference_predictors[reference] == predictor]
+        query_local = np.flatnonzero(query_predictors[queries] == predictor)
+        if not len(reference_local) or not len(query_local):
+            continue
+        reference_values = np.asarray(response_sketches[reference_local], dtype=float)
+        query_values = np.asarray(response_sketches[queries[query_local]], dtype=float)
+        center = reference_values.mean(axis=0)
+        scale = np.where(reference_values.std(axis=0) > 1e-8, reference_values.std(axis=0), 1.0)
+        reference_scaled = (reference_values - center) / scale
+        query_scaled = (query_values - center) / scale
+        rank = min(8, reference_scaled.shape[0], reference_scaled.shape[1])
+        if rank:
+            _, _, components = np.linalg.svd(reference_scaled, full_matrices=False)
+            reference_latent = reference_scaled @ components[:rank].T
+            query_latent = query_scaled @ components[:rank].T
+        else:
+            reference_latent = reference_scaled
+            query_latent = query_scaled
+        distances = np.empty(len(query_latent), dtype=float)
+        for start in range(0, len(query_latent), 256):
+            block = query_latent[start:start + 256]
+            pairwise = np.sqrt(
+                ((block[:, None, :] - reference_latent[None, :, :]) ** 2).sum(axis=2)
+            )
+            if exclude_self:
+                for row, query_index in enumerate(queries[query_local[start:start + len(block)]]):
+                    matches = np.flatnonzero(reference_local == query_index)
+                    pairwise[row, matches] = np.inf
+            distances[start:start + len(block)] = pairwise.min(axis=1)
+        result[query_local] = distances
+    if not np.isfinite(result).all():
+        fallback = float(np.median(result[np.isfinite(result)])) if np.isfinite(result).any() else 0.0
+        result[~np.isfinite(result)] = fallback
+    return result
+
+
+def _fit_one_fold(args: tuple[object, ...]) -> tuple[int, np.ndarray, dict[str, np.ndarray], np.ndarray, np.ndarray, np.ndarray]:
     """Fit one grouped outer fold in an independent process.
 
     The worker receives one fixed train/test split and returns only its OOF
@@ -427,34 +507,38 @@ def _fit_one_fold(args: tuple[object, ...]) -> tuple[int, np.ndarray, dict[str, 
         test,
         y,
         uq_source,
-        context,
-        context_no_id,
-        all_numeric,
+        context_numeric,
+        context_categories,
+        identity_categories,
+        uq_features,
         support_novelty,
-        full,
         predictors,
+        response_sketches,
     ) = args
     fold = int(fold)
     train = np.asarray(train, dtype=int)
     test = np.asarray(test, dtype=int)
     y = np.asarray(y, dtype=int)
     uq_source = np.asarray(uq_source, dtype=float)
-    context = np.asarray(context, dtype=float)
-    context_no_id = np.asarray(context_no_id, dtype=float)
-    all_numeric = np.asarray(all_numeric, dtype=float)
+    context_numeric = np.asarray(context_numeric, dtype=float)
+    context_categories = np.asarray(context_categories, dtype=str)
+    identity_categories = np.asarray(identity_categories, dtype=str)
+    uq_features = np.asarray(uq_features, dtype=float)
     support_novelty = np.asarray(support_novelty, dtype=float)
-    full = np.asarray(full, dtype=float)
     predictors = np.asarray(predictors, dtype=str)
+    response_sketches = np.asarray(response_sketches, dtype=float)
     prediction_names = [
         "raw_normalized_uq",
         "platt_logistic",
         "isotonic",
         "support_novelty_only",
         "ptl_rf",
+        "ptl_rf_full_id",
         "gbdt_uncalibrated",
+        "gbdt_full_id",
         "ptl_context",
-        "ptl_full",
-        "ptl_no_id",
+        "ptl_full_id",
+        "ptl_no_context",
     ]
     predictions = {
         name: np.full(len(test), np.nan, dtype=float)
@@ -463,6 +547,26 @@ def _fit_one_fold(args: tuple[object, ...]) -> tuple[int, np.ndarray, dict[str, 
     p0_train = np.full(len(train), 0.5, dtype=float)
     p0_test = np.full(len(test), 0.5, dtype=float)
     degenerate_test = np.zeros(len(test), dtype=bool)
+    context_cat_train, context_cat_test = _fold_local_one_hot(
+        context_categories[train], context_categories[test]
+    )
+    identity_cat_train, identity_cat_test = _fold_local_one_hot(
+        identity_categories[train], identity_categories[test]
+    )
+    manifold_train = _fold_local_manifold_distance(
+        train, train, predictors, predictors, response_sketches, exclude_self=True
+    )
+    manifold_test = _fold_local_manifold_distance(
+        train, test, predictors, predictors, response_sketches
+    )
+    context_train = np.column_stack([context_numeric[train], manifold_train, context_cat_train])
+    context_test = np.column_stack([context_numeric[test], manifold_test, context_cat_test])
+    no_context_train = np.column_stack([context_numeric[train][:, :len(NO_CONTEXT_NUMERIC_COLUMNS)], manifold_train])
+    no_context_test = np.column_stack([context_numeric[test][:, :len(NO_CONTEXT_NUMERIC_COLUMNS)], manifold_test])
+    all_numeric_train = np.column_stack([uq_features[train], context_train])
+    all_numeric_test = np.column_stack([uq_features[test], context_test])
+    all_numeric_full_train = np.column_stack([all_numeric_train, identity_cat_train])
+    all_numeric_full_test = np.column_stack([all_numeric_test, identity_cat_test])
     train_predictors = predictors[train]
     test_predictors = predictors[test]
     for predictor in sorted(np.unique(train_predictors)):
@@ -495,24 +599,36 @@ def _fit_one_fold(args: tuple[object, ...]) -> tuple[int, np.ndarray, dict[str, 
     if np.unique(y[train]).size < 2:
         constant = float(y[train].mean())
         predictions["ptl_rf"] = np.full(len(test), constant, dtype=float)
+        predictions["ptl_rf_full_id"] = np.full(len(test), constant, dtype=float)
         predictions["gbdt_uncalibrated"] = np.full(len(test), constant, dtype=float)
+        predictions["gbdt_full_id"] = np.full(len(test), constant, dtype=float)
     else:
         rf = RandomForestClassifier(
             n_estimators=200, min_samples_leaf=10, random_state=17, n_jobs=1
-        ).fit(all_numeric[train], y[train])
+        ).fit(all_numeric_train, y[train])
         gbdt = GradientBoostingClassifier(
             n_estimators=100, max_depth=2, learning_rate=0.04, random_state=17
-        ).fit(all_numeric[train], y[train])
-        predictions["ptl_rf"] = rf.predict_proba(all_numeric[test])[:, 1]
-        predictions["gbdt_uncalibrated"] = gbdt.predict_proba(all_numeric[test])[:, 1]
+        ).fit(all_numeric_train, y[train])
+        rf_full = RandomForestClassifier(
+            n_estimators=200, min_samples_leaf=10, random_state=17, n_jobs=1
+        ).fit(all_numeric_full_train, y[train])
+        gbdt_full = GradientBoostingClassifier(
+            n_estimators=100, max_depth=2, learning_rate=0.04, random_state=17
+        ).fit(all_numeric_full_train, y[train])
+        predictions["ptl_rf"] = rf.predict_proba(all_numeric_test)[:, 1]
+        predictions["ptl_rf_full_id"] = rf_full.predict_proba(all_numeric_full_test)[:, 1]
+        predictions["gbdt_uncalibrated"] = gbdt.predict_proba(all_numeric_test)[:, 1]
+        predictions["gbdt_full_id"] = gbdt_full.predict_proba(all_numeric_full_test)[:, 1]
 
-    context_model = ContextualCalibrator().fit(context[train], p0_scalar_train, y[train])
-    predictions["ptl_context"] = context_model.predict(context[test], p0_scalar_test)
-    full_model = ContextualCalibrator().fit(full[train], p0_scalar_train, y[train])
-    predictions["ptl_full"] = full_model.predict(full[test], p0_scalar_test)
-    no_id_model = ContextualCalibrator().fit(context_no_id[train], p0_scalar_train, y[train])
-    predictions["ptl_no_id"] = no_id_model.predict(context_no_id[test], p0_scalar_test)
-    return fold, test, predictions, p0_test, degenerate_test
+    context_model = ContextualCalibrator().fit(context_train, p0_scalar_train, y[train])
+    predictions["ptl_context"] = context_model.predict(context_test, p0_scalar_test)
+    full_train = np.column_stack([context_train, identity_cat_train])
+    full_test = np.column_stack([context_test, identity_cat_test])
+    full_model = ContextualCalibrator().fit(full_train, p0_scalar_train, y[train])
+    predictions["ptl_full_id"] = full_model.predict(full_test, p0_scalar_test)
+    no_context_model = ContextualCalibrator().fit(no_context_train, p0_scalar_train, y[train])
+    predictions["ptl_no_context"] = no_context_model.predict(no_context_test, p0_scalar_test)
+    return fold, test, predictions, p0_test, degenerate_test, manifold_test
 
 
 def _fit_fold_predictions(frame: pd.DataFrame) -> pd.DataFrame:
@@ -521,13 +637,12 @@ def _fit_fold_predictions(frame: pd.DataFrame) -> pd.DataFrame:
     y = frame["reliable_label"].to_numpy(dtype=int)
     risk = frame["continuous_risk"].to_numpy(dtype=float)
     uq_source = frame["uq_mean_gene_variance"].to_numpy(dtype=float)
-    context = frame[CONTEXT_COLUMNS].to_numpy(dtype=float)
-    no_id_columns = P_COLUMNS + S_COLUMNS + N_COLUMNS
-    context_no_id = frame[no_id_columns].to_numpy(dtype=float)
-    all_numeric = frame[ALL_NUMERIC_COLUMNS].to_numpy(dtype=float)
+    context_numeric = frame[CONTEXT_NUMERIC_COLUMNS].to_numpy(dtype=float)
+    context_categories = frame[CONTEXT_CATEGORICAL_COLUMNS].astype(str).to_numpy()
+    identity_categories = frame[["environment_id", "predictor"]].astype(str).to_numpy()
+    uq_features = frame[UQ_COLUMNS].to_numpy(dtype=float)
     support_novelty = frame[S_COLUMNS + N_COLUMNS].to_numpy(dtype=float)
-    identity = pd.get_dummies(frame[["environment_id", "predictor"]], dtype=float).to_numpy()
-    full = np.column_stack([context, identity])
+    response_sketches = np.asarray(frame["prediction_response_sketch"].tolist(), dtype=float)
     groups = frame["biological_instance_id"].to_numpy()
     if len(np.unique(groups)) < 5:
         raise ValueError("pilot needs at least five biological-instance groups")
@@ -540,14 +655,17 @@ def _fit_fold_predictions(frame: pd.DataFrame) -> pd.DataFrame:
             "isotonic",
             "support_novelty_only",
             "ptl_rf",
+            "ptl_rf_full_id",
             "gbdt_uncalibrated",
+            "gbdt_full_id",
             "ptl_context",
-            "ptl_full",
-            "ptl_no_id",
+            "ptl_full_id",
+            "ptl_no_context",
         ]
     }
     uq_quantile = np.full(len(frame), np.nan, dtype=float)
     degenerate_uq = np.zeros(len(frame), dtype=bool)
+    manifold_distance = np.full(len(frame), np.nan, dtype=float)
     splitter = GroupKFold(n_splits=5)
     predictors = frame["predictor"].to_numpy(dtype=str)
     fold_tasks = [
@@ -557,14 +675,15 @@ def _fit_fold_predictions(frame: pd.DataFrame) -> pd.DataFrame:
             test,
             y,
             uq_source,
-            context,
-            context_no_id,
-            all_numeric,
+            context_numeric,
+            context_categories,
+            identity_categories,
+            uq_features,
             support_novelty,
-            full,
             predictors,
+            response_sketches,
         )
-        for fold, (train, test) in enumerate(splitter.split(context, y, groups))
+        for fold, (train, test) in enumerate(splitter.split(context_numeric, y, groups))
     ]
     worker_count = int(os.environ.get("PTL_V2_WORKERS", "5"))
     if not 1 <= worker_count <= len(fold_tasks):
@@ -574,12 +693,13 @@ def _fit_fold_predictions(frame: pd.DataFrame) -> pd.DataFrame:
     else:
         with ProcessPoolExecutor(max_workers=worker_count) as executor:
             fold_results = list(executor.map(_fit_one_fold, fold_tasks))
-    for fold, test, fold_predictions, fold_uq, fold_degenerate in sorted(
+    for fold, test, fold_predictions, fold_uq, fold_degenerate, fold_manifold_distance in sorted(
         fold_results, key=lambda result: result[0]
     ):
         folds[test] = fold
         uq_quantile[test] = fold_uq
         degenerate_uq[test] = fold_degenerate
+        manifold_distance[test] = fold_manifold_distance
         for name in predictions:
             predictions[name][test] = fold_predictions[name]
     if np.any(folds < 0):
@@ -591,6 +711,7 @@ def _fit_fold_predictions(frame: pd.DataFrame) -> pd.DataFrame:
     output["fold"] = folds
     output["uq_quantile"] = uq_quantile
     output["degenerate_uq"] = degenerate_uq
+    output["prediction_manifold_distance"] = manifold_distance
     for name, values in predictions.items():
         output[name] = values
     output["reliable_label"] = y
@@ -611,7 +732,7 @@ def _write_outputs(root: Path, frame: pd.DataFrame, fold_predictions: pd.DataFra
         "fidelity_delta_cosine", "continuous_risk", "reliable_label", "legacy_transportability_label",
         "legacy_target_risk", "anchor_fidelity", "transportability_threshold", "transportability_label",
         "legacy_reliable_label", "legacy_threshold", "transportability_tau", "training_support_max",
-        "degenerate_uq", "uq_quantile",
+        "degenerate_uq", "uq_quantile", "anchor_median_fidelity", "prediction_response_sketch",
     }])
     predictions_columns = [
         "prediction_id", "biological_instance_id", "environment_id", "predictor", "split_family",
@@ -626,7 +747,7 @@ def _write_outputs(root: Path, frame: pd.DataFrame, fold_predictions: pd.DataFra
         "prediction_id", "biological_instance_id", "environment_id", "predictor", "split_family",
         "signature_id", "perturbation_group_id", "fidelity_delta_cosine", "continuous_risk",
         "anchor_fidelity", "transportability_threshold", "transportability_label", "reliable_label",
-        "transportability_tau",
+        "transportability_tau", "anchor_median_fidelity",
         "legacy_transportability_label", "legacy_target_risk",
     ]
     paths = {
@@ -644,6 +765,7 @@ def _write_outputs(root: Path, frame: pd.DataFrame, fold_predictions: pd.DataFra
         "fig2": source / "figure2_confidence_source.csv",
         "fig3": source / "figure3_selective_source.csv",
         "target_sensitivity": source / "transportability_target_sensitivity.csv",
+        "anchor_registry": manifests / "reliability_anchor_registry.csv",
     }
     frame[predictions_columns].drop_duplicates("prediction_id").to_csv(paths["predictions"], index=False)
     prediction_manifest = (
@@ -733,7 +855,8 @@ def _write_outputs(root: Path, frame: pd.DataFrame, fold_predictions: pd.DataFra
     method_rows = []
     method_names = [column for column in fold_predictions.columns if column in {
         "raw_normalized_uq", "platt_logistic", "isotonic", "support_novelty_only", "ptl_rf",
-        "gbdt_uncalibrated", "ptl_context", "ptl_full", "ptl_no_id"
+        "ptl_rf_full_id", "gbdt_uncalibrated", "gbdt_full_id", "ptl_context",
+        "ptl_full_id", "ptl_no_context"
     }]
     for (predictor, environment, split_family), group in fold_predictions.groupby(
         ["predictor", "environment_id", "split_family"]
@@ -749,7 +872,7 @@ def _write_outputs(root: Path, frame: pd.DataFrame, fold_predictions: pd.DataFra
                 **values,
             })
     detail = pd.DataFrame(method_rows)
-    macro = detail.groupby("method", as_index=False)[["aurc", "excess_aurc", "risk_at_50", "risk_at_80", "ftr_at_50", "ftr_at_80", "brier", "log_loss", "auroc", "auprc", "spearman_continuous_risk"]].mean(numeric_only=True)
+    macro = detail.groupby("method", as_index=False)[["aurc", "excess_aurc", "risk_at_50", "risk_at_80", "ftr_at_50", "ftr_at_80", "brier", "log_loss", "auroc", "auprc", "spearman_predicted_risk_realized_risk"]].mean(numeric_only=True)
     macro["aggregation_level"] = "environment_macro_average"
     macro["predictor"] = "all_pilot_predictors"
     macro["environment_id"] = "macro"
@@ -782,6 +905,51 @@ def _write_outputs(root: Path, frame: pd.DataFrame, fold_predictions: pd.DataFra
     return paths
 
 
+def _freeze_reliability_anchor_registry(root: Path, frame: pd.DataFrame) -> pd.DataFrame:
+    """Freeze familiar/random fidelity anchors before PTL cross-fitting."""
+
+    path = root / "artifacts/manifests/reliability_anchor_registry.csv"
+    anchor = frame.loc[frame["split_family"].eq("random_split")]
+    registry = (
+        anchor.groupby(["dataset_id", "predictor"], as_index=False)
+        .agg(
+            anchor_median_fidelity=("fidelity_delta_cosine", "median"),
+            n_anchor_predictions=("prediction_id", "nunique"),
+        )
+        .assign(
+            anchor_split_family="random_split",
+            anchor_definition="median familiar/random fidelity; frozen before PTL grouped cross-fitting",
+            transportability_tau=0.8,
+        )
+    )
+    registry["transportability_threshold"] = (
+        registry["transportability_tau"] * registry["anchor_median_fidelity"]
+    )
+    expected_columns = [
+        "dataset_id", "predictor", "anchor_median_fidelity", "n_anchor_predictions",
+        "anchor_split_family", "anchor_definition", "transportability_tau",
+        "transportability_threshold",
+    ]
+    registry = registry[expected_columns].sort_values(["dataset_id", "predictor"]).reset_index(drop=True)
+    if path.exists():
+        frozen = pd.read_csv(path)
+        frozen = frozen.reindex(columns=expected_columns).sort_values(["dataset_id", "predictor"]).reset_index(drop=True)
+        if list(frozen["dataset_id"].astype(str)) != list(registry["dataset_id"].astype(str)) or list(frozen["predictor"].astype(str)) != list(registry["predictor"].astype(str)):
+            raise ValueError("frozen reliability anchor registry does not match the current pilot universe")
+        for column in ["anchor_median_fidelity", "transportability_tau", "transportability_threshold"]:
+            if not np.allclose(
+                frozen[column].to_numpy(dtype=float),
+                registry[column].to_numpy(dtype=float),
+                atol=1e-12,
+                rtol=0.0,
+            ):
+                raise ValueError(f"frozen reliability anchor changed for column {column}")
+        return frozen
+    path.parent.mkdir(parents=True, exist_ok=True)
+    registry.to_csv(path, index=False)
+    return registry
+
+
 def run_pilot(root: str | Path) -> dict[str, object]:
     root = Path(root).resolve()
     labels = _load_oof_labels(root)
@@ -798,15 +966,14 @@ def run_pilot(root: str | Path) -> dict[str, object]:
         ]]
         .rename(columns={"fidelity_delta_cosine": "anchor_fidelity"})
     )
-    thresholds = (
-        anchors.groupby(["dataset_id", "predictor"], as_index=False)["anchor_fidelity"]
-        .median()
-        .rename(columns={"anchor_fidelity": "anchor_median_fidelity"})
-        .assign(transportability_threshold=lambda values: 0.8 * values["anchor_median_fidelity"])
-        [["dataset_id", "predictor", "transportability_threshold"]]
-    )
+    anchor_registry = _freeze_reliability_anchor_registry(root, frame)
     frame = frame.merge(anchors, on=["dataset_id", "predictor", "signature_id"], how="left")
-    frame = frame.merge(thresholds, on=["dataset_id", "predictor"], how="left")
+    frame = frame.merge(
+        anchor_registry[["dataset_id", "predictor", "anchor_median_fidelity", "transportability_threshold"]],
+        on=["dataset_id", "predictor"],
+        how="left",
+        validate="many_to_one",
+    )
     frame["transportability_tau"] = 0.8
     frame["transportability_label"] = (
         frame["fidelity_delta_cosine"] >= frame["transportability_threshold"]
@@ -817,6 +984,12 @@ def run_pilot(root: str | Path) -> dict[str, object]:
     frame["legacy_transportability_label"] = frame["legacy_transportability_label"].fillna(-1.0)
     frame["legacy_target_risk"] = frame["legacy_target_risk"].fillna(np.nan)
     fold_predictions = _fit_fold_predictions(frame)
+    frame = frame.merge(
+        fold_predictions[["prediction_id", "prediction_manifold_distance"]],
+        on="prediction_id",
+        how="left",
+        validate="one_to_one",
+    )
     paths = _write_outputs(root, frame, fold_predictions)
     summary = {
         "pilot_id": "ptl_v2_g4_baseline_replay_2026-09-06",
@@ -826,12 +999,12 @@ def run_pilot(root: str | Path) -> dict[str, object]:
         "biological_instances": int(frame["biological_instance_id"].nunique()),
         "folds": 5,
         "cross_fit_workers": int(os.environ.get("PTL_V2_WORKERS", "5")),
-        "cross_fit_parallelization": "source-disjoint outer folds with deterministic parent merge",
+        "cross_fit_parallelization": "biological-instance-disjoint grouped cross-fitting with deterministic parent merge",
         "split_families": list(PILOT_SPLITS),
         "transportability_target": "T_i = I[F_i >= 0.8 * median(F_random_anchor)]",
         "transportability_tau_sensitivity": [0.6, 0.7, 0.8, 0.9],
-        "gears": "not_run: official package imports in the project environment, but the v2 data adapter is not yet validated; legacy fallback paths remain excluded",
-        "k562_surface": "ReplogleWeissman2022_K562_essential legacy processed surface; GWPS deferred",
+        "gears": "official_gears_scientific_pilot_condition_disjoint_completed; see artifacts/manifests/gears_pilot_audit.csv; G2 remains pending independent review",
+        "k562_surface": "PTL baseline uses the ReplogleWeissman2022_K562_essential legacy surface; the separate GEARS pilot includes ReplogleWeissman2022_K562_gwps",
         "outputs": {key: _relative(root, value) for key, value in paths.items()},
     }
     summary_path = root / "artifacts/manifests/ptl_v2_g4_pilot_summary.json"

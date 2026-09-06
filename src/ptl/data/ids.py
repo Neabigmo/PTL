@@ -6,12 +6,27 @@ run-directory names.  In particular, ``run_id`` is never used as a fold key.
 
 from __future__ import annotations
 
-import re
+from urllib.parse import quote
 
 
 def _part(value: object | None) -> str:
-    text = "na" if value is None or str(value).strip() == "" else str(value).strip().casefold()
-    return re.sub(r"[^a-z0-9]+", "-", text).strip("-") or "na"
+    """Encode one ID component without punctuation-induced collisions.
+
+    Components are case-folded for the project's semantic identifiers, then
+    percent-encoded with the component delimiter excluded from the safe set.
+    Unlike the old punctuation-stripping normalizer, values such as ``A-B``
+    and ``A_B`` remain distinct. Missing values have an explicit marker so a
+    literal ``na`` value is not conflated with absence.
+    """
+
+    if value is None or str(value).strip() == "":
+        return "n~"
+    text = str(value).strip().casefold()
+    # ``_`` is an RFC 3986 unreserved character, so urllib leaves it alone
+    # even when it is omitted from ``safe``.  Encode it explicitly because
+    # the surrounding ID format uses ``__`` as its component delimiter.
+    encoded = quote(text, safe=".-~").replace("_", "%5F")
+    return "v~" + encoded
 
 
 def environment_id(

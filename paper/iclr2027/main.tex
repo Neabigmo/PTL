@@ -5,7 +5,7 @@
 \usepackage{url}
 \usepackage{booktabs}
 
-\title{Predictor-Aware Reliability Calibration for Single-Cell Perturbation Response Prediction}
+\title{Context-Aware Reliability Calibration for Single-Cell Perturbation Response Prediction}
 \author{Anonymous Authors}
 
 \newcommand{\ptl}{\textsc{PTL}}
@@ -15,8 +15,8 @@
 \maketitle
 
 \begin{abstract}
-Predictor uncertainty is informative but incomplete when a perturbation-response
-predictor is transported across biological environments. We study a reliability
+Predictor uncertainty can be severely misaligned with realized fidelity under
+structured biological shift. We study a reliability
 layer that combines target-free prediction geometry, training support, novelty,
 and explicit biological context with a calibrated uncertainty score. This
 document is a paper skeleton: quantitative claims will be populated only from
@@ -45,10 +45,13 @@ $T_i = \mathbb{I}[F_i \geq \tau\,\operatorname{median}(F_{\mathrm{random}})]$.
 \section{Experimental design}
 We use signature-level biological instances, five-fold grouped cross-fitting,
 environment-first aggregation, and an environment-then-instance paired
-bootstrap. The initial replay surface covers Norman, Replogle K562 essential
-(the available legacy surface), and Replogle RPE1, with random, dataset-heldout,
-and unseen-perturbation split families. Official GEARS and the selected K562
-GWPS surface remain gated pending adapter validation and compatible artifacts.
+bootstrap. The initial PTL replay surface covers Norman, Replogle K562
+essential, and Replogle RPE1. A separate official GEARS scientific pilot covers
+Norman, Replogle K562 GWPS, and Replogle RPE1 with three random condition-holdout
+seeds on each surface, one frozen 4,096-gene panel per dataset, and native
+log-variance uncertainty. GEARS absolute-expression outputs are converted to
+matched-reference deltas before evaluation. The adapter pilot is not treated as
+a final PTL-v2 performance claim.
 
 \section{Results plan}
 All numbers in the final paper will be generated from the following compact
@@ -57,17 +60,19 @@ artifacts:
   \item \path{artifacts/source_data/g4_method_comparison.csv};
   \item \path{artifacts/source_data/g4_bootstrap_ci.csv};
   \item \path{artifacts/source_data/transportability_target_sensitivity.csv};
-  \item \path{artifacts/manifests/environment_registry.csv}.
+  \item \path{artifacts/manifests/environment_registry.csv};
+  \item \path{artifacts/manifests/gears_pilot_audit.csv}.
 \end{itemize}
 The current replay is an engineering and estimand audit, not a final claim of
 state-of-the-art predictive performance.
 
 \section{Limitations and reproducibility}
-The available pilot arrays are legacy baseline outputs, and the ensemble uses
-the two or three aligned seed members available for each signature. The
-environment registry explicitly marks perturbation-modality expansion as
-pending metadata review. The source code, contracts, vendored style files, and
-provenance boundary are kept in the project repository.
+The baseline replay arrays use the two or three aligned seed members available
+for each signature, while the official GEARS pilot provides a separate native
+UQ validation surface with condition-disjoint splits. The environment registry explicitly marks
+perturbation-modality expansion as pending metadata review. The source code,
+contracts, vendored style files, and provenance boundary are kept in the
+project repository.
 
 % TODO(G5/G6): add validated predictor roster, figures, tables, references,
 % author block, and final claims with artifact-level provenance.
