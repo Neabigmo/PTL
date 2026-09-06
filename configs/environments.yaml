@@ -1,0 +1,58 @@
+schema_version: 1
+environments:
+  norman_k562_rna:
+    dataset_id: NormanWeissman2019_filtered
+    cell_context: K562
+    modality: RNA
+    condition: baseline
+    role: common_core
+  replogle_k562_gwps:
+    dataset_id: ReplogleWeissman2022_K562_gwps
+    cell_context: K562
+    modality: RNA
+    condition: GWPS
+    role: common_core
+  replogle_rpe1:
+    dataset_id: ReplogleWeissman2022_rpe1
+    cell_context: RPE1
+    modality: RNA
+    condition: baseline
+    role: common_core
+  adamson_k562_full_candidate:
+    dataset_id: AdamsonWeissman2016_full_candidate
+    cell_context: K562
+    modality: RNA
+    condition: multi_accession_candidate
+    role: common_core_candidate
+    status: pending_adamson_audit
+  tian_k562_crispra:
+    dataset_id: TianKampmann2021_CRISPRa
+    cell_context: K562
+    modality: CRISPRa+RNA
+    condition: baseline
+    role: context_expansion
+  tian_k562_crispri:
+    dataset_id: TianKampmann2021_CRISPRi
+    cell_context: K562
+    modality: CRISPRi+RNA
+    condition: baseline
+    role: context_expansion
+  frangieh_thp1_rna:
+    dataset_id: FrangiehIzar2021_RNA
+    cell_context: THP-1/monocytes
+    modality: RNA
+    condition: metadata_defined
+    role: context_expansion
+  papalexi_eccite_rna:
+    dataset_id: PapalexiSatija2021_eccite_RNA
+    cell_context: K562
+    modality: RNA+protein
+    condition: ECCITE-seq
+    role: context_expansion
+  wessels_thp1:
+    dataset_id: WesselsSatija2023
+    cell_context: THP-1/monocytes
+    modality: CRISPR-Cas13/RNA
+    condition: metadata_defined
+    role: external_b
+    frozen: true

@@ -1,0 +1,34 @@
+{
+  "pilot_id": "ptl_v2_g4_baseline_replay_2026-09-06",
+  "datasets": [
+    "NormanWeissman2019_filtered",
+    "ReplogleWeissman2022_K562_essential",
+    "ReplogleWeissman2022_rpe1"
+  ],
+  "predictors": [
+    "mean_global",
+    "mean_matching",
+    "ridge"
+  ],
+  "rows": 20652,
+  "biological_instances": 866,
+  "folds": 5,
+  "gears": "not_run: official package imports in the project environment, but the v2 data adapter is not yet validated; legacy fallback paths remain excluded",
+  "k562_surface": "ReplogleWeissman2022_K562_essential legacy processed surface; GWPS deferred",
+  "outputs": {
+    "predictions": "artifacts/source_data/predictions_summary.csv",
+    "prediction_uq_manifest": "artifacts/manifests/prediction_uq_manifest.csv",
+    "deployment_features": "artifacts/source_data/deployment_features.csv",
+    "outcomes": "artifacts/source_data/outcomes.csv",
+    "folds": "artifacts/source_data/folds.csv",
+    "fold_summary": "artifacts/manifests/fold_summary.csv",
+    "environment_registry": "artifacts/manifests/environment_registry.csv",
+    "folds_parquet": "artifacts/manifests/reliability_folds.parquet",
+    "rq1": "artifacts/source_data/rq1_raw_uq_summary.csv",
+    "g4": "artifacts/source_data/g4_method_comparison.csv",
+    "bootstrap_ci": "artifacts/source_data/g4_bootstrap_ci.csv",
+    "fig2": "artifacts/source_data/figure2_confidence_source.csv",
+    "fig3": "artifacts/source_data/figure3_selective_source.csv",
+    "summary": "artifacts/manifests/ptl_v2_g4_pilot_summary.json"
+  }
+}

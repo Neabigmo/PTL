@@ -21,8 +21,12 @@
 !/artifacts/README.md
 !/artifacts/manifests/
 !/artifacts/manifests/README.md
+!/artifacts/manifests/*.csv
+!/artifacts/manifests/*.json
+!/artifacts/manifests/*.md
 !/artifacts/source_data/
 !/artifacts/source_data/README.md
+!/artifacts/source_data/*.csv
 **/ptl_oof_predictions.csv
 
 # Local QA/cache trees and compiled documents.

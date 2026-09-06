@@ -1,0 +1,9 @@
+{
+  "panel_id": "legacy_global_intersection_6257",
+  "gene_count": 6257,
+  "source_gene_list": "results/baselines/cell_context_knn_delta_baseline/dataset_heldout_split__all_datasets__holdout-NormanWeissman2019_filtered__seed0__signature/genes.txt",
+  "source_sha256": "8f7e638a159cd802ea5fd99361795172a8c6e8020e55dba6b70dedbdd3db1d18",
+  "policy": "predictor-native gene space remains separate; this panel is used only for declared common metrics",
+  "generated_by": "scripts/build_evaluation_gene_space.py",
+  "status": "provisional_legacy_panel_until_v2_metric_audit"
+}

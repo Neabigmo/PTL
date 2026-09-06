@@ -1,45 +1,48 @@
-# Perturbation Transportability Project
+# PTL: ICLR 2027 reliability project
 
-This repository contains the data processing, modeling, evaluation, and manuscript materials for a single-cell perturbation transportability study. The workspace is organized so that raw inputs, reproducible code, analysis outputs, manuscript assets, and submission materials remain clearly separated.
+This workspace contains two explicitly separated lines:
 
-## Project Layout
+- **Active PTL-v2 / ICLR 2027:** the new reliability-calibration study under
+  `src/ptl/`, `configs/`, `artifacts/`, and `paper/iclr2027/`.
+- **Legacy PTL-v1 / CBAC:** the preserved prior analysis and submission line
+  under `src/analysis/`, `src/baselines/`, `src/transportability/`,
+  `manuscript/`, `results/`, and the provenance anchor documented in
+  `docs/V1_PROVENANCE_FREEZE.md`.
+
+The ICLR line asks how much reliability information remains in biological
+context after predictor uncertainty is known. Its design contract is
+[`docs/ICLR2027_REFACTOR_MASTERPLAN.md`](docs/ICLR2027_REFACTOR_MASTERPLAN.md),
+with the current accelerated execution packet in
+[`docs/CODEX_NEXT_SPRINT_G1_G4.md`](docs/CODEX_NEXT_SPRINT_G1_G4.md).
+
+## Repository layout
 
 | Path | Purpose |
 | --- | --- |
-| `config/` | Dataset and preprocessing configuration files. |
-| `data/` | External, raw, interim, and processed data products. |
-| `src/` | Analysis, model training, evaluation, figure, and utility code. |
-| `tests/` | Regression and smoke tests for the analysis code. |
-| `results/` | Generated figures, tables, logs, models, checkpoints, and QA outputs. |
-| `manuscript/` | LaTeX manuscript source, compiled PDFs, figures, tables, and revision notes. |
-| `submit/` | Current journal-facing submission files. |
-| `submission_package/` | Packaged submission materials and release archive. |
-| `docs/` | Study documentation, data inventory, decision records, and internal notes. |
-| `scripts/maintenance/` | Environment checks, manuscript verification, and maintenance utilities. |
-| `third_party/` | External repositories or vendored research dependencies. |
-| `tools/` | Local support modules and project-specific tooling. |
-| `.cache/` | Local test caches and temporary working files. |
+| `configs/` | PTL-v2 dataset, environment, predictor, task, reliability and dependency contracts. |
+| `src/ptl/` | Active PTL-v2 data, predictor, UQ, reliability, evaluation and experiment modules. |
+| `artifacts/` | Tracked compact manifests/source-data contracts; large local artifacts stay ignored. |
+| `paper/iclr2027/` | Separate ICLR 2027 paper surface; it does not overwrite the CBAC manuscript. |
+| `src/analysis/`, `src/baselines/`, `src/transportability/` | Legacy v1/CBAC implementation retained for provenance and supplementary evidence. |
+| `data/`, `results/`, `submit/`, `submission_package/` | Existing local data and generated outputs; ignored by the active Git source tree. |
+| `docs/` | Design contract, provenance freeze, execution gates and audit records. |
+| `third_party/iclr2027/` | User-provided ICLR 2027 LaTeX style files. |
+| `_github_ptl_work/` | Historical Git worktree retained as read-only legacy context, not an active source tree. |
 
-## Working Conventions
+## Rules for the active line
 
-- Keep source data under `data/external/` or `data/raw/`; derived tables and matrices belong under `data/processed/`.
-- Keep reusable analysis logic in `src/`; one-off maintenance checks belong under `scripts/maintenance/`.
-- Write generated research outputs to `results/`, then copy publication-ready material to `manuscript/` or `submit/`.
-- Keep revision notes, reviewer-response drafts, and manuscript adjustment records under `manuscript/revision_notes/`.
-- Treat `docs/internal_archive/` as provenance material: useful for traceability, but not part of the public-facing project surface.
+- Do not use legacy heuristic `confidence` as headline model-native UQ; label it
+  `legacy_confidence_proxy` when it is retained for comparison.
+- Keep `predictions`, `deployment_features`, `outcomes`, and `folds` separate;
+  outcome-derived fidelity cannot enter deployment features.
+- Group PTL cross-fitting by `biological_instance_id`, not by run ID.
+- Report environment-level metrics before macro-averaging so large screens do
+  not dominate the conclusions.
+- Do not run new G1-G4 experiments until the corresponding contracts and
+  manifests are present and tested.
 
-## Current synchronized snapshot
+## Legacy snapshot
 
-The active manuscript line is the single-anonymized Computational Biology and
-Chemistry (CBAC) version. It is backed by nine processed public screens: eight
-scPerturb datasets plus the independent `GSE284197_screen` external holdout.
-
-The current evidence surface contains 525 planned transparent baseline runs
-across five baselines and six split families, together with PTL reliability,
-public-screen holdout, case-example, and GEARS output-contract artifacts.
-The current CBAC figure family is under `results/figures_cbac/`, and the
-manuscript source is under `manuscript/`.
-
-The main submission-facing files are in `submit/`. Historical EAAI drafts and
-earlier figure families remain in the workspace for provenance, but are not the
-active submission line.
+The former CBAC line remains available locally, including its nine processed
+screen families, baseline matrices, manuscript source, figures, and submission
+records. It is not silently rewritten by the ICLR-v2 refactor.

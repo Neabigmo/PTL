@@ -1,0 +1,77 @@
+schema_version: 1
+registry_source: artifacts/manifests/dataset_audit.csv
+audit_scope:
+  raw_directory: data/raw/scperturb_v1.4
+  expected_h5ad_count: 54
+  inspection_mode: h5py_metadata_only
+
+common_core:
+  - dataset_id: NormanWeissman2019_filtered
+    source_file: data/raw/scperturb_v1.4/NormanWeissman2019_filtered.h5ad
+    role: common_core
+    headline_eligible: true
+  - dataset_id: ReplogleWeissman2022_K562_gwps
+    source_file: data/raw/scperturb_v1.4/ReplogleWeissman2022_K562_gwps.h5ad
+    role: common_core_primary_k562
+    headline_eligible: true
+  - dataset_id: ReplogleWeissman2022_rpe1
+    source_file: data/raw/scperturb_v1.4/ReplogleWeissman2022_rpe1.h5ad
+    role: common_core_cell_context
+    headline_eligible: true
+  - dataset_id: AdamsonWeissman2016_full_candidate
+    source_files:
+      - data/raw/scperturb_v1.4/AdamsonWeissman2016_GSM2406675_10X001.h5ad
+      - data/raw/scperturb_v1.4/AdamsonWeissman2016_GSM2406677_10X005.h5ad
+      - data/raw/scperturb_v1.4/AdamsonWeissman2016_GSM2406681_10X010.h5ad
+    role: common_core_candidate
+    headline_eligible: false
+    status: pending_adamson_audit
+
+extended_existing:
+  - ReplogleWeissman2022_K562_essential
+  - PapalexiSatija2021_eccite_RNA
+  - DatlingerBock2017
+  - DatlingerBock2021
+  - GSE284197_screen
+
+context_expansion:
+  - dataset_id: TianKampmann2021_CRISPRa
+    role: context_expansion
+  - dataset_id: TianKampmann2021_CRISPRi
+    role: context_expansion
+  - dataset_id: FrangiehIzar2021_RNA
+    role: context_expansion
+  - dataset_id: PapalexiSatija2021_eccite_RNA
+    role: context_expansion
+  - dataset_id: XuCao2023
+    role: context_expansion_candidate
+    status: exact_systema_mapping_unresolved
+  - dataset_id: DatlingerBock2017
+    role: context_expansion_supplementary
+  - dataset_id: DatlingerBock2021
+    role: context_expansion_supplementary
+
+external:
+  - dataset_id: GSE284197_screen
+    role: external_a
+    previously_used_external: true
+  - dataset_id: WesselsSatija2023
+    role: external_b
+    frozen: true
+    selected_by: metadata_only_rubric
+  - dataset_id: JoungZhang2023_atlas
+    role: external_b_candidate
+  - dataset_id: JoungZhang2023_combinatorial
+    role: external_b_candidate
+
+external_b_freeze:
+  selected_dataset_id: WesselsSatija2023
+  decision_document: docs/EXTERNAL_B_FREEZE.md
+  frozen_before_ptl_v2_performance: true
+
+identity_policy:
+  environment_id: dataset + cell_context + modality + condition
+  biological_instance_id: environment + perturbation + dose + timepoint
+  prediction_id: biological_instance + predictor + predictor_split + model_seed
+  fold_group: biological_instance_id
+  model_gene_space_separate_from_evaluation_gene_space: true

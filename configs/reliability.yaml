@@ -1,0 +1,61 @@
+schema_version: 1
+folds:
+  method: grouped_stratified_if_available
+  n_splits: 5
+  group: biological_instance_id
+  never_group_by: run_id
+tables:
+  predictions:
+    allowed_prefixes:
+      - prediction_id
+      - biological_instance_id
+      - environment_id
+      - predictor
+      - predictor_version
+      - predictor_commit
+      - predictor_split_id
+      - seed
+      - prediction
+      - uq
+      - provenance
+  deployment_features:
+    blocks: [U, P, S, N, C]
+  outcomes:
+    fields: [fidelity, continuous_risk, transportability, deg, retrieval]
+  folds:
+    fields: [biological_instance_id, fold, holdout_role]
+feature_blocks:
+  U: [uq_mean_gene_variance, uq_median_gene_variance, uq_top_effect_variance, uq_cosine_disagreement, uq_effect_norm_variance]
+  P: [prediction_norm, prediction_sparsity, prediction_concentration, prediction_reference_distance]
+  S: [support_cells, support_signatures, reference_key_overlap]
+  N: [perturbation_seen_fraction, combination_novelty, perturbation_novelty]
+  C: [cell_context, modality, condition, batch_distance]
+forbidden_headline_features:
+  - split_family
+  - stress_family_flag
+  - heldout_target
+  - fidelity
+  - continuous_risk
+  - transportability
+  - deg
+  - retrieval
+methods:
+  - raw_normalized_uq
+  - platt_logistic
+  - isotonic
+  - support_novelty_only
+  - ptl_rf
+  - calibrated_gbdt
+  - ptl_context
+  - ptl_full
+  - ptl_no_id
+ptl_context:
+  formula: sigmoid(exp(a(z)) * logit(p0) + b(z))
+  input_blocks: [U, P, S, N, C]
+  initialization: identity_a_zero_b_zero
+  correction_regularization: [a_squared, b_squared]
+  architecture: small_linear_block_encoder
+metrics:
+  primary: [aurc, excess_aurc, risk_at_50, risk_at_80, ftr_at_50, ftr_at_80, brier, log_loss]
+  secondary: [auroc, auprc, spearman_continuous_risk]
+  aggregation: environment_then_macro_average
