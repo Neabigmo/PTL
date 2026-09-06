@@ -1,0 +1,246 @@
+我建议把现在的 6 张图彻底重组为 **5–6 组高信息量组图**。现在的问题是：Fig.1/2/4 偏“空流程框”，信息密度低；Fig.3 虽然有数据，但配色、字体、标签层级不够专业；Fig.5 只有两个简单柱状图，支撑不了 PTL 的核心贡献；Fig.6 信息最多，但标签拥挤、颜色突兀、逻辑不够清楚。你的稿件核心其实很适合做成一套统一的“benchmark + reliability workflow”图组：先讲数据与 split，再讲模型排名变化，再讲 PTL 可靠性过滤，最后讲失败模式。当前草稿中已经有 context-stress split、五类 baseline、PTL、failure-mode atlas 等完整结构，但图形没有把这些卖点充分可视化出来 。
+
+---
+
+## 总体视觉风格先统一
+
+建议全稿统一为 **Nature Methods / Cell Systems 风格**：白底、细线条、低饱和色、少阴影、强分组、少大段文字。
+
+字体建议：
+
+正文图中文字：**Arial / Helvetica / Source Sans Pro**。
+标题 8.5–9.5 pt，坐标轴 7–8 pt，图内注释 6.5–7 pt。
+不要再用现在这种很细、很小、偏压缩的字体，PDF 里缩小后可读性会差。
+
+推荐主色板：
+
+* Random anchor：#4E79A7 蓝
+* Held-out perturbation：#F28E2B 橙
+* Held-out combination：#59A14F 绿
+* Low support：#EDC948 黄
+* Dataset heldout：#B07AA1 紫
+* External holdout：#E15759 红
+* PTL：#76B7B2 青绿
+* Naive confidence：#9C9C9C 灰
+
+注意：**split family 用一套颜色，model 用另一套颜色，不要混用。** 现在 Fig.5 蓝、灰、粉突然出现，Fig.6 又是橙、黄、蓝、绿，视觉系统不统一。
+
+---
+
+# 建议重组后的主图体系
+
+## Figure 1：研究总览图，不要只是流程框，要做成“问题—基准—可靠性层”的总图
+
+现在 Fig.1 只有几个方框，太空，像项目流程图，不像论文主图。建议把 Fig.1 改成 4 个 panel：
+
+**Fig.1A：问题示意图**
+画出 random split 和 context-stress split 的区别。左边是随机划分：训练集和测试集共享 perturbation/context/dataset；右边是 stress split：测试集在 perturbation、combination、support、dataset 或 external source 上发生 shift。这个 panel 是整篇文章的动机核心。
+
+**Fig.1B：数据处理流程图**
+Raw single-cell perturbation data → matched control → pseudobulk → delta signature → global gene intersection → benchmark table。这里要明确显示 signature-level，而不是 cell-level。可以用小型矩阵图表示 gene expression signature。
+
+**Fig.1C：模型评估流程**
+五个 baseline 并行进入不同 split family，输出 full-gene prediction，然后计算 non-control cosine similarity。这里不要写大段话，用图标和箭头。
+
+**Fig.1D：PTL 可靠性层**
+Prediction output + confidence + support + novelty + train-test distance → PTL → keep / abstain → failure-mode atlas。这样 Fig.1 同时承担“整篇文章路线图”的作用。
+
+这张图可以合并现在的 Fig.1 和 Fig.4。现在 Fig.4 单独占一页但信息不够，建议不要作为独立主图，而是压缩为 Fig.1D 或后面 Fig.4A。
+
+---
+
+## Figure 2：数据与 benchmark 构建图，要新增真实数据图
+
+现在 Fig.2 只是 split family 的说明框，像方法笔记，不够像结果图。建议 Figure 2 做成“benchmark composition and split audit”组图。
+
+**Fig.2A：数据来源与角色图**
+用三层结构显示：
+
+Internal training / internal stress source：NormanWeissman2019、ReplogleWeissman2022
+External holdout：GSE284197
+Shared modeling surface：7,880-gene intersection
+
+这里可以用 dataset cards 或小型 Sankey 图，不要再用长条说明框。
+
+**Fig.2B：各 dataset 的 signature 数量柱状图**
+新增：每个数据集的 non-control signature 数、control stratum 数、可用 perturbation 数。
+这张图很重要，因为审稿人会立刻问：你的 benchmark 规模到底多大？
+
+**Fig.2C：split family 的 test signature 数量柱状图 / dot plot**
+横轴 split family，纵轴 number of test signatures。每个 split 的样本规模必须可见。否则后面的性能差异缺少背景。
+
+**Fig.2D：support distribution 小提琴图或箱线图**
+按 split family 展示 support count 分布。尤其 low-support split 要证明它真的 low-support。
+
+**Fig.2E：train-test context distance 分布图**
+按 split family 画 density/violin/boxplot。这个图能直接支撑“context stress”的定义，而不是只靠文字解释。
+
+**Fig.2F：leakage / split audit dot-matrix**
+行是 audit item：perturbation overlap、combination overlap、dataset identity、gene-space alignment、control matching、seed determinism。列是 split family。用绿色对勾 / 灰点 / 红叉表示通过情况。这个 panel 会显著增强 benchmark 的可信度。
+
+---
+
+## Figure 3：模型性能与 ranking instability，保留热图但必须升级
+
+现在 Fig.3 是最接近正式结果图的一张，但还不够强。建议做成 5-panel。
+
+**Fig.3A：model × split 的 mean non-control cosine 热图**
+保留现有热图，但改进：
+
+* 使用统一连续色阶，例如浅灰蓝 → 深蓝，不要用现在偏黄的高值色；
+* 每个格子显示 mean cosine，但不要同时写太多 rank 和文字；
+* rank 可以用右上角小圆标表示；
+* x 轴 split family 按 stress 程度排序：random → low support → unseen perturbation → unseen combination → dataset heldout → external holdout；
+* y 轴按模型类别排序：control mean、global delta、perturbation mean、cell-context KNN、ridge。
+
+**Fig.3B：rank shift bump chart**
+新增，非常关键。横轴 split family，纵轴 rank 1–5，每条线代表一个模型。这样一眼看出“没有 universal winner”。这比文字说 ranking changes 更有冲击力。
+
+**Fig.3C：transfer decay lollipop / waterfall plot**
+以 random split 为 anchor，计算每个模型在 stress split 下的 cosine drop。这个图能强化“random split 不代表 transfer split”。
+
+**Fig.3D：external holdout 单独放大图**
+外部 holdout 是最难的 regime，应该单独突出。画每个模型在 external holdout 的 mean cosine + 95% CI / bootstrap interval。不要只在热图中一格带过。
+
+**Fig.3E：pairwise FDR significance matrix**
+现在正文说有 14 个 FDR-significant model contrasts，但图里没有体现。新增一个三角矩阵或 dot matrix：行列是模型对，颜色表示 effect size，星号表示 FDR 显著。这个 panel 能让统计证据更可见。
+
+Table 1 可以保留，但建议缩成小表，或者直接移到 supplementary。主文中用 Fig.3B/3C 替代表格会更有说服力。
+
+---
+
+## Figure 4：PTL 可靠性过滤，必须从两个柱状图升级为完整可靠性评估
+
+现在 Fig.5 只有 naive vs PTL 两个柱状图，支撑不了“PTL improves false-transportability filtering”这个核心贡献。建议 Figure 4 作为 PTL 主图。
+
+**Fig.4A：PTL 架构小示意图**
+把现在 Fig.4 压缩成左上角的小 panel：input feature groups → PTL model → transportability score → keep/abstain。
+
+**Fig.4B：ROC curve**
+展示 PTL logistic regression、PTL random forest、naive confidence 三条曲线。文中已经报告 ROC AUC 约 0.907，应当可视化。
+
+**Fig.4C：Precision–Recall curve**
+因为 transportability label 可能类别不均衡，PR curve 比 ROC 更有说服力。文中报告 AP 约 0.923，这个必须画出来。
+
+**Fig.4D：false-transportability rate bar plot**
+保留现在的核心柱状图，但加误差线或 bootstrap CI。比较 naive confidence、full PTL RF、no-context-distance RF、logistic PTL。不要只放两个柱。
+
+**Fig.4E：risk–coverage curve / selective prediction curve**
+这是 selective prediction 论文最常见的图。横轴 coverage，纵轴 false-transportability rate 或 cosine risk。它比一个固定 threshold 的柱状图更专业。
+
+**Fig.4F：PTL ablation lollipop plot**
+展示 full features、remove context distance、remove novelty、remove uncertainty、remove support 等 ablation 的 AUC/AP/FTR。现在正文提到 “no context distance” 和 full random forest 接近，但缺少系统展示。这个 panel 能避免审稿人质疑 PTL 是偶然有效。
+
+---
+
+## Figure 5：Failure-mode atlas，改成“失败来自哪里”的多层图
+
+现在 Fig.6 是有价值的，但太拥挤，颜色也比较刺眼。建议重做为 failure-mode 主图。
+
+**Fig.5A：failure taxonomy schematic**
+先画一个小示意：prediction failure 被分成 severe failure、false transportability、novelty-associated failure、low-support failure、transfer-boundary failure。用简洁图标和层级结构。
+
+**Fig.5B：failure share heatmap**
+行是 split family，列是 model，颜色是 severe failure share 或 total failure share。这样可以直接看哪些模型在哪些 split 崩得最明显。
+
+**Fig.5C：severity composition stacked bar**
+保留现在右侧 stacked bar，但要重画：每个 split 一条横向堆叠条，颜色从浅到深代表 severity 1/2/3。标签不要塞在条形里面，放在图例和外侧。
+
+**Fig.5D：failure enrichment dot plot**
+行是 context signal：perturbation novelty、combination novelty、low support、dataset transfer、external transfer。列是 failure mode。点大小表示 enrichment ratio，颜色表示 -log10(FDR) 或 effect size。这个图会比现在的“dominant failure contexts”更像正式分析。
+
+**Fig.5E：alluvial / Sankey 图**
+从 split family → failure mode → severity，展示失败如何流向不同严重程度。这个图适合总结 failure-mode atlas。
+
+**Fig.5F：代表性失败案例图**
+挑 2–3 个 signature，画 true delta vs predicted delta 的小散点图，或者 top altered genes 的条形图。这样 failure atlas 不只是统计标签，而有具体生物表达签名的直观例子。
+
+---
+
+## Figure 6：建议新增一张“稳健性与审计图”，可作为主图或 Supplementary Fig.1
+
+如果篇幅允许，新增一张 robustness/audit 组图。这个会让稿件更像 benchmark paper，而不只是模型比较。
+
+**Fig.6A：run matrix completion heatmap**
+模型 × split × seed × dataset，显示 planned/completed/failed。正文说 run matrix 有 210 planned runs，这个信息应该可视化。
+
+**Fig.6B：seed stability plot**
+每个模型在每个 split 下的 seed-level mean cosine 分布。可以用点+误差线。审稿人会关心结果是否稳定。
+
+**Fig.6C：dataset-heldout vs external-holdout 对比图**
+把 dataset-heldout 和 external-holdout 的难度、gene intersection、support、context distance 放在一张小 dashboard 中。因为这是你文章最重要的 transfer claim。
+
+**Fig.6D：evidence-tier summary**
+用一个小型 evidence map 显示：high confidence conclusion、moderate conclusion、bounded/exploratory conclusion。这个 panel 可以帮助你主动控制过度解读。
+
+如果主文放不下，这张图可以放 Supplementary，但至少 Fig.6A 和 Fig.6B 建议保留。
+
+---
+
+# 表格怎么调整
+
+现在 Table 1 是“split family winner 表”，有用但太单薄。建议改成：
+
+**Main Table 1：Benchmark composition table**
+列：dataset、role、number of signatures、number of perturbations、number of combinations、gene space、split use。
+这个表比 winner table 更适合主文，因为 benchmark paper 首先要交代数据规模。
+
+**Main Table 2：Best model by split family + average performance**
+保留现在 Table 1 的内容，但加上 second-best model、performance gap、number of test signatures。否则 winner 的意义不够清楚。
+
+**Supplementary Table 1：full run-level metrics**
+所有 model × split × seed 的 cosine、rank、CI。
+
+**Supplementary Table 2：PTL performance and ablation**
+AUC、AP、false-transportability rate、coverage、cosine risk。
+
+**Supplementary Table 3：failure-mode atlas full counts**
+failure mode、split、model、support、novelty、severity。
+
+---
+
+# 具体到现有每张图的修改意见
+
+**现有 Fig.1：建议废弃重画。**
+问题是空、浅、像汇报 PPT。应改成 Fig.1A–D 的总览图，把 random vs stress、signature construction、baseline prediction、PTL keep/abstain 全部放进去。
+
+**现有 Fig.2：建议拆成 Fig.2A + Fig.2C。**
+现在只是文字说明 split family，不够数据化。必须新增 signature counts、support distribution、context distance、leakage audit。
+
+**现有 Fig.3：保留核心，但升级成多 panel。**
+热图本身是对的，但需要加 rank shift、transfer decay、external holdout zoom-in 和 pairwise FDR matrix。
+
+**现有 Fig.4：不要单独占主图。**
+PTL 架构图可以缩小为 Fig.4A。真正的 PTL 主图应该是 ROC、PR、risk–coverage、ablation 和 false-transportability filtering。
+
+**现有 Fig.5：重画。**
+两个柱状图太弱。它只能作为 Fig.4D 的一个 panel，不能作为独立 Figure。颜色也需要统一，灰色 naive、青绿色 PTL，不要灰/蓝/粉乱跳。
+
+**现有 Fig.6：保留思想，重做视觉。**
+左侧横条太拥挤，右侧 severity bar 信息不够。建议改成 heatmap + stacked bar + enrichment dot plot + Sankey。
+
+---
+
+# 最终推荐的主图顺序
+
+1. **Figure 1｜Context-stress benchmark and PTL reliability workflow**
+   总览示意图，解释整篇文章逻辑。
+
+2. **Figure 2｜Benchmark composition, split construction, and audit diagnostics**
+   数据规模、split family、support、context distance、leakage audit。
+
+3. **Figure 3｜Model ranking instability across context-stress regimes**
+   热图、rank shift、transfer decay、external holdout、FDR pairwise comparison。
+
+4. **Figure 4｜PTL improves selective transportability filtering**
+   PTL 架构、ROC、PR、false-transportability、risk–coverage、ablation。
+
+5. **Figure 5｜Failure-mode atlas under novelty, low support, and transfer boundaries**
+   failure taxonomy、failure heatmap、severity composition、enrichment、案例。
+
+6. **Supplementary Figure 1｜Run matrix, seed stability, and robustness audit**
+   完整性、稳定性、审计证据。
+
+---
+
+一句话概括：你现在的图是在“说明流程”，但这篇文章真正需要的是“证明 benchmark 可信、证明 ranking 会变、证明 PTL 有用、证明 failure 有结构”。所以要把空流程框压缩，把真实数据图补上，把每个核心 claim 都对应到一个多 panel 组图。

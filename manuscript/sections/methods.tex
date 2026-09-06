@@ -1,0 +1,99 @@
+\section{Methods}
+
+\subsection{Overview of PTL reliability modeling}
+
+PTL is a reliability model for already-generated single-cell perturbation predictions. Its intended input is a perturbation-response dataset or benchmark manifest containing an expression matrix, cell metadata, perturbation labels, control labels, dataset identifiers, context annotations, support counts, and prediction outputs from one or more models. Its output is a set of context-stress benchmark scores, per-signature transportability labels, a model-agnostic keep/abstain score, and a failure-mode atlas.
+
+The analysis has six modules: input standardization, reference-aware signature construction, context-stress split generation, relative transportability labeling, deployment-feature reliability modeling, and failure-mode reporting. This organization keeps the expression predictor separate from the reliability model and makes each audit artifact traceable.
+
+\subsection{Step-by-step PTL protocol}
+
+The protocol is intended to be run as an auditable sequence rather than as a single opaque benchmark command. It prepares a perturbation-response object, verifies matched controls, constructs delta signatures, writes split manifests and leakage audits, runs a predictor or adapter, assigns relative labels, trains PTL, and reports risk--coverage, calibration, failure-atlas, and biological diagnostic tables. A run should not be interpreted until the split audit, gene-space audit, feature audit, and output-contract checks have passed.
+
+\begin{center}
+\fbox{\begin{minipage}{0.94\linewidth}
+\textbf{Algorithm 1. PTL input-output contract and training procedure}
+
+\textbf{Input:} expression matrix, cell metadata, perturbation/control labels, dataset/context labels, split manifest, and model prediction outputs.
+
+\textbf{Output:} aligned signatures, transportability labels, keep/abstain scores, risk--coverage summaries, and a failure-mode atlas.
+
+\begin{enumerate}
+\item Align prediction and target signatures in a shared gene space.
+\item Construct reference-aware delta signatures, \(\Delta_{p,c}=\bar{x}_{p,c}-\bar{x}_{0,c}\).
+\item Generate context-stress splits and audit support, leakage, and train--test distance.
+\item Assign relative labels with \(I[\cos(\hat{\Delta}_{p,c},\Delta_{p,c}) \ge \tau \times m_s]\), where \(\tau\in\{0.6,0.7,0.8,0.9\}\).
+\item Train the keep/abstain reliability model using deployment-available features only.
+\item Report false-transportability, risk--coverage, calibration, and failure-atlas outputs.
+\end{enumerate}
+\end{minipage}}
+\end{center}
+
+Here, \(m_s\) denotes the median random-split anchor fidelity computed within the corresponding dataset, model, and seed context before applying the stress-family label rule.
+
+\subsection{Input contract and data resources}
+
+The internal benchmark surface used harmonized public scPerturb resources, including NormanWeissman2019 and ReplogleWeissman2022 screens \citep{norman2019manifolds,replogle2022genome,peidli2024scperturb}. The independent public experimental validation source was the GSE284197 Perturb-seq screen \citep{geo2025gse284197}, processed with the same metadata and signature contract but held out from the internal benchmark surface. This manuscript treats GSE284197 as public experimental validation, not as newly generated experimental data. Standard single-cell preprocessing choices were aligned with common Scanpy, Seurat, and scVI/scvi-tools practice where relevant \citep{wolf2018scanpy,stuart2019integration,hafemeister2019sctransform,lopez2018scvi,gayoso2022scvitools}.
+
+Each dataset was required to expose expression values, feature names, perturbation or control labels, dataset identity, and enough context metadata to identify matched control strata. Prediction outputs were required to provide a test prediction matrix, a matched target matrix, test metadata, a gene list, and run-level metadata. This contract allowed transparent baselines and an adapted published architecture to be evaluated through the same downstream PTL machinery.
+
+\subsection{Reproducible preprocessing and benchmark parameters}
+
+All public screens were processed into a common signature contract before modeling. Input objects were required to contain a normalized expression matrix, gene symbols, perturbation labels, control labels, dataset identifiers, and context fields sufficient to match perturbed cells to controls. Gene filtering used the 6,257-gene global intersection used in this benchmark. Cells were aggregated into perturbation--context pseudobulk signatures only when the corresponding perturbed and matched-control strata were available; signatures without an eligible reference were excluded from predictor scoring and recorded during the split audit. Low-support stress was defined from signature-level backing cell counts: non-control signatures were sorted by \(n_{\mathrm{cells}}\), and group keys with \(n_{\mathrm{cells}}\) at or below the empirical 20th-percentile cutoff were assigned to the low-support test mask and then projected onto the cell-level track.
+
+Splits were generated deterministically from manifest files and seeds 0--2 where available. The random split served as the anchor; stress splits held out perturbations, perturbation combinations, low-support signatures, complete datasets, or the independent public screen. Each manifest recorded train/test membership, held-out units, support counts, perturbation overlap, reference-control overlap, dataset overlap, and train--test context distance. Baseline predictors used fixed hyperparameters across datasets: ridge regression used the same regularization grid selected within the training split, k-nearest-neighbor transfer used context-distance neighbors, and mean-delta baselines used training-only perturbation or global deltas. Model-confidence features were restricted to target-free, deployment-available quantities such as support, distance-to-training context, predicted-effect norm, and model-internal or proxy uncertainty where available. Outcome-derived fidelity metrics were excluded from PTL features and used only for evaluation.
+
+Biological diagnostics were computed from the same aligned prediction and target signatures. Pathway summaries used the project gene-set collection recorded in \path{transportability_gene_sets.json}; perturbation retrieval compared each prediction with held-out target signatures in the same evaluation surface; false transportability was the fraction of accepted predictions whose relative transportability label was negative. Calibration curves, ROC/precision--recall summaries, and risk--coverage curves were computed from out-of-fold PTL scores so that selective-prediction evidence did not reuse the same labels for fitting and reporting.
+
+\subsection{Signature construction}
+
+The canonical modeling surface is the signature track. Each non-control signature represents a perturbation and context stratum with a matched reference control stratum. Let \(x_{i}\) denote an expression vector for cell \(i\), \(p\) a perturbation label, and \(c\) a context stratum. The perturbation signature is the pseudobulk mean \(\bar{x}_{p,c}\), and the matched control signature is \(\bar{x}_{0,c}\). The delta signature is
+\[
+\Delta_{p,c}=\bar{x}_{p,c}-\bar{x}_{0,c}.
+\]
+Predictions and targets were compared on these delta signatures in a shared gene space. Cell-level information was retained for support counts, leakage checks, and future cell-level extensions, but the claims here are restricted to signature-level prediction.
+
+\subsection{Context-stress split generator}
+
+PTL requires an explicit split manifest before model training. The random split serves as a low-stress anchor. Stress splits hold out perturbations, perturbation combinations, low-support signatures, whole datasets, or an independent public experimental dataset. In algorithmic terms, the split generator selects a stress family, identifies the corresponding withheld units, writes deterministic train/test membership across seeds, audits leakage of perturbation and context labels, and records support and context-distance summaries.
+
+The expanded benchmark surface used the 6,257-gene global intersection used in this benchmark for transparent baseline runs. The completed manifest contained 525 transparent baseline rows across five baseline models, three seeds where available, and the six split families: random, held-out perturbation, held-out combination, low-support, dataset-heldout, and external-holdout.
+
+\subsection{Baseline and adapter predictors}
+
+Five transparent full-gene baselines were evaluated: a control-mean baseline, a global-delta baseline, a perturbation-mean-delta baseline, a cell-context k-nearest-neighbor delta baseline, and ridge regression. These baselines were chosen because they expose reference behavior, average perturbation effects, context-aware nearest-neighbor transfer, and linear multivariate learning without hiding the reliability analysis behind a specialized architecture.
+
+To test whether the PTL contract can accept a published perturbation predictor, we also implemented a GEARS adapter \citep{roohani2023gears}. The adapter converts signature-level AnnData objects into the GEARS data interface, uses a custom train/test split, trains GEARS, and writes the same prediction matrix, metadata, gene-list, log, and registry contract as the transparent baselines. Because this adapter demonstration uses signature-level pseudobulk profiles and conservative graph fallbacks, it is reported as an output-contract compatibility demonstration, not a performance benchmark.
+
+\subsection{Transportability labeling}
+
+The primary fidelity metric was mean cosine similarity on non-control test signatures. Per-signature transportability labels were defined with a relative anchor rule: a prediction was labeled transportable when its cosine similarity was at least \(0.8\) times the median random-split anchor fidelity computed for the matching dataset, model, and seed context. This relative rule avoids imposing a single absolute threshold across regimes with very different intrinsic difficulty. Threshold sensitivity and risk--coverage summaries were retained as robustness diagnostics because the label is intended to support operational filtering, not mechanistic truth.
+
+\subsection{PTL training and deployment}
+
+PTL is trained after a predictor has produced outputs. It does not predict expression. It estimates whether an already-generated prediction should be retained. Deployment-available feature groups included model and split identifiers, dataset identifiers, target-free model-confidence proxies, support counts, perturbation novelty, combination novelty, reference availability, predicted effect-size summaries, stress-family metadata, and optional train-test context-distance summaries. A feature audit excluded target, label, and post-outcome columns before training. Identifier features were interpreted cautiously and accompanied by ablations to test whether PTL learned generalizable reliability structure rather than only memorizing dataset or split labels.
+
+Logistic regression was used as a calibrated baseline estimator and random forest as the nonlinear comparator. Ablations removed context-distance, perturbation-novelty, uncertainty, or optional pathway features. The primary reliability outcome was false-transportability rate among accepted predictions; ROC AUC, average precision, calibration, risk--coverage, and selective-risk summaries were reported as supporting diagnostics.
+
+\subsection{Biological summaries and failure-mode atlas}
+
+Biological usefulness was assessed with public-data summaries rather than newly generated experiments. Gene-set summaries measured pathway-level cosine and direction consistency using the available pathway collection. Perturbation-retrieval summaries tested whether predicted signatures preserved perturbation identity relative to other test signatures. These metrics are not substitutes for gene-level fidelity, but they provide a biological check on retained versus rejected outputs.
+
+The failure-mode atlas groups per-signature examples by model, split family, support and novelty context, transportability status, risk, and severity. The atlas is descriptive: it identifies recurring regimes where predictions degrade, especially severe failure, high-risk transportability errors, novelty-associated degradation, and low-support degradation.
+
+\subsection{Comparison with alternative reliability approaches}
+
+PTL is not the only possible way to filter perturbation predictions. Table~\ref{tab:methodcomparison} summarizes the operational differences between common alternatives and the proposed reliability approach. Random-split benchmarking and external-only validation are useful evaluation views but do not provide per-signature keep/abstain decisions. Confidence filtering and support/novelty heuristics can abstain, but they do not jointly use split semantics, model outputs, and deployment features. PTL combines these inputs into a model-agnostic reliability layer and a failure-mode report.
+
+\begin{table}[t]
+\centering
+\caption{Operational comparison between PTL and alternative reliability approaches.}
+\label{tab:methodcomparison}
+\resizebox{\linewidth}{!}{%
+\input{../results/tables/methods_comparison_table.tex}
+}
+\end{table}
+
+\subsection{Practical guidance and troubleshooting}
+
+Recommended use starts with the split audit, not with model scores. Users should verify that held-out perturbations, combinations, datasets, and controls match the intended biological question; confirm that gene spaces are aligned; inspect support distributions; and run simple baselines before interpreting a complex model. If context-distance features add little predictive value, as in the present benchmark, they should be retained as diagnostic summaries but not over-interpreted as necessary PTL features. If a published model cannot ingest the full expression contract, an adapter may still be useful, but claims should be restricted to the surface actually tested.

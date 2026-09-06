@@ -1,0 +1,11 @@
+\section{Limitations}
+
+The analysis is signature-level. It evaluates predicted delta responses after aggregation to matched perturbation/control signatures and does not model the full distribution of single-cell states within each perturbation. This design makes cross-dataset benchmarking and output-contract checks tractable, but it can miss cell-level heterogeneity and rare-state effects.
+
+The validation uses public experimental perturbation screens rather than newly generated experimental data. GSE284197 and the additional public-screen holdouts strengthen the experimental grounding of the reliability analysis, but they are not a census of all biological, technical, or platform shifts. GSE264667/NadigOConner2024 HepG2 and Jurkat screens passed the local contract audit as candidates \citep{geo2024gse264667}, but they are not used as validation evidence until raw-source processing and baseline rows are available.
+
+The baseline set is transparent by design. It includes simple full-gene predictors and ridge regression, but it does not constitute a complete ranking of the published perturbation-model literature. The GEARS implementation is an adapter demonstration on the signature contract, with completed random and held-out perturbation rows, limited CPU runs, and conservative graph fallbacks, rather than a tuned GEARS model-comparison study.
+
+PTL also depends on labeled benchmark outputs for calibration. A new disease setting, species, platform, or perturbation technology may require recalibration and renewed stress-split validation before the same operating threshold is used for biological interpretation.
+
+Finally, the failure-mode atlas is descriptive. It identifies where predictions degrade and whether degradation is associated with novelty, support, or dataset boundaries, but it does not by itself explain the molecular mechanism of each failure. PTL should therefore be used to guide reliability-aware evaluation, prioritization, and follow-up study design.

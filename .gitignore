@@ -1,0 +1,71 @@
+# PTL-v2 source-of-truth repository
+# Biological data and derived matrices never enter Git.
+/data/raw/
+/data/interim/
+/data/processed/
+/data/external/
+/data/cache/
+**/*.h5ad
+**/*.h5
+**/*.loom
+**/*.npz
+**/*.npy
+**/*.parquet
+**/*.feather
+**/*.pkl
+**/*.pickle
+
+# Generated results and artifacts are opt-in only.
+/results/
+/artifacts/*
+!/artifacts/README.md
+!/artifacts/manifests/
+!/artifacts/manifests/README.md
+!/artifacts/source_data/
+!/artifacts/source_data/README.md
+**/ptl_oof_predictions.csv
+
+# Local QA/cache trees and compiled documents.
+/.cache/
+/tmp/
+**/*.pdf
+
+# Submission bundles and generated publication outputs.
+/submit/
+/submission_package/
+/manuscript/*.pdf
+/manuscript/*.aux
+/manuscript/*.bbl
+/manuscript/*.blg
+/manuscript/*.fdb_latexmk
+/manuscript/*.fls
+/manuscript/*.log
+/manuscript/*.out
+
+# Historical checkout and nested third-party repository internals.
+/_github_ptl_work/
+/third_party/GEARS/
+
+# Python, local environments, caches and editor files.
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files.
+.DS_Store
+Thumbs.db

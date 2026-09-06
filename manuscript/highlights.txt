@@ -1,0 +1,5 @@
+PTL models transportability risk in perturbation-response prediction
+Random-split winners fail under dataset and perturbation transfer
+Reliability filtering reduces false transportability versus confidence
+Failures concentrate at novelty, support and dataset boundaries
+Public Perturb-seq screens reveal reliability limits before interpretation

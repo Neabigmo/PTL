@@ -1,0 +1,43 @@
+dataset_id: NormanWeissman2019_filtered
+source_dataset: scPerturb v1.4
+input_path: H:/2026try/4.24/data/raw/scperturb_v1.4/NormanWeissman2019_filtered.h5ad
+input_format: h5ad
+split_role: train
+output_dir: H:/2026try/4.24/data/processed
+control_values:
+  - control
+obs_fields:
+  perturbation: perturbation
+  batch: gemgroup
+  cell_context: cell_line
+extra_metadata_fields:
+  - perturbation
+  - guide_id
+  - gemgroup
+  - cell_line
+  - ncounts
+  - ngenes
+  - percent_mito
+  - percent_ribo
+cell_context_fallbacks:
+  - cell_line
+  - celltype
+  - tissue_type
+qc:
+  min_genes: 1000
+  min_counts: 4000
+  max_percent_mito: 20
+  chunk_size: 1024
+signature_target_sum: 10000
+min_cells_per_perturbation: 10
+var_name_column:
+write_convenience_adata: true
+convenience_adata_mode: cell
+convenience_var_top_n:
+convenience_var_sort_by:
+label_strategy: direct
+label_strategy_kwargs: {}
+contract_filter_query:
+delta_reference_fields:
+  - batch
+matrix_store_mode: backed_source_with_qc_manifest

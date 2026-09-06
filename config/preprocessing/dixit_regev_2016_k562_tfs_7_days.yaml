@@ -1,0 +1,54 @@
+dataset_id: DixitRegev2016_K562_TFs_7_days
+source_dataset: scPerturb v1.4
+input_path: H:/2026try/4.24/data/raw/scperturb_v1.4/DixitRegev2016_K562_TFs_7_days.h5ad
+input_format: h5ad
+split_role: train
+output_dir: H:/2026try/4.24/data/processed
+control_values:
+  - control
+obs_fields:
+  perturbation: perturbation
+  batch: time
+  cell_context: cell_line
+extra_metadata_fields:
+  - perturbation
+  - target
+  - moi
+  - time
+  - cell_line
+  - celltype
+  - perturbation_type
+  - guide_id
+  - ncounts
+  - ngenes
+  - percent_mito
+  - percent_ribo
+  - nperts
+cell_context_fallbacks:
+  - cell_line
+  - celltype
+  - tissue_type
+qc:
+  min_genes: 500
+  min_counts: 1000
+  max_percent_mito: 25
+  chunk_size: 2048
+signature_target_sum: 10000
+min_cells_per_perturbation: 10
+var_name_column:
+write_convenience_adata: false
+convenience_adata_mode: none
+convenience_var_top_n:
+convenience_var_sort_by:
+label_strategy: single_target_with_controls
+label_strategy_kwargs:
+  status_field: perturbation
+  single_target_field: target
+  multi_target_label: MULTI_TARGET
+  unknown_single_target_values:
+    - nan
+    - NA
+contract_filter_query: "(perturbation != 'nan')"
+delta_reference_fields:
+  - time
+matrix_store_mode: backed_source_with_qc_manifest

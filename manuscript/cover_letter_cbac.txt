@@ -1,0 +1,15 @@
+Dear Editor,
+
+Please consider our manuscript, "Reliability modeling of transportable perturbation responses in public single-cell functional genomics screens", for publication in Computational Biology and Chemistry.
+
+This manuscript presents a computational biology study of reliability modeling for single-cell perturbation-response prediction. Using public Perturb-seq functional genomics screens, we show that random-split model rankings do not reliably transfer to held-out perturbations, combinations, low-support signatures, dataset-heldout settings, or an independent public experimental screen. We then evaluate the Perturbation Transportability Layer (PTL), a model-agnostic keep/abstain reliability model that reduces false transportability before downstream pathway interpretation and perturbation prioritization.
+
+The work is aligned with the journal's scope in computational life sciences, functional genomics, bioinformatics, systems biology, and AI/machine learning for biological data. The manuscript emphasizes public-data grounded biological interpretation risk rather than presenting PTL as a wet-lab substitute or a tuned benchmark of any single perturbation predictor. It includes transparent baseline runs, public-screen holdouts, case examples of retained and rejected predictions, deterministic publication figures, and reproducible code and processed evidence tables.
+
+The manuscript is original, has not been published, and is not under consideration elsewhere. The author declares no competing interests.
+
+Sincerely,
+
+Yiheng Yang
+Dalian University of Technology
+yangyiheng@mail.dlut.edu.cn

@@ -1,0 +1,221 @@
+总体判断：**方向已经对了，但现在还像“项目报告/benchmark 草稿”，不是一篇够强的论文。** 你设想里的“virtual-cell 可靠性框架”已经有雏形：草稿有 context-stress split、5 个 baseline、PTL、failure atlas；但科学打击点还不够尖，证据链也不够硬。
+
+## 最大差距：5 个核心问题
+
+**1. 现在还没有真正打到“virtual-cell model”本体。**
+文章题目和引言在讲 virtual cell，但实验主要是 5 个透明 baseline，没有真正系统评估 GEARS、CPA、scGen、CellOT、scGPT/Geneformer embedding-based predictor。GEARS 这类方法本身就是为单基因/多基因 perturbation response 预测设计的，审稿人会问：你说 virtual-cell reliability，为什么不测主流 virtual-cell/perturbation 模型？([Nature][1])
+
+**2. 数据规模和外部验证太薄。**
+草稿主要用 Norman、Replogle K562 essential、一个 GSE284197 external holdout。可是 scPerturb 已经整理了 44 个公开 single-cell perturbation-response 数据集，且目标就是促进 benchmark 和方法开发。你现在只用了很小一部分，显得“benchmark”二字支撑不足。([Nature][2])
+
+**3. PTL 有潜在“信息泄漏/定义循环”风险。**
+你现在说 PTL 用 local benchmark features、support、novelty、uncertainty、context distance 去预测 transportable；但文中又提到 effect-size summaries、per-signature metrics、Phase 06 label。如果某些 PTL 特征间接使用了 test target 或真实 delta 信息，审稿人会直接质疑：这是可靠性预测，还是事后知道答案？这一点必须严格澄清。
+
+**4. 结果有几个地方会被审稿人抓住。**
+比如 unseen-combination split 的 mean cosine 0.664，比 random split 0.444 还高；这会削弱“stress split 更难”的叙事。再比如 PTL 最好结果是 “no context distance” ablation，而不是 full PTL，这会削弱你“context-stress / context-distance 很关键”的主张。你必须解释：是数据组成导致该 split 较易，还是 split 设计不平衡？context distance 是冗余特征，还是实现失败？
+
+**5. 图太像自动生成的报告图，不像投稿图。**
+Figure 1 太空、信息密度低；Figure 2 标签小、审计矩阵难读；Figure 4 的 PTL 结构图太弱，不能支撑“方法贡献”；Figure 5 空白多、散点图解释不足。现在图表还没有“顶刊风范”，也没有让人一眼记住本文贡献的主视觉。
+
+---
+
+## 下一步改法：按优先级来
+
+### 第一优先级：重塑文章主张
+
+不要再写成：
+
+> 我们提出 context-stress benchmark，并验证 PTL 有效。
+
+改成：
+
+> **Random split is not a reliability test for virtual-cell prediction. We define perturbation transportability and show how to audit, filter, and explain non-transportable predictions under biological context shift.**
+
+中文就是：
+
+> random split 不是 virtual-cell 预测可靠性的证据；本文定义扰动可迁移性，并提供一套审计、过滤、解释不可迁移预测的框架。
+
+这句话要贯穿题目、摘要、引言末段、Figure 1。
+
+---
+
+### 第二优先级：补强实验，而不是盲目加模型
+
+最少补这 4 件事：
+
+| 要补什么                                           | 为什么                                    |
+| ---------------------------------------------- | -------------------------------------- |
+| 加 1–2 个主流 perturbation model：GEARS、CPA 或 scGen | 否则“virtual-cell model reliability”名不副实 |
+| 加更多 scPerturb 数据集，至少 5–8 个                     | 否则 benchmark 太小                        |
+| 做 external holdout × 多数据集，而不是单个 GSE            | 否则外部验证太脆                               |
+| 加 DEG/pathway/perturbation-discrimination 指标   | 单一 cosine 不够生物学                        |
+
+Virtual Cell Challenge 的总结也强调，目前 perturbation prediction 模型还没有在所有指标上稳定超过 naive baseline，说明“可靠性评估”和“naive baseline 对照”是当前热点问题；你可以借这个作为引言动机。([Arc Institute][3])
+
+---
+
+### 第三优先级：修 PTL，防止被认为泄漏
+
+PTL 必须重写成两套特征：
+
+**允许使用的部署时特征：**
+
+* model name / split family
+* train-set support count
+* perturbation novelty
+* combination novelty
+* cell-state novelty
+* train-test embedding distance
+* model ensemble uncertainty
+* replicate availability
+* dataset/source indicator
+
+**禁止或必须隔离的特征：**
+
+* true test delta
+* true cosine
+* test-label-derived effect size
+* 用真实答案计算出来的 failure severity
+* 任何 Phase 06 per-signature outcome 的直接统计
+
+然后增加一个表：
+
+**Table X：PTL feature audit: deployment-available vs evaluation-only**
+
+这张表非常关键，可以直接堵住审稿人。
+
+---
+
+### 第四优先级：重新组织结果
+
+现在 Results 读起来像流水账。建议改成 5 个小节：
+
+1. **Random split overestimates reliability**
+   重点展示 random 与 stress 的差异。
+
+2. **Model ranking is not transportable across split families**
+   保留 rank instability，但要加置信区间。
+
+3. **External and dataset-heldout transfer expose baseline fragility**
+   外部验证单独讲，不要混在所有 split 里。
+
+4. **PTL filters false transportability without predicting expression**
+   强调 PTL 是 reliability layer，不是 predictor。
+
+5. **Failure modes reveal where perturbation prediction breaks**
+   把 novelty、low support、dataset boundary 讲成 failure taxonomy。
+
+---
+
+## 图表必须大改
+
+### Figure 1：重画成“核心概念图”
+
+现在 Figure 1 太空。改成一张强主图：
+
+左：Virtual-cell promise
+中：Context shift stress test
+右：PTL keep/abstain + failure mode
+
+核心视觉标题：
+
+> **Prediction is not transportability**
+
+这张图要让编辑一眼看懂你的论文。
+
+### Figure 2：数据与 split 审计图
+
+保留，但改成更清晰：
+
+* A：数据集数量、cell 数、perturbation 数
+* B：split family 图示
+* C：train-test novelty map
+* D：support distribution
+* E：leakage audit
+
+不要用现在这种小字矩阵。
+
+### Figure 3：主结果图
+
+保留 rank instability，但要加：
+
+* 每个 split 的 bootstrap CI
+* random-to-stress drop
+* stress difficulty index
+* “best model changes” 的 summary badge
+
+### Figure 4：PTL 图
+
+必须升级。结构图中明确写：
+
+* Predictor output
+* Deployment-available features
+* PTL score
+* Keep / abstain
+* Failure reason
+
+下面放 ROC、PR、false transportability、risk-coverage。
+
+### Figure 5：Failure atlas
+
+现在空白太多。改成：
+
+* taxonomy river plot
+* split × failure heatmap
+* novelty/support enrichment
+* 2–3 个真实 case card
+
+不要只放散点。
+
+---
+
+## 最关键的新增分析
+
+必须加这 6 个：
+
+1. **Split difficulty normalization**
+   解释为什么 unseen-combination 比 random 更高，避免叙事崩塌。
+
+2. **PTL leakage audit**
+   明确哪些特征部署时可用，哪些只用于评价。
+
+3. **Cross-dataset leave-one-dataset-out**
+   用多个 scPerturb 数据集轮流外部验证。
+
+4. **DEG direction consistency**
+   不要只看 cosine；扰动预测更关心关键响应方向是否对。
+
+5. **Pathway-level fidelity**
+   哪怕只用 GO/Reactome hallmark gene sets，也比纯表达相似度更有生物学味道。
+
+6. **Model-family expansion**
+   至少加入 GEARS 或 CPA，否则“virtual-cell reliability”会显得名不副实。
+
+---
+
+## 摘要也要改
+
+现在摘要太像结果堆砌。建议改成这种逻辑：
+
+> Virtual-cell models are increasingly evaluated by aggregate prediction scores, but such scores do not establish whether a predicted perturbation response is transportable across biological context. Here we define perturbation transportability as a reliability property under explicit context stress. We construct a context-stress benchmark across perturbation, combination, support, dataset and external-holdout regimes, and evaluate transparent baselines together with representative perturbation models. We show that random-split ranking is not stable under stress transfer, and that severe failures concentrate at novelty, low-support and dataset-boundary conditions. We then introduce PTL, a model-agnostic reliability layer that uses deployment-available support, novelty, uncertainty and context-distance features to decide whether a prediction should be retained or abstained. PTL reduces false-transportability errors relative to naive confidence while preserving a bounded interpretation as a filtering layer rather than a new perturbation predictor.
+
+---
+
+## 一句话改进路线
+
+**把这篇文章从“我做了一个 benchmark + PTL”改成“我定义了 virtual-cell 扰动预测的可迁移性边界，并提供了一个可复用、可审计、可拒识的可靠性评价范式”。**
+
+具体执行顺序：
+
+1. 先做 **PTL 特征泄漏审计**。
+2. 再扩充 **scPerturb 多数据集 leave-one-dataset-out**。
+3. 加入 **GEARS/CPA/scGen 至少一个主流模型**。
+4. 增加 **DEG/pathway/perturbation-discrimination 指标**。
+5. 重画 5 张图，尤其 Figure 1 和 Figure 4。
+6. 重写摘要、引言最后两段和 Discussion 第一段。
+
+这样改完，文章才会从“Codex 自动跑出来的项目报告”变成真正可投的 **AIFORBIO benchmark/reliability paper**。
+
+[1]: https://www.nature.com/articles/s41587-023-01905-6?utm_source=chatgpt.com "Predicting transcriptional outcomes of novel multigene ..."
+[2]: https://www.nature.com/articles/s41592-023-02144-y?utm_source=chatgpt.com "scPerturb: harmonized single-cell perturbation data"
+[3]: https://arcinstitute.org/news/virtual-cell-challenge-2025-wrap-up?utm_source=chatgpt.com "Virtual Cell Challenge 2025 Wrap-Up: Winners and ..."

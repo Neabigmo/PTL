@@ -1,0 +1,60 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+\usepackage[authoryear,round]{natbib}
+\emergencystretch=3em
+
+\title{Reliability modeling for transportable perturbation-response predictions in public single-cell functional-genomics screens}
+\author{Yiheng Yang\\
+School of Future Technology, Dalian University of Technology\\
+School of Bioengineering, Dalian University of Technology\\
+\texttt{yangyiheng@mail.dlut.edu.cn}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Computational models are increasingly used to infer gene-perturbation responses from single-cell functional genomics screens, yet their predictions can fail when transferred to unseen perturbations, low-support contexts, or external datasets. Such failures can mislead downstream pathway interpretation and perturbation prioritization. We present the Perturbation Transportability Layer (PTL), a model-agnostic reliability model for already-generated single-cell perturbation-response outputs. PTL combines reference-aware delta signatures, context-stress splits, relative transportability labels, deployment-feature keep/abstain modeling, and a failure-mode atlas. We evaluated PTL on public Perturb-seq resources, including an independent public GSE284197 screen and additional public-screen holdouts. Across 525 transparent baseline runs, random-split rankings did not transport across held-out perturbation, combination, low-support, dataset-heldout, and external-holdout regimes. In the primary setting, the full random-forest PTL model reduced the mean false-transportability rate from 0.71 for naive confidence to 0.24. Retained predictions showed higher transportability and perturbation-retrieval diagnostics than rejected high-risk outputs, while pathway-level summaries remained diagnostic rather than uniformly improved. Case examples showed that high-confidence predictions can still reverse or degrade top-gene signals under perturbation and dataset transfer. A signature-level GEARS adapter provided an output-contract compatibility demonstration, not a performance benchmark. PTL provides a reliability layer evaluated across public-screen holdouts for prioritizing perturbation predictions before downstream biological interpretation.
+\end{abstract}
+
+\noindent\textbf{Keywords:} functional genomics; Perturb-seq; single-cell perturbation prediction; transportability; reliability modeling; dataset shift
+
+\input{sections/introduction}
+\input{sections/methods}
+\input{sections/results}
+\input{sections/discussion}
+\input{sections/limitations}
+
+\section*{Data and code availability}
+The minimal code release for peer review is available as a tagged source snapshot at \url{https://github.com/Neabigmo/PTL/tree/v1.0-cbac-submission}. It contains the split-generation code, predictor output contract, GEARS adapter code, PTL training and evaluation code, deterministic figure scripts, environment notes, and expected-output manifests. For review, the submission package includes a complete processed evidence archive with split manifests, baseline metrics, PTL reliability outputs, case-example tables, figure source data, deterministic figure scripts, checksums, and repository metadata. Raw public datasets are not redistributed and remain available from their original repositories, including the scPerturb Zenodo release, the independent public GSE284197 Perturb-seq screen, and the GSE264667/NadigOConner2024 candidate screens listed in the external-candidate audit.
+
+\section*{Acknowledgements}
+The author thanks the maintainers and contributors of the public single-cell perturbation data resources used in this study.
+
+\section*{Funding}
+This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors.
+
+\section*{Declaration of competing interest}
+The author declares no competing interests.
+
+\section*{CRediT author statement}
+Yiheng Yang: Conceptualization, Methodology, Software, Validation, Formal analysis, Data curation, Writing -- original draft, Writing -- review and editing, Visualization.
+
+\section*{Ethics statement}
+This study reanalyzes public, de-identified single-cell perturbation datasets and does not report newly generated human or animal experimental data.
+
+\section*{Sex and gender statement}
+Sex- and gender-specific analyses were not performed because the study operates on aggregated public perturbation-response signatures and the required individual-level sex or gender annotations were not consistently available across the benchmark sources.
+
+\section*{Declaration of generative AI and AI-assisted technologies in the manuscript preparation process}
+During the preparation of this work the author used OpenAI Codex to assist with drafting, code organization, LaTeX troubleshooting, and language polishing. No generative AI or AI-assisted image-generation tools were used to create or modify the submitted figures or graphical abstract. All submitted figures and the graphical abstract were created from deterministic plotting scripts and vector elements. After using Codex, the author reviewed and edited the content as needed and takes full responsibility for the content of the manuscript.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

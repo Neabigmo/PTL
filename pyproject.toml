@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ptl"
+version = "2.0.0.dev0"
+description = "Context-aware reliability calibration for single-cell perturbation prediction"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+core = [
+  "numpy>=1.24",
+  "pandas>=2.0",
+  "scikit-learn>=1.3",
+  "pyyaml>=6.0",
+]
+test = ["pytest>=8.0"]
+gears = ["torch>=2.1", "torch-geometric>=2.4"]
+cpa = ["torch>=2.1"]
+scgpt = ["torch>=2.1", "transformers>=4.35"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["ptl*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

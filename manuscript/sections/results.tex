@@ -1,0 +1,86 @@
+\section{Results}
+
+\subsection{Benchmark design for perturbation-response transportability}
+
+We organized PTL as a computational reliability study for public single-cell functional genomics screens (Figure~\ref{fig:concept}). The analysis starts from perturbation-response signatures and model outputs, evaluates them under stress-transfer regimes, and assigns keep/abstain reliability scores before biological interpretation. The benchmark surface contained 525 transparent baseline runs with consistent gene counts and valid metric outputs. Random splits were retained as low-stress anchors, whereas held-out perturbation, held-out combination, low-support, dataset-heldout, and external-holdout splits tested biologically relevant transfer questions.
+
+Figure~\ref{fig:benchmark} summarizes the dataset surface and split audit. The independent public GSE284197 screen was treated as an external experimental validation source, and leave-one-screen-out dataset-heldout summaries were used to test additional public experimental screens. The hardest stress family by average non-control cosine was dataset-heldout transfer, with mean cosine 0.049 across implemented baselines. GSE284197 showed high composite difficulty because perturbation overlap, dataset identity, and train-test context all shifted simultaneously. These audits define the biological setting of the study: predicted signatures are not only evaluated for average fidelity, but for whether fidelity survives perturbation and dataset transfer.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{../results/figures_cbac/fig1_simplified_framework.png}
+\caption{PTL framework for reliability modeling in public single-cell perturbation screens. Public Perturb-seq inputs are converted into reference-aware delta signatures, evaluated with context-stress split families, passed through a model-agnostic PTL reliability model, and reported as keep/abstain decisions for downstream biological use.}
+\label{fig:concept}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{../results/figures_cbac/fig2_cbac_benchmark_design.png}
+\caption{Benchmark composition, split construction, and compact audit diagnostics. The panels report the public screen surface, split-family transfer questions, and overlap/leakage checks before model performance is interpreted. Support and context-distance details are provided in Supplementary Figure S1.}
+\label{fig:benchmark}
+\end{figure}
+
+\subsection{Model rankings collapse under perturbation and dataset transfer}
+
+Although ridge regression led the random split and two stress regimes, random-split ranking did not define a universal winner across transfer regimes (Table~\ref{tab:familywinners}, Figure~\ref{fig:decay}). Ridge regression led the random-split, low-support-split, and unseen-perturbation-split conditions. In contrast, global-delta baseline led the dataset-heldout split and external holdout, whereas perturbation-mean-delta led the unseen-combination split. Corrected paired comparisons found 17 FDR-significant model contrasts, supporting the conclusion that the rank shifts were not only descriptive artifacts of one summary table.
+
+\begin{table}[t]
+\centering
+\caption{Family-level winners from the transfer-decay summary.}
+\label{tab:familywinners}
+\begin{tabular}{lll}
+\toprule
+Split family & Leading model & Mean non-control cosine \\
+\midrule
+random\_split & ridge\_regression\_baseline & 0.373 \\
+low\_support\_split & ridge\_regression\_baseline & 0.307 \\
+unseen\_perturbation\_split & ridge\_regression\_baseline & 0.311 \\
+unseen\_combination\_split & perturbation\_mean\_delta\_baseline & 0.664 \\
+dataset\_heldout\_split & global\_delta\_baseline & 0.056 \\
+external\_holdout & global\_delta\_baseline & 0.112 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{../results/figures_cbac/fig3_cbac_ranking_instability.png}
+\caption{Model ranking instability across transfer regimes. Mean non-control cosine, rank badges, rank-shift trajectories, and dataset/external transfer behavior show that random-split ranking does not define a universal perturbation-response predictor.}
+\label{fig:decay}
+\end{figure}
+
+External and public-screen holdouts reinforced the same point. On GSE284197, global-delta, cell-context k-nearest-neighbor, and perturbation-mean-delta baselines reached mean non-control cosine around 0.11, whereas ridge regression fell below zero. Additional public-screen holdouts also varied substantially: mean non-control cosine was 0.038 for ReplogleWeissman2022 RPE1, -0.025 for PapalexiSatija2021 ECCITE-seq RNA, and 0.006 for DatlingerBock2021, with the best model changing across screens. Thus, public functional genomics screens expose transfer behavior that random-split reporting compresses away.
+
+\subsection{PTL filters false transportability better than confidence}
+
+PTL attaches a reliability decision to predicted signatures rather than replacing the perturbation predictor (Figure~\ref{fig:ptl}). The primary deployment model was the full PTL random forest, which reduced mean false-transportability rate from 0.71 for naive confidence to 0.24, with ROC AUC 0.93 and average precision 0.93. The best-performing ablation was the no-context-distance random forest, with a similar false-transportability rate of 0.23 and ROC AUC 0.94; we treat that row as a robustness check rather than the primary claim.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{../results/figures_cbac/fig4_cbac_reliability_filtering.png}
+\caption{PTL reliability filtering of perturbation-response predictions. The panels emphasize the full PTL random-forest reduction in false transportability, ROC and precision--recall behavior, risk--coverage, and selected reliability baselines.}
+\label{fig:ptl}
+\end{figure}
+
+The selective-prediction result should be read as a transportability filter. At the default \(0.8\times\) split-specific anchor threshold, the full PTL random forest achieved a 67\% relative reduction in mean false transportability. In the risk--coverage summary, the same model accepted 80\% of predictions at the reported high-coverage operating point with false-transportability rate 0.47, illustrating the trade-off between coverage and selective risk. A calibrated logistic baseline was the next strongest comparator among the reliability baselines, with mean false-transportability rate 0.27 and ROC AUC 0.87, whereas split-family-only, support-only, novelty-only, and support-plus-novelty models remained weaker. Threshold sensitivity was stable across anchor multipliers 0.6, 0.7, 0.8, and 0.9 (Supplementary Figure S2), supporting the relative anchor rule as an operational filter rather than a fragile cutoff.
+
+\subsection{Failure-mode atlas reveals biological transfer boundaries}
+
+The failure-mode atlas connects transportability errors to interpretable transfer contexts (Figure~\ref{fig:failure}). Severe failures concentrated around perturbation novelty, low support, and dataset boundaries rather than appearing uniformly across the benchmark. The most extreme row was ridge regression under external holdout, where severe failures accounted for 73.4\% of signatures and perturbation overlap was near zero. Dataset-heldout severe failures were also dominated by perturbation-novelty signals. These patterns suggest that perturbation prediction reports should include failure composition and context enrichment, not only aggregate cosine.
+
+Case examples make the biological interpretation risk concrete. Cases were selected from predefined retained, high-confidence failure, and dataset-boundary failure categories using the transportability label, PTL risk decision, and severity class. A retained PapalexiSatija2021 JAK2 perturbation prediction had cosine 0.90 and preserved all top-gene directions among the eight strongest true-response genes, sharing interferon-response genes including CD74, GBP1, GBP5, HLA-DRA, IRF1, TAP1, and WARS. In contrast, a high-confidence NormanWeissman2019 MAML2 prediction was non-transportable despite confidence 1.00, with cosine -0.22 and only two shared top genes. A dataset-heldout PapalexiSatija2021 SMAD4 case degraded further, with cosine -0.45 and top-gene direction consistency 0.25. These examples show why high-confidence predictions should not automatically enter pathway interpretation or perturbation prioritization.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{../results/figures_cbac/fig5_cbac_failure_cases.png}
+\caption{Failure-mode atlas and biological case examples. The panels separate the failure taxonomy, model--split severity, severity composition, context enrichment, and case examples of retained and rejected perturbation predictions.}
+\label{fig:failure}
+\end{figure}
+
+Retained predictions had a higher transportable-label rate than rejected high-risk predictions (0.91 versus 0.17) and stronger perturbation-identity retrieval (0.086 versus 0.034 top-1 retrieval). Pathway-level cosine was not uniformly higher for retained predictions, so we treat it as a diagnostic summary rather than a one-directional success metric. The atlas is therefore a biological audit surface: it indicates which predictions are plausible candidates for interpretation and which ones should be flagged as transfer-boundary failures.
+
+\subsection{Adapter demonstration and generality}
+
+The GEARS adapter produced valid PTL-compatible outputs for completed Replogle demonstration rows, including random-split rows and a 10-epoch held-out-perturbation RPE1 row (Supplementary Figure S3). These rows wrote the required prediction matrix, target matrix, metadata, gene list, run log, and metrics contract. This section tests output-contract compatibility across random and held-out perturbation settings, not GEARS competitiveness or final GEARS performance.
+
+We also audited GSE264667/NadigOConner2024 HepG2 and Jurkat Perturb-seq as candidate external resources. The GEO h5ad files are publicly available but large, and local scPerturb proxy files expose perturbation labels, control cells, gene matrices, and metadata sufficient for contract inspection. Baseline prediction rows from the raw GEO source were not available for this analysis, so these screens remain contract-passed candidates rather than performance evidence.

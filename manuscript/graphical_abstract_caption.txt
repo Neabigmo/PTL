@@ -1,0 +1,1 @@
+Graphical abstract. Public Perturb-seq screens are converted into stress-transfer tests for completed perturbation-response predictions. PTL uses deployment features to score keep/abstain reliability and reports retained predictions together with failure modes before downstream biological interpretation.

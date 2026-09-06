@@ -1,0 +1,25 @@
+dataset_id: E-MTAB-14567
+source_dataset: BioStudies ArrayExpress
+input_path: H:/2026try/4.24/data/external/E-MTAB-14567/filtered_feature_bc_matrix_rerun.h5
+input_format: 10x_h5
+split_role: archived_candidate
+output_dir: H:/2026try/4.24/data/processed
+control_values:
+  - cDNA
+obs_fields:
+  perturbation: perturbation_label
+  batch: batch
+  cell_context: cell_context
+cell_context_fallbacks:
+  - cell_context
+qc:
+  min_genes: 200
+  min_counts: 500
+  chunk_size: 2048
+signature_target_sum: 10000
+min_cells_per_perturbation: 10
+var_name_column: gene_ids
+write_processed_adata: false
+processed_var_top_n:
+processed_var_sort_by:
+processed_adata_mode: none

@@ -1,0 +1,59 @@
+dataset_id: GSE284197_screen
+source_dataset: GEO GSE284197
+input_path: H:/2026try/4.24/data/external/GSE284197/GSE284197_screen.h5ad
+input_format: h5ad
+split_role: external_validation
+output_dir: H:/2026try/4.24/data/processed
+control_values:
+  - nt
+  - wt
+obs_fields:
+  perturbation: perturbation
+  batch: batch
+  cell_context: stage
+extra_metadata_fields:
+  - batch_name
+  - species
+  - individual
+  - batch
+  - n_genes_by_counts
+  - total_counts
+  - n_genes
+  - sgRNA
+  - timepoint
+  - stage
+  - sex
+  - predictions
+  - class
+  - supervised_name
+  - perturbation
+  - Gene_target
+  - sgRNA_effective
+  - Gene_target_single
+cell_context_fallbacks:
+  - stage
+  - supervised_name
+qc:
+  min_genes: 500
+  min_counts: 1000
+  chunk_size: 1024
+signature_target_sum: 10000
+min_cells_per_perturbation: 25
+var_name_column:
+write_convenience_adata: false
+convenience_adata_mode: none
+convenience_var_top_n:
+convenience_var_sort_by:
+label_strategy: single_target_with_controls
+label_strategy_kwargs:
+  status_field: perturbation
+  single_target_field: Gene_target_single
+  multi_target_label: MULTI_TARGET
+  unknown_single_target_values:
+    - NA
+    - nan
+contract_filter_query: "(species == 'human') and ((perturbation == 'WT') or (perturbation == 'NT') or (Gene_target_single != 'NA'))"
+delta_reference_fields:
+  - batch
+  - timepoint
+matrix_store_mode: backed_source_with_qc_manifest

@@ -1,0 +1,39 @@
+schema_version: 1
+purpose: "Record external code and paper dependencies without vendoring large environments."
+entries:
+  - name: GEARS
+    url: https://github.com/snap-stanford/GEARS.git
+    pinned_commit: f374e43e197b295016d80395d7a54ddb81cc6769
+    role: "Optional learned predictor; official implementation audit for G2/G5."
+    license: "MIT (repository LICENSE)"
+    status: present
+  - name: ICLR-2027-style-files
+    url: https://www.iclr.cc/
+    pinned_commit: null
+    role: "User-supplied LaTeX style files, vendored under third_party/iclr2027."
+    license: "Use subject to the venue's current author instructions; verify before redistribution."
+    status: vendored
+  - name: Systema
+    url: null
+    pinned_commit: null
+    role: "Planned perturbation-specific metric robustness reference."
+    license: "To be verified before code or data reuse."
+    status: planned
+  - name: scPertEval
+    url: null
+    pinned_commit: null
+    role: "Planned evaluation-protocol reference and robustness comparison."
+    license: "To be verified before code or data reuse."
+    status: planned
+  - name: PRESCRIBE
+    url: null
+    pinned_commit: null
+    role: "Strategic optional uncertainty/reliability comparator for G5."
+    license: "To be verified before code or data reuse."
+    status: planned
+  - name: CPA-scGPT
+    url: null
+    pinned_commit: null
+    role: "Model-specific predictor environments for G5; keep dependencies isolated."
+    license: "To be verified per upstream repository before use."
+    status: planned

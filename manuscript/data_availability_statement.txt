@@ -1,0 +1,2 @@
+The minimal code release for peer review is available at https://github.com/Neabigmo/PTL/tree/v1.0-cbac-submission. For review, the submission package includes a complete processed evidence archive containing split manifests, baseline metrics, PTL reliability outputs, case-example tables, figure source data, deterministic figure scripts, checksums, and repository metadata. Raw public datasets are not redistributed and remain available from their original repositories.
+
