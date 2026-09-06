@@ -1,0 +1,77 @@
+\documentclass{article}
+\usepackage{../../third_party/iclr2027/iclr2027_conference,times}
+\input{../../third_party/iclr2027/math_commands.tex}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+
+\title{Predictor-Aware Reliability Calibration for Single-Cell Perturbation Response Prediction}
+\author{Anonymous Authors}
+
+\newcommand{\ptl}{\textsc{PTL}}
+\newcommand{\uq}{\textsc{UQ}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Predictor uncertainty is informative but incomplete when a perturbation-response
+predictor is transported across biological environments. We study a reliability
+layer that combines target-free prediction geometry, training support, novelty,
+and explicit biological context with a calibrated uncertainty score. This
+document is a paper skeleton: quantitative claims will be populated only from
+the validated PTL-v2 artifacts.
+\end{abstract}
+
+\section{Introduction}
+Single-cell perturbation predictors are increasingly evaluated outside the
+environment in which they were trained. A central practical question is whether
+confidence remains calibrated when cell context, perturbation coverage, and
+experimental conditions change. We propose a predictor-aware reliability layer
+that preserves the separation between prediction, deployment features, and
+outcomes.
+
+\section{Problem formulation}
+For a prediction $\hat{y}_i$, let $u_i$ denote model-native or ensemble
+uncertainty descriptors and let $z_i$ contain target-free prediction geometry,
+training support, novelty, and context. The primary contextual calibrator uses
+\begin{equation}
+ p_i = \sigma\!\left(\exp(a(z_i))\,\operatorname{logit}(p_{0,i}) + b(z_i)\right),
+\end{equation}
+where $p_{0,i}$ is a scalar uncertainty calibration fitted within the training
+fold. The reliability target is defined relative to a familiar/random anchor:
+$T_i = \mathbb{I}[F_i \geq \tau\,\operatorname{median}(F_{\mathrm{random}})]$.
+
+\section{Experimental design}
+We use signature-level biological instances, five-fold grouped cross-fitting,
+environment-first aggregation, and an environment-then-instance paired
+bootstrap. The initial replay surface covers Norman, Replogle K562 essential
+(the available legacy surface), and Replogle RPE1, with random, dataset-heldout,
+and unseen-perturbation split families. Official GEARS and the selected K562
+GWPS surface remain gated pending adapter validation and compatible artifacts.
+
+\section{Results plan}
+All numbers in the final paper will be generated from the following compact
+artifacts:
+\begin{itemize}
+  \item \path{artifacts/source_data/g4_method_comparison.csv};
+  \item \path{artifacts/source_data/g4_bootstrap_ci.csv};
+  \item \path{artifacts/source_data/transportability_target_sensitivity.csv};
+  \item \path{artifacts/manifests/environment_registry.csv}.
+\end{itemize}
+The current replay is an engineering and estimand audit, not a final claim of
+state-of-the-art predictive performance.
+
+\section{Limitations and reproducibility}
+The available pilot arrays are legacy baseline outputs, and the ensemble uses
+the two or three aligned seed members available for each signature. The
+environment registry explicitly marks perturbation-modality expansion as
+pending metadata review. The source code, contracts, vendored style files, and
+provenance boundary are kept in the project repository.
+
+% TODO(G5/G6): add validated predictor roster, figures, tables, references,
+% author block, and final claims with artifact-level provenance.
+
+\bibliographystyle{../../third_party/iclr2027/iclr2027_conference}
+\bibliography{../../third_party/iclr2027/iclr2027_conference}
+\end{document}

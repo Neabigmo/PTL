@@ -10,9 +10,23 @@
     "mean_matching",
     "ridge"
   ],
-  "rows": 20652,
-  "biological_instances": 866,
+  "rows": 23226,
+  "biological_instances": 6884,
   "folds": 5,
+  "cross_fit_workers": 5,
+  "cross_fit_parallelization": "source-disjoint outer folds with deterministic parent merge",
+  "split_families": [
+    "random_split",
+    "dataset_heldout_split",
+    "unseen_perturbation_split"
+  ],
+  "transportability_target": "T_i = I[F_i >= 0.8 * median(F_random_anchor)]",
+  "transportability_tau_sensitivity": [
+    0.6,
+    0.7,
+    0.8,
+    0.9
+  ],
   "gears": "not_run: official package imports in the project environment, but the v2 data adapter is not yet validated; legacy fallback paths remain excluded",
   "k562_surface": "ReplogleWeissman2022_K562_essential legacy processed surface; GWPS deferred",
   "outputs": {
@@ -29,6 +43,7 @@
     "bootstrap_ci": "artifacts/source_data/g4_bootstrap_ci.csv",
     "fig2": "artifacts/source_data/figure2_confidence_source.csv",
     "fig3": "artifacts/source_data/figure3_selective_source.csv",
+    "target_sensitivity": "artifacts/source_data/transportability_target_sensitivity.csv",
     "summary": "artifacts/manifests/ptl_v2_g4_pilot_summary.json"
   }
 }

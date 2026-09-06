@@ -26,10 +26,10 @@ tables:
     fields: [biological_instance_id, fold, holdout_role]
 feature_blocks:
   U: [uq_mean_gene_variance, uq_median_gene_variance, uq_top_effect_variance, uq_cosine_disagreement, uq_effect_norm_variance]
-  P: [prediction_norm, prediction_sparsity, prediction_concentration, prediction_reference_distance]
+  P: [prediction_norm, prediction_sparsity, prediction_concentration, prediction_geometry_distance]
   S: [support_cells, support_signatures, reference_key_overlap]
-  N: [perturbation_seen_fraction, combination_novelty, perturbation_novelty]
-  C: [cell_context, modality, condition, batch_distance]
+  N: [perturbation_seen_fraction, component_seen_fraction, combination_novelty, perturbation_novelty]
+  C: [cell_context, perturbation_modality, readout_modality, condition, platform, batch_distance]
 forbidden_headline_features:
   - split_family
   - stress_family_flag
@@ -37,6 +37,7 @@ forbidden_headline_features:
   - fidelity
   - continuous_risk
   - transportability
+  - transportability_tau
   - deg
   - retrieval
 methods:
@@ -45,16 +46,21 @@ methods:
   - isotonic
   - support_novelty_only
   - ptl_rf
-  - calibrated_gbdt
+  - gbdt_uncalibrated
   - ptl_context
   - ptl_full
   - ptl_no_id
 ptl_context:
   formula: sigmoid(exp(a(z)) * logit(p0) + b(z))
-  input_blocks: [U, P, S, N, C]
+  scalar_uq_input: U
+  input_blocks: [P, S, N, C]
+  encoded_context_columns: [cell_context, perturbation_modality, readout_modality, condition, platform, batch_distance]
   initialization: identity_a_zero_b_zero
   correction_regularization: [a_squared, b_squared]
   architecture: small_linear_block_encoder
+ptl_no_id:
+  input_blocks: [P, S, N]
+  interpretation: strict_no_context_control
 metrics:
   primary: [aurc, excess_aurc, risk_at_50, risk_at_80, ftr_at_50, ftr_at_80, brier, log_loss]
   secondary: [auroc, auprc, spearman_continuous_risk]

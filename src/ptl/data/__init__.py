@@ -7,7 +7,7 @@ from .contracts import (
     PredictionRecord,
     validate_feature_columns,
 )
-from .ids import biological_instance_id, environment_id, prediction_id
+from .ids import biological_instance_id, environment_id, perturbation_group_id, prediction_id
 from .path_resolver import WorkspacePathResolver
 
 __all__ = [
@@ -18,6 +18,7 @@ __all__ = [
     "WorkspacePathResolver",
     "biological_instance_id",
     "environment_id",
+    "perturbation_group_id",
     "prediction_id",
     "validate_feature_columns",
 ]

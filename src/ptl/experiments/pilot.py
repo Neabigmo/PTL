@@ -9,17 +9,24 @@ comparisons without modifying raw or processed matrices.
 from __future__ import annotations
 
 import json
+import os
+import re
+from concurrent.futures import ProcessPoolExecutor
+from functools import lru_cache
 from pathlib import Path
-from typing import Iterable
-
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.model_selection import GroupKFold
 
-from ptl.data.ids import biological_instance_id, environment_id, prediction_id
+from ptl.data.ids import biological_instance_id, environment_id, perturbation_group_id, prediction_id
 from ptl.data.contracts import validate_feature_columns
-from ptl.evaluation.bootstrap import paired_hierarchical_bootstrap, summarize_bootstrap_ci
+from ptl.evaluation.bootstrap import (
+    paired_hierarchical_bootstrap,
+    summarize_bootstrap_ci,
+    summarize_paired_deltas,
+)
 from ptl.evaluation.metrics import evaluate_scores
 from ptl.reliability.calibration import (
     ContextualCalibrator,
@@ -30,12 +37,15 @@ from ptl.reliability.calibration import (
     predict_logistic,
     predict_platt,
 )
-from ptl.uncertainty.uq import confidence_from_uq, summarize_ensemble
+from ptl.uncertainty.uq import UQNormalizer, summarize_ensemble
 
 
 PILOT_DATASETS = {
     "NormanWeissman2019_filtered": {
         "cell_context": "K562",
+        "perturbation_modality": "metadata_pending",
+        "readout_modality": "RNA",
+        "platform": "processed_signature_table",
         "modality": "RNA",
         "condition": "baseline",
     },
@@ -43,15 +53,22 @@ PILOT_DATASETS = {
     # surface, but it has no compatible processed prediction arrays yet.
     "ReplogleWeissman2022_K562_essential": {
         "cell_context": "K562",
+        "perturbation_modality": "metadata_pending",
+        "readout_modality": "RNA",
+        "platform": "processed_signature_table",
         "modality": "RNA",
         "condition": "essential_legacy_pilot",
     },
     "ReplogleWeissman2022_rpe1": {
         "cell_context": "RPE1",
+        "perturbation_modality": "metadata_pending",
+        "readout_modality": "RNA",
+        "platform": "processed_signature_table",
         "modality": "RNA",
         "condition": "baseline",
     },
 }
+PILOT_SPLITS = ("random_split", "dataset_heldout_split", "unseen_perturbation_split")
 MODEL_DIRS = {
     "mean_global": "global_delta_baseline",
     "mean_matching": "perturbation_mean_delta_baseline",
@@ -73,13 +90,28 @@ P_COLUMNS = [
     "prediction_norm",
     "prediction_sparsity",
     "prediction_concentration",
-    "prediction_reference_distance",
+    "prediction_geometry_distance",
 ]
 S_COLUMNS = ["support_cells", "support_signatures", "reference_key_overlap"]
-N_COLUMNS = ["perturbation_seen_fraction", "combination_novelty", "perturbation_novelty"]
-C_COLUMNS = ["cell_context_code", "modality_code", "condition_code", "batch_distance"]
+N_COLUMNS = [
+    "perturbation_seen_fraction",
+    "component_seen_fraction",
+    "combination_novelty",
+    "perturbation_novelty",
+]
+C_COLUMNS = [
+    "cell_context_code",
+    "perturbation_modality_code",
+    "readout_modality_code",
+    "condition_code",
+    "platform_code",
+    "batch_distance",
+]
 CONTEXT_COLUMNS = P_COLUMNS + S_COLUMNS + N_COLUMNS + C_COLUMNS
 ALL_NUMERIC_COLUMNS = UQ_COLUMNS + CONTEXT_COLUMNS
+SIGNATURE_METADATA_COLUMNS = [
+    "signature_id", "reference_key", "perturbation_label", "is_control", "n_cells", "batch"
+]
 
 
 def _relative(root: Path, path: Path) -> str:
@@ -111,22 +143,144 @@ def _load_oof_labels(root: Path) -> pd.DataFrame:
     )
 
 
-def _find_run(root: Path, model_dir: str, dataset_id: str, seed: int) -> Path:
+def _find_run(root: Path, model_dir: str, dataset_id: str, split_family: str, seed: int) -> Path:
     base = root / "results/baselines" / model_dir
+    if split_family == "dataset_heldout_split":
+        pattern = f"{split_family}__all_datasets__holdout-{dataset_id}__seed{seed}__signature"
+    else:
+        pattern = f"{split_family}__{dataset_id}__seed{seed}__signature"
     candidates = sorted(
-        base.glob(f"dataset_heldout_split__all_datasets__holdout-{dataset_id}__seed{seed}__signature")
+        base.glob(pattern)
     )
     if len(candidates) != 1:
         raise FileNotFoundError(f"expected one seed directory, found {len(candidates)}: {base}")
     return candidates[0]
 
 
-def _load_ensemble(root: Path, dataset_id: str, predictor: str) -> pd.DataFrame:
+def _split_path(root: Path, dataset_id: str, split_family: str, seed: int) -> Path:
+    if split_family == "dataset_heldout_split":
+        name = f"{split_family}__all_datasets__holdout-{dataset_id}__seed{seed}__signature.json"
+    else:
+        name = f"{split_family}__{dataset_id}__seed{seed}__signature.json"
+    path = root / "data/processed/splits" / name
+    if not path.exists():
+        raise FileNotFoundError(path)
+    return path
+
+
+@lru_cache(maxsize=None)
+def _load_training_metadata(root_text: str, dataset_id: str) -> pd.DataFrame:
+    root = Path(root_text)
+    path = root / "data/processed" / f"{dataset_id}_delta_signatures.parquet"
+    columns = [column for column in SIGNATURE_METADATA_COLUMNS if column != "signature_id"]
+    available = set(pq.ParquetFile(path).schema.names)
+    requested = [column for column in ["signature_id", *columns] if column in available]
+    metadata = pd.read_parquet(path, columns=requested).copy()
+    for column in ["signature_id", *columns]:
+        if column not in metadata:
+            metadata[column] = np.nan
+    metadata = metadata[["signature_id", *columns]]
+    metadata["signature_id"] = metadata["signature_id"].astype(str)
+    return metadata
+
+
+@lru_cache(maxsize=2)
+def _load_all_training_metadata(root_text: str) -> pd.DataFrame:
+    root = Path(root_text)
+    tables = []
+    for path in sorted((root / "data/processed").glob("*_delta_signatures.parquet")):
+        dataset_id = path.name.removesuffix("_delta_signatures.parquet")
+        tables.append(_load_training_metadata(root_text, dataset_id))
+    if not tables:
+        raise FileNotFoundError(f"no processed delta-signature metadata under {root / 'data/processed'}")
+    return pd.concat(tables, ignore_index=True)
+
+
+def _components(label: object) -> list[str]:
+    text = str(label)
+    return [part.strip() for part in re.split(r"[+,;|]", text) if part.strip()]
+
+
+def _training_features(
+    root: Path,
+    dataset_id: str,
+    split_family: str,
+    seed: int,
+    metadata: pd.DataFrame,
+) -> pd.DataFrame:
+    train_id_sets = []
+    for split_seed in (0, 1, 2):
+        split = json.loads(
+            _split_path(root, dataset_id, split_family, split_seed).read_text(encoding="utf-8")
+        )
+        train_ids = split["train_ids"]
+        if isinstance(train_ids, dict):
+            train_ids = [value for values in train_ids.values() for value in values]
+        train_id_sets.append({str(value) for value in train_ids})
+    train_ids = set.intersection(*train_id_sets)
+    train = (
+        _load_all_training_metadata(str(root))
+        if split_family == "dataset_heldout_split"
+        else _load_training_metadata(str(root), dataset_id)
+    )
+    train = train[train["signature_id"].isin(train_ids)].copy()
+    if train.empty:
+        raise ValueError(f"split has no training signatures: {dataset_id}/{split_family}/seed{seed}")
+
+    target = metadata.copy()
+    target["perturbation_label"] = target["perturbation_label"].fillna(target["signature_id"])
+    train["perturbation_label"] = train["perturbation_label"].fillna(train["signature_id"])
+    perturbation_counts = train.groupby("perturbation_label")["signature_id"].nunique()
+    cell_support = train.groupby("perturbation_label")["n_cells"].sum(min_count=1).fillna(0.0)
+    train_references = set(train["reference_key"].dropna().astype(str))
+    train_batches = set(train["batch"].dropna().astype(str))
+    train_combinations = set(train["perturbation_label"].astype(str))
+    train_components = {
+        component
+        for label in train["perturbation_label"]
+        for component in _components(label)
+    }
+
+    labels = target["perturbation_label"].astype(str)
+    counts = labels.map(perturbation_counts).fillna(0.0).to_numpy(dtype=float)
+    cells = labels.map(cell_support).fillna(0.0).to_numpy(dtype=float)
+    components_seen = np.asarray(
+        [
+            np.mean([component in train_components for component in _components(label)])
+            if _components(label)
+            else 0.0
+            for label in labels
+        ],
+        dtype=float,
+    )
+    reference = target["reference_key"].astype(str)
+    batch = target["batch"].astype(str)
+    max_support = float(counts.max()) if counts.size else 0.0
+    return pd.DataFrame(
+        {
+            "support_cells": cells,
+            "support_signatures": counts,
+            "reference_key_overlap": reference.isin(train_references).astype(float),
+            "perturbation_seen_fraction": (counts > 0).astype(float),
+            "component_seen_fraction": components_seen,
+            "combination_novelty": np.asarray(
+                [float(len(_components(label)) > 1 and label not in train_combinations) for label in labels],
+                dtype=float,
+            ),
+            "perturbation_novelty": 1.0 / np.sqrt(np.maximum(counts, 1.0)),
+            "batch_distance": (~batch.isin(train_batches)).astype(float),
+            "training_support_max": max(max_support, 1.0),
+        },
+        index=metadata.index,
+    )
+
+
+def _load_ensemble(root: Path, dataset_id: str, predictor: str, split_family: str) -> pd.DataFrame:
     members: list[np.ndarray] = []
-    metadata: pd.DataFrame | None = None
+    metadata_by_seed: list[pd.DataFrame] = []
     member_paths: list[Path] = []
     for seed in (0, 1, 2):
-        run = _find_run(root, MODEL_DIRS[predictor], dataset_id, seed)
+        run = _find_run(root, MODEL_DIRS[predictor], dataset_id, split_family, seed)
         pred_path = run / "test_predictions.npz"
         meta_path = run / "test_metadata.parquet"
         if not pred_path.exists() or not meta_path.exists():
@@ -135,29 +289,62 @@ def _load_ensemble(root: Path, dataset_id: str, predictor: str) -> pd.DataFrame:
             members.append(np.asarray(archive["y_pred"], dtype=np.float32))
             target = np.asarray(archive["y_true"], dtype=np.float32)
         current = pd.read_parquet(meta_path).reset_index(drop=True)
-        if metadata is None:
-            metadata = current
-            targets = target
-        else:
-            if not metadata["signature_id"].astype(str).equals(current["signature_id"].astype(str)):
-                raise ValueError(f"seed metadata are not aligned for {dataset_id}/{predictor}")
-            if not np.allclose(targets, target, equal_nan=True):
-                raise ValueError(f"seed targets are not aligned for {dataset_id}/{predictor}")
+        current["signature_id"] = current["signature_id"].astype(str)
+        current["__target"] = list(target)
+        current["__seed"] = seed
+        metadata_by_seed.append(current)
         member_paths.append(pred_path)
-    assert metadata is not None
-    values = np.stack(members, axis=0)
-    uq = summarize_ensemble(values)
-    mean_prediction = values.mean(axis=0)
-    cosine = np.sum(mean_prediction * targets, axis=1)
-    cosine = cosine / np.maximum(
-        np.linalg.norm(mean_prediction, axis=1) * np.linalg.norm(targets, axis=1), 1e-12
-    )
-    abs_mean = np.abs(mean_prediction)
-    prediction_norm = np.linalg.norm(mean_prediction, axis=1)
-    concentration = abs_mean.max(axis=1) / np.maximum(prediction_norm, 1e-12)
-    support = metadata.get("n_cells", pd.Series(np.ones(len(metadata))))
+    grouped: dict[str, list[tuple[int, np.ndarray, np.ndarray, pd.Series]]] = {}
+    for current, member in zip(metadata_by_seed, members):
+        for row_index, row in current.iterrows():
+            signature = str(row["signature_id"])
+            grouped.setdefault(signature, []).append(
+                (int(row["__seed"]), np.asarray(member[row_index]), np.asarray(row["__target"]), row)
+            )
+    records: list[dict[str, object]] = []
+    metadata_rows: list[pd.Series] = []
+    member_seed_labels: list[str] = []
+    uq_values: dict[str, list[float]] = {column: [] for column in UQ_COLUMNS}
+    for signature in sorted(grouped):
+        group = grouped[signature]
+        if len(group) < 2:
+            continue
+        target = group[0][2]
+        if not all(np.allclose(target, item[2], equal_nan=True) for item in group[1:]):
+            raise ValueError(f"seed targets are not aligned for {dataset_id}/{predictor}/{signature}")
+        values = np.stack([item[1] for item in group], axis=0)
+        uq = summarize_ensemble(values[:, None, :])
+        mean_prediction = values.mean(axis=0)
+        cosine = float(np.dot(mean_prediction, target) / max(
+            np.linalg.norm(mean_prediction) * np.linalg.norm(target), 1e-12
+        ))
+        abs_mean = np.abs(mean_prediction)
+        prediction_norm = float(np.linalg.norm(mean_prediction))
+        concentration = float(abs_mean.max() / max(prediction_norm, 1e-12))
+        metadata_rows.append(group[0][3])
+        member_seed_labels.append("|".join(str(item[0]) for item in group))
+        records.append({
+            "signature_id": signature,
+            "prediction_norm": prediction_norm,
+            "prediction_sparsity": float((abs_mean < 1e-8).mean()),
+            "prediction_concentration": concentration,
+            "prediction_geometry_distance": 1.0 - np.clip(concentration, 0.0, 1.0),
+            "fidelity_delta_cosine": cosine,
+        })
+        for name, values_ in zip(UQ_COLUMNS, [
+            uq.mean_gene_variance,
+            uq.median_gene_variance,
+            uq.top_effect_variance,
+            uq.cosine_disagreement,
+            uq.effect_norm_variance,
+        ]):
+            uq_values[name].append(float(values_[0]))
+    if not metadata_rows:
+        raise ValueError(f"no signatures have at least two seed members for {dataset_id}/{predictor}/{split_family}")
+    metadata = pd.DataFrame(metadata_rows).reset_index(drop=True)
+    record_frame = pd.DataFrame(records)
+    training = _training_features(root, dataset_id, split_family, 0, metadata)
     perturbation = metadata["perturbation_label"].fillna(metadata["signature_id"].astype(str))
-    support_by_perturbation = perturbation.groupby(perturbation).transform("size").to_numpy()
     environment = environment_id(
         dataset_id,
         PILOT_DATASETS[dataset_id]["cell_context"],
@@ -169,70 +356,174 @@ def _load_ensemble(root: Path, dataset_id: str, predictor: str) -> pd.DataFrame:
             "dataset_id": dataset_id,
             "environment_id": environment,
             "predictor": predictor,
+            "split_family": split_family,
             "signature_id": metadata["signature_id"].astype(str),
             "perturbation": perturbation.astype(str),
-            "support_cells": pd.to_numeric(support, errors="coerce").fillna(0).to_numpy(),
-            "support_signatures": support_by_perturbation,
-            "reference_key_overlap": metadata.get("reference_key", pd.Series([None] * len(metadata))).notna().astype(float),
-            "prediction_norm": prediction_norm,
-            "prediction_sparsity": (abs_mean < 1e-8).mean(axis=1),
-            "prediction_concentration": concentration,
-            "prediction_reference_distance": 1.0 - np.clip(concentration, 0.0, 1.0),
-            "combination_novelty": perturbation.str.contains(r"\+|,|;", regex=True).astype(float),
-            "perturbation_novelty": 1.0 / np.sqrt(np.maximum(support_by_perturbation, 1)),
-            "fidelity_delta_cosine": cosine,
+            "perturbation_group_id": [
+                perturbation_group_id(environment, value) for value in perturbation
+            ],
+            **{column: training[column].to_numpy() for column in S_COLUMNS + N_COLUMNS},
+            "batch_distance": training["batch_distance"].to_numpy(),
+            **{column: record_frame[column].to_numpy() for column in [
+                "prediction_norm", "prediction_sparsity", "prediction_concentration",
+                "prediction_geometry_distance", "fidelity_delta_cosine",
+            ]},
             "prediction_array_path": _relative(root, member_paths[0]),
             "gene_list_path": _relative(root, member_paths[0].with_name("genes.txt")),
-            "ensemble_member_seeds": "0|1|2",
-            **{name: getattr(uq, name.removeprefix("uq_")) for name in []},
+            "ensemble_member_seeds": member_seed_labels,
+            "training_manifest_seeds": "0|1|2_intersection",
         }
     )
-    for name, values_ in zip(UQ_COLUMNS, [
-        uq.mean_gene_variance,
-        uq.median_gene_variance,
-        uq.top_effect_variance,
-        uq.cosine_disagreement,
-        uq.effect_norm_variance,
-    ]):
-        result[name] = values_
+    for name in UQ_COLUMNS:
+        result[name] = uq_values[name]
     result["biological_instance_id"] = [
-        biological_instance_id(environment, value) for value in result["perturbation"]
+        biological_instance_id(environment, value) for value in result["signature_id"]
     ]
     result["prediction_id"] = [
-        prediction_id(bio, predictor, "dataset_heldout_split", "ensemble3")
-        for bio in result["biological_instance_id"]
+        prediction_id(bio, predictor, split_family, f"ensemble{len(seeds.split('|'))}")
+        for bio, seeds in zip(
+            result["biological_instance_id"], result["ensemble_member_seeds"]
+        )
     ]
     return result
 
 
 def _add_context_features(frame: pd.DataFrame) -> pd.DataFrame:
     frame = frame.copy()
-    frame["perturbation_seen_fraction"] = frame.groupby("environment_id")["support_signatures"].transform(
-        lambda values: values / max(float(values.max()), 1.0)
-    )
-    frame["cell_context_code"] = frame["environment_id"].str.contains("rpe1").astype(float) * 2.0
-    frame.loc[frame["environment_id"].str.contains("k562"), "cell_context_code"] = 1.0
-    frame["modality_code"] = 0.0
-    frame["condition_code"] = frame["environment_id"].str.contains("essential").astype(float)
-    frame["batch_distance"] = 0.0
+    def code_for(field: str) -> dict[str, float]:
+        values = sorted({str(details[field]) for details in PILOT_DATASETS.values()})
+        return {value: float(index) for index, value in enumerate(values, start=1)}
+
+    for field, column in [
+        ("cell_context", "cell_context_code"),
+        ("perturbation_modality", "perturbation_modality_code"),
+        ("readout_modality", "readout_modality_code"),
+        ("condition", "condition_code"),
+        ("platform", "platform_code"),
+    ]:
+        lookup = code_for(field)
+        frame[column] = frame["dataset_id"].map(
+            {dataset: lookup[str(details[field])] for dataset, details in PILOT_DATASETS.items()}
+        ).fillna(0.0)
     frame["fidelity_delta_cosine"] = frame["fidelity_delta_cosine"].clip(-1.0, 1.0)
-    frame["continuous_risk"] = 1.0 - (frame["fidelity_delta_cosine"] + 1.0) / 2.0
-    frame["reliable_label"] = (frame["fidelity_delta_cosine"] >= 0.5).astype(int)
+    frame["continuous_risk"] = (1.0 - frame["fidelity_delta_cosine"]) / 2.0
     frame["uq_quantile"] = np.nan
-    for _, indices in frame.groupby("predictor").groups.items():
-        idx = np.asarray(list(indices), dtype=int)
-        frame.loc[idx, "uq_quantile"] = confidence_from_uq(
-            frame.loc[idx, "uq_mean_gene_variance"].to_numpy(),
-            frame.loc[idx, "uq_mean_gene_variance"].to_numpy(),
-        )
+    frame["degenerate_uq"] = False
     return frame
 
 
+def _fit_one_fold(args: tuple[object, ...]) -> tuple[int, np.ndarray, dict[str, np.ndarray], np.ndarray, np.ndarray]:
+    """Fit one grouped outer fold in an independent process.
+
+    The worker receives one fixed train/test split and returns only its OOF
+    predictions.  It never mutates shared state; the parent merges results by
+    fold after all workers finish.  This keeps the cross-fitting protocol
+    unchanged while allowing the expensive model fits to use separate CPUs.
+    """
+
+    (
+        fold,
+        train,
+        test,
+        y,
+        uq_source,
+        context,
+        context_no_id,
+        all_numeric,
+        support_novelty,
+        full,
+        predictors,
+    ) = args
+    fold = int(fold)
+    train = np.asarray(train, dtype=int)
+    test = np.asarray(test, dtype=int)
+    y = np.asarray(y, dtype=int)
+    uq_source = np.asarray(uq_source, dtype=float)
+    context = np.asarray(context, dtype=float)
+    context_no_id = np.asarray(context_no_id, dtype=float)
+    all_numeric = np.asarray(all_numeric, dtype=float)
+    support_novelty = np.asarray(support_novelty, dtype=float)
+    full = np.asarray(full, dtype=float)
+    predictors = np.asarray(predictors, dtype=str)
+    prediction_names = [
+        "raw_normalized_uq",
+        "platt_logistic",
+        "isotonic",
+        "support_novelty_only",
+        "ptl_rf",
+        "gbdt_uncalibrated",
+        "ptl_context",
+        "ptl_full",
+        "ptl_no_id",
+    ]
+    predictions = {
+        name: np.full(len(test), np.nan, dtype=float)
+        for name in prediction_names
+    }
+    p0_train = np.full(len(train), 0.5, dtype=float)
+    p0_test = np.full(len(test), 0.5, dtype=float)
+    degenerate_test = np.zeros(len(test), dtype=bool)
+    train_predictors = predictors[train]
+    test_predictors = predictors[test]
+    for predictor in sorted(np.unique(train_predictors)):
+        train_local = np.flatnonzero(train_predictors == predictor)
+        test_local = np.flatnonzero(test_predictors == predictor)
+        if not len(test_local):
+            continue
+        reference = uq_source[train[train_local]]
+        normalizer = UQNormalizer.fit(reference)
+        p0_train[train_local] = normalizer.transform(uq_source[train[train_local]])
+        p0_test[test_local] = normalizer.transform(uq_source[test[test_local]])
+        degenerate_test[test_local] = normalizer.degenerate
+    if np.all(p0_train == 0.5):
+        normalizer = UQNormalizer.fit(uq_source[train])
+        p0_train = normalizer.transform(uq_source[train])
+        p0_test = normalizer.transform(uq_source[test])
+        degenerate_test[:] = normalizer.degenerate
+
+    platt_model = fit_platt(p0_train, y[train])
+    isotonic_model = fit_isotonic(p0_train, y[train])
+    p0_scalar_train = predict_platt(platt_model, p0_train)
+    p0_scalar_test = predict_platt(platt_model, p0_test)
+    predictions["raw_normalized_uq"] = p0_test
+    predictions["platt_logistic"] = p0_scalar_test
+    predictions["isotonic"] = predict_isotonic(isotonic_model, p0_test)
+    predictions["support_novelty_only"] = predict_logistic(
+        fit_logistic(support_novelty[train], y[train]), support_novelty[test]
+    )
+
+    if np.unique(y[train]).size < 2:
+        constant = float(y[train].mean())
+        predictions["ptl_rf"] = np.full(len(test), constant, dtype=float)
+        predictions["gbdt_uncalibrated"] = np.full(len(test), constant, dtype=float)
+    else:
+        rf = RandomForestClassifier(
+            n_estimators=200, min_samples_leaf=10, random_state=17, n_jobs=1
+        ).fit(all_numeric[train], y[train])
+        gbdt = GradientBoostingClassifier(
+            n_estimators=100, max_depth=2, learning_rate=0.04, random_state=17
+        ).fit(all_numeric[train], y[train])
+        predictions["ptl_rf"] = rf.predict_proba(all_numeric[test])[:, 1]
+        predictions["gbdt_uncalibrated"] = gbdt.predict_proba(all_numeric[test])[:, 1]
+
+    context_model = ContextualCalibrator().fit(context[train], p0_scalar_train, y[train])
+    predictions["ptl_context"] = context_model.predict(context[test], p0_scalar_test)
+    full_model = ContextualCalibrator().fit(full[train], p0_scalar_train, y[train])
+    predictions["ptl_full"] = full_model.predict(full[test], p0_scalar_test)
+    no_id_model = ContextualCalibrator().fit(context_no_id[train], p0_scalar_train, y[train])
+    predictions["ptl_no_id"] = no_id_model.predict(context_no_id[test], p0_scalar_test)
+    return fold, test, predictions, p0_test, degenerate_test
+
+
 def _fit_fold_predictions(frame: pd.DataFrame) -> pd.DataFrame:
+    if "reliable_label" not in frame or frame["reliable_label"].isna().any():
+        raise ValueError("reliable_label must be assigned from the random-anchor target before fitting")
     y = frame["reliable_label"].to_numpy(dtype=int)
     risk = frame["continuous_risk"].to_numpy(dtype=float)
-    p0 = np.clip(frame["uq_quantile"].to_numpy(dtype=float), 1e-5, 1.0 - 1e-5)
+    uq_source = frame["uq_mean_gene_variance"].to_numpy(dtype=float)
     context = frame[CONTEXT_COLUMNS].to_numpy(dtype=float)
+    no_id_columns = P_COLUMNS + S_COLUMNS + N_COLUMNS
+    context_no_id = frame[no_id_columns].to_numpy(dtype=float)
     all_numeric = frame[ALL_NUMERIC_COLUMNS].to_numpy(dtype=float)
     support_novelty = frame[S_COLUMNS + N_COLUMNS].to_numpy(dtype=float)
     identity = pd.get_dummies(frame[["environment_id", "predictor"]], dtype=float).to_numpy()
@@ -249,49 +540,57 @@ def _fit_fold_predictions(frame: pd.DataFrame) -> pd.DataFrame:
             "isotonic",
             "support_novelty_only",
             "ptl_rf",
-            "calibrated_gbdt",
+            "gbdt_uncalibrated",
             "ptl_context",
             "ptl_full",
             "ptl_no_id",
         ]
     }
+    uq_quantile = np.full(len(frame), np.nan, dtype=float)
+    degenerate_uq = np.zeros(len(frame), dtype=bool)
     splitter = GroupKFold(n_splits=5)
-    for fold, (train, test) in enumerate(splitter.split(context, y, groups)):
-        folds[test] = fold
-        predictions["raw_normalized_uq"][test] = p0[test]
-        predictions["platt_logistic"][test] = predict_platt(fit_platt(p0[train], y[train]), p0[test])
-        predictions["isotonic"][test] = predict_isotonic(fit_isotonic(p0[train], y[train]), p0[test])
-        predictions["support_novelty_only"][test] = predict_logistic(
-            fit_logistic(support_novelty[train], y[train]), support_novelty[test]
+    predictors = frame["predictor"].to_numpy(dtype=str)
+    fold_tasks = [
+        (
+            fold,
+            train,
+            test,
+            y,
+            uq_source,
+            context,
+            context_no_id,
+            all_numeric,
+            support_novelty,
+            full,
+            predictors,
         )
-
-        if np.unique(y[train]).size < 2:
-            constant = float(y[train].mean())
-            predictions["ptl_rf"][test] = constant
-            predictions["calibrated_gbdt"][test] = constant
-            predictions["ptl_full"][test] = constant
-        else:
-            rf = RandomForestClassifier(
-                n_estimators=200, min_samples_leaf=10, random_state=17, n_jobs=1
-            ).fit(all_numeric[train], y[train])
-            gbdt = GradientBoostingClassifier(
-                n_estimators=100, max_depth=2, learning_rate=0.04, random_state=17
-            ).fit(all_numeric[train], y[train])
-            full_model = RandomForestClassifier(
-                n_estimators=200, min_samples_leaf=10, random_state=19, n_jobs=1
-            ).fit(full[train], y[train])
-            predictions["ptl_rf"][test] = rf.predict_proba(all_numeric[test])[:, 1]
-            predictions["calibrated_gbdt"][test] = gbdt.predict_proba(all_numeric[test])[:, 1]
-            predictions["ptl_full"][test] = full_model.predict_proba(full[test])[:, 1]
-
-        context_model = ContextualCalibrator().fit(context[train], p0[train], y[train])
-        predictions["ptl_context"][test] = context_model.predict(context[test], p0[test])
-        no_id_model = ContextualCalibrator().fit(context[train], p0[train], y[train])
-        predictions["ptl_no_id"][test] = no_id_model.predict(context[test], p0[test])
+        for fold, (train, test) in enumerate(splitter.split(context, y, groups))
+    ]
+    worker_count = int(os.environ.get("PTL_V2_WORKERS", "5"))
+    if not 1 <= worker_count <= len(fold_tasks):
+        raise ValueError(f"PTL_V2_WORKERS must be between 1 and {len(fold_tasks)}")
+    if worker_count == 1:
+        fold_results = [_fit_one_fold(task) for task in fold_tasks]
+    else:
+        with ProcessPoolExecutor(max_workers=worker_count) as executor:
+            fold_results = list(executor.map(_fit_one_fold, fold_tasks))
+    for fold, test, fold_predictions, fold_uq, fold_degenerate in sorted(
+        fold_results, key=lambda result: result[0]
+    ):
+        folds[test] = fold
+        uq_quantile[test] = fold_uq
+        degenerate_uq[test] = fold_degenerate
+        for name in predictions:
+            predictions[name][test] = fold_predictions[name]
     if np.any(folds < 0):
         raise AssertionError("some pilot rows were not assigned to a grouped fold")
-    output = frame[["prediction_id", "biological_instance_id", "environment_id", "predictor"]].copy()
+    output = frame[[
+        "prediction_id", "biological_instance_id", "environment_id", "predictor", "split_family",
+        "signature_id", "perturbation_group_id",
+    ]].copy()
     output["fold"] = folds
+    output["uq_quantile"] = uq_quantile
+    output["degenerate_uq"] = degenerate_uq
     for name, values in predictions.items():
         output[name] = values
     output["reliable_label"] = y
@@ -306,16 +605,30 @@ def _write_outputs(root: Path, frame: pd.DataFrame, fold_predictions: pd.DataFra
     manifests.mkdir(parents=True, exist_ok=True)
     validate_feature_columns([column for column in frame.columns if column not in {
         "prediction_id", "biological_instance_id", "environment_id", "predictor", "dataset_id",
-        "signature_id", "perturbation", "prediction_array_path", "gene_list_path", "ensemble_member_seeds",
+        "split_family", "signature_id", "perturbation", "perturbation_group_id",
+        "prediction_array_path", "gene_list_path", "ensemble_member_seeds",
+        "training_manifest_seeds",
         "fidelity_delta_cosine", "continuous_risk", "reliable_label", "legacy_transportability_label",
-        "legacy_target_risk",
+        "legacy_target_risk", "anchor_fidelity", "transportability_threshold", "transportability_label",
+        "legacy_reliable_label", "legacy_threshold", "transportability_tau", "training_support_max",
+        "degenerate_uq", "uq_quantile",
     }])
     predictions_columns = [
-        "prediction_id", "biological_instance_id", "environment_id", "predictor", "prediction_array_path",
-        "gene_list_path", "ensemble_member_seeds", *UQ_COLUMNS,
+        "prediction_id", "biological_instance_id", "environment_id", "predictor", "split_family",
+        "signature_id", "perturbation_group_id", "prediction_array_path",
+        "gene_list_path", "ensemble_member_seeds", "training_manifest_seeds", *UQ_COLUMNS,
     ]
-    deployment_columns = ["prediction_id", "biological_instance_id", "environment_id", "predictor", *P_COLUMNS, *S_COLUMNS, *N_COLUMNS, *C_COLUMNS]
-    outcomes_columns = ["prediction_id", "biological_instance_id", "environment_id", "predictor", "fidelity_delta_cosine", "continuous_risk", "reliable_label", "legacy_transportability_label", "legacy_target_risk"]
+    deployment_columns = [
+        "prediction_id", "biological_instance_id", "environment_id", "predictor",
+        *P_COLUMNS, *S_COLUMNS, *N_COLUMNS, *C_COLUMNS,
+    ]
+    outcomes_columns = [
+        "prediction_id", "biological_instance_id", "environment_id", "predictor", "split_family",
+        "signature_id", "perturbation_group_id", "fidelity_delta_cosine", "continuous_risk",
+        "anchor_fidelity", "transportability_threshold", "transportability_label", "reliable_label",
+        "transportability_tau",
+        "legacy_transportability_label", "legacy_target_risk",
+    ]
     paths = {
         "predictions": source / "predictions_summary.csv",
         "prediction_uq_manifest": manifests / "prediction_uq_manifest.csv",
@@ -330,27 +643,29 @@ def _write_outputs(root: Path, frame: pd.DataFrame, fold_predictions: pd.DataFra
         "bootstrap_ci": source / "g4_bootstrap_ci.csv",
         "fig2": source / "figure2_confidence_source.csv",
         "fig3": source / "figure3_selective_source.csv",
+        "target_sensitivity": source / "transportability_target_sensitivity.csv",
     }
     frame[predictions_columns].drop_duplicates("prediction_id").to_csv(paths["predictions"], index=False)
     prediction_manifest = (
-        frame.groupby(["environment_id", "dataset_id", "predictor"], as_index=False)
+        frame.groupby(["environment_id", "dataset_id", "predictor", "split_family"], as_index=False)
         .agg(
             n_predictions=("prediction_id", "nunique"),
             n_biological_instances=("biological_instance_id", "nunique"),
             ensemble_member_seeds=("ensemble_member_seeds", "first"),
+            training_manifest_seeds=("training_manifest_seeds", "first"),
             prediction_array_path=("prediction_array_path", "first"),
             gene_list_path=("gene_list_path", "first"),
-            uq_method=("ensemble_member_seeds", lambda values: "three_seed_ensemble"),
+            uq_method=("ensemble_member_seeds", lambda values: "aligned_2_or_3_seed_ensemble"),
         )
     )
     prediction_manifest.to_csv(paths["prediction_uq_manifest"], index=False)
     frame[deployment_columns].to_csv(paths["deployment_features"], index=False)
     frame[outcomes_columns].to_csv(paths["outcomes"], index=False)
-    fold_table = fold_predictions[["prediction_id", "biological_instance_id", "fold"]].drop_duplicates()
+    fold_table = fold_predictions[["prediction_id", "biological_instance_id", "split_family", "fold"]].drop_duplicates()
     fold_table.to_csv(paths["folds"], index=False)
     fold_table.to_parquet(paths["folds_parquet"], index=False)
     fold_summary = (
-        fold_predictions.groupby(["environment_id", "predictor", "fold"], as_index=False)
+        fold_predictions.groupby(["environment_id", "predictor", "split_family", "fold"], as_index=False)
         .agg(
             n_predictions=("prediction_id", "nunique"),
             n_biological_instances=("biological_instance_id", "nunique"),
@@ -366,9 +681,12 @@ def _write_outputs(root: Path, frame: pd.DataFrame, fold_predictions: pd.DataFra
                 ),
                 "dataset_id": dataset_id,
                 "cell_context": details["cell_context"],
-                "modality": details["modality"],
+                "perturbation_modality": details["perturbation_modality"],
+                "readout_modality": details["readout_modality"],
+                "platform": details["platform"],
                 "condition": details["condition"],
                 "role": "pilot_replay",
+                "semantic_status": "core_pilot_fields_explicit_metadata_expansion_pending",
                 "status": "active_legacy_prediction_surface" if "legacy" in details["condition"] else "active_pilot_surface",
             }
             for dataset_id, details in PILOT_DATASETS.items()
@@ -376,33 +694,66 @@ def _write_outputs(root: Path, frame: pd.DataFrame, fold_predictions: pd.DataFra
     )
     environment_registry.to_csv(paths["environment_registry"], index=False)
 
+    sensitivity_rows = []
+    anchor_median = frame["transportability_threshold"] / frame["transportability_tau"]
+    for tau in (0.6, 0.7, 0.8, 0.9):
+        labels = frame["fidelity_delta_cosine"] >= tau * anchor_median
+        for keys, group in frame.assign(_sensitivity_label=labels).groupby(
+            ["dataset_id", "predictor", "split_family"], sort=True
+        ):
+            sensitivity_rows.append({
+                "dataset_id": keys[0],
+                "predictor": keys[1],
+                "split_family": keys[2],
+                "tau": tau,
+                "n": len(group),
+                "reliable_rate": group["_sensitivity_label"].mean(),
+            })
+    pd.DataFrame(sensitivity_rows).to_csv(paths["target_sensitivity"], index=False)
+
     rq1_rows = []
-    working = frame.copy()
+    working = frame.drop(columns=["uq_quantile", "degenerate_uq"]).merge(
+        fold_predictions[["prediction_id", "uq_quantile", "degenerate_uq"]],
+        on="prediction_id",
+        how="left",
+    )
     working["support_bin"] = pd.qcut(working["support_cells"].rank(method="first"), 3, labels=["low", "mid", "high"])
     working["novelty_bin"] = pd.qcut(working["perturbation_novelty"].rank(method="first"), 3, labels=["low", "mid", "high"])
-    for keys, group in working.groupby(["environment_id", "predictor", "support_bin", "novelty_bin"], observed=True):
+    for keys, group in working.groupby(["environment_id", "predictor", "split_family", "support_bin", "novelty_bin"], observed=True):
         corr = group["uq_quantile"].corr(group["fidelity_delta_cosine"], method="spearman")
         rq1_rows.append({
-            "environment_id": keys[0], "predictor": keys[1], "support_bin": keys[2], "novelty_bin": keys[3],
+            "environment_id": keys[0], "predictor": keys[1], "split_family": keys[2],
+            "support_bin": keys[3], "novelty_bin": keys[4],
             "n": len(group), "mean_fidelity": group["fidelity_delta_cosine"].mean(),
             "mean_confidence": group["uq_quantile"].mean(), "spearman_confidence_fidelity": corr,
+            "degenerate_uq_rate": group["degenerate_uq"].mean(),
         })
     pd.DataFrame(rq1_rows).to_csv(paths["rq1"], index=False)
 
     method_rows = []
     method_names = [column for column in fold_predictions.columns if column in {
         "raw_normalized_uq", "platt_logistic", "isotonic", "support_novelty_only", "ptl_rf",
-        "calibrated_gbdt", "ptl_context", "ptl_full", "ptl_no_id"
+        "gbdt_uncalibrated", "ptl_context", "ptl_full", "ptl_no_id"
     }]
-    for (predictor, environment), group in fold_predictions.groupby(["predictor", "environment_id"]):
+    for (predictor, environment, split_family), group in fold_predictions.groupby(
+        ["predictor", "environment_id", "split_family"]
+    ):
         for method in method_names:
             values = evaluate_scores(group["reliable_label"], group[method], group["continuous_risk"])
-            method_rows.append({"aggregation_level": "predictor_environment", "predictor": predictor, "environment_id": environment, "method": method, **values})
+            method_rows.append({
+                "aggregation_level": "predictor_environment_split",
+                "predictor": predictor,
+                "environment_id": environment,
+                "split_family": split_family,
+                "method": method,
+                **values,
+            })
     detail = pd.DataFrame(method_rows)
     macro = detail.groupby("method", as_index=False)[["aurc", "excess_aurc", "risk_at_50", "risk_at_80", "ftr_at_50", "ftr_at_80", "brier", "log_loss", "auroc", "auprc", "spearman_continuous_risk"]].mean(numeric_only=True)
     macro["aggregation_level"] = "environment_macro_average"
     macro["predictor"] = "all_pilot_predictors"
     macro["environment_id"] = "macro"
+    macro["split_family"] = "macro"
     macro["n"] = np.nan
     detail = pd.concat([detail, macro[detail.columns]], ignore_index=True)
     detail.to_csv(paths["g4"], index=False)
@@ -413,11 +764,20 @@ def _write_outputs(root: Path, frame: pd.DataFrame, fold_predictions: pd.DataFra
         seed=17,
     )
     bootstrap_ci = summarize_bootstrap_ci(bootstrap_draws)
-    bootstrap_ci.insert(0, "aggregation_level", "paired_hierarchical_macro_ci")
-    bootstrap_ci.insert(2, "predictor", "all_pilot_predictors")
-    bootstrap_ci.insert(3, "environment_id", "macro")
+    delta_ci = summarize_paired_deltas(bootstrap_draws, "raw_normalized_uq")
+    delta_ci["aggregation_level"] = "paired_hierarchical_delta_ci"
+    delta_ci["predictor"] = "all_pilot_predictors"
+    delta_ci["environment_id"] = "macro"
+    delta_ci["split_family"] = "macro"
+    bootstrap_ci["aggregation_level"] = "paired_hierarchical_macro_ci"
+    bootstrap_ci["baseline_method"] = ""
+    bootstrap_ci["resample_level"] = "environment_then_biological_instance"
+    bootstrap_ci["predictor"] = "all_pilot_predictors"
+    bootstrap_ci["environment_id"] = "macro"
+    bootstrap_ci["split_family"] = "macro"
+    bootstrap_ci = pd.concat([bootstrap_ci, delta_ci], ignore_index=True, sort=False)
     bootstrap_ci.to_csv(paths["bootstrap_ci"], index=False)
-    frame[["prediction_id", "environment_id", "predictor", "uq_quantile", "fidelity_delta_cosine", "support_cells", "perturbation_novelty"]].to_csv(paths["fig2"], index=False)
+    working[["prediction_id", "environment_id", "predictor", "split_family", "uq_quantile", "degenerate_uq", "fidelity_delta_cosine", "support_cells", "perturbation_novelty"]].to_csv(paths["fig2"], index=False)
     detail.to_csv(paths["fig3"], index=False)
     return paths
 
@@ -428,9 +788,32 @@ def run_pilot(root: str | Path) -> dict[str, object]:
     frames = []
     for dataset_id in PILOT_DATASETS:
         for predictor in MODEL_DIRS:
-            frames.append(_load_ensemble(root, dataset_id, predictor))
+            for split_family in PILOT_SPLITS:
+                frames.append(_load_ensemble(root, dataset_id, predictor, split_family))
     frame = _add_context_features(pd.concat(frames, ignore_index=True))
     frame = frame.merge(labels, on=["dataset_id", "predictor", "signature_id"], how="left")
+    anchors = (
+        frame.loc[frame["split_family"] == "random_split", [
+            "dataset_id", "predictor", "signature_id", "fidelity_delta_cosine"
+        ]]
+        .rename(columns={"fidelity_delta_cosine": "anchor_fidelity"})
+    )
+    thresholds = (
+        anchors.groupby(["dataset_id", "predictor"], as_index=False)["anchor_fidelity"]
+        .median()
+        .rename(columns={"anchor_fidelity": "anchor_median_fidelity"})
+        .assign(transportability_threshold=lambda values: 0.8 * values["anchor_median_fidelity"])
+        [["dataset_id", "predictor", "transportability_threshold"]]
+    )
+    frame = frame.merge(anchors, on=["dataset_id", "predictor", "signature_id"], how="left")
+    frame = frame.merge(thresholds, on=["dataset_id", "predictor"], how="left")
+    frame["transportability_tau"] = 0.8
+    frame["transportability_label"] = (
+        frame["fidelity_delta_cosine"] >= frame["transportability_threshold"]
+    ).astype(int)
+    frame["reliable_label"] = frame["transportability_label"]
+    frame["legacy_reliable_label"] = frame["legacy_transportability_label"]
+    frame["legacy_threshold"] = 0.5
     frame["legacy_transportability_label"] = frame["legacy_transportability_label"].fillna(-1.0)
     frame["legacy_target_risk"] = frame["legacy_target_risk"].fillna(np.nan)
     fold_predictions = _fit_fold_predictions(frame)
@@ -442,6 +825,11 @@ def run_pilot(root: str | Path) -> dict[str, object]:
         "rows": int(len(frame)),
         "biological_instances": int(frame["biological_instance_id"].nunique()),
         "folds": 5,
+        "cross_fit_workers": int(os.environ.get("PTL_V2_WORKERS", "5")),
+        "cross_fit_parallelization": "source-disjoint outer folds with deterministic parent merge",
+        "split_families": list(PILOT_SPLITS),
+        "transportability_target": "T_i = I[F_i >= 0.8 * median(F_random_anchor)]",
+        "transportability_tau_sensitivity": [0.6, 0.7, 0.8, 0.9],
         "gears": "not_run: official package imports in the project environment, but the v2 data adapter is not yet validated; legacy fallback paths remain excluded",
         "k562_surface": "ReplogleWeissman2022_K562_essential legacy processed surface; GWPS deferred",
         "outputs": {key: _relative(root, value) for key, value in paths.items()},

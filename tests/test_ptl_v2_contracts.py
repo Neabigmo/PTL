@@ -18,6 +18,13 @@ def test_predictors_share_biological_instance_but_not_prediction_id():
     assert bio in left and bio in right
 
 
+def test_prediction_ids_are_unique_at_signature_level():
+    environment = "env__norman__k562__rna__baseline"
+    signatures = [biological_instance_id(environment, value) for value in ["sig_a", "sig_b"]]
+    ids = [prediction_id(value, "ridge", "dataset_heldout_split", "ensemble3") for value in signatures]
+    assert len(set(ids)) == len(ids)
+
+
 def test_outcomes_cannot_enter_deployment_features():
     with pytest.raises(ValueError, match="outcome"):
         validate_feature_columns(["support_cells", "fidelity_delta_cosine"])

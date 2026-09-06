@@ -70,8 +70,10 @@ external_b_freeze:
   frozen_before_ptl_v2_performance: true
 
 identity_policy:
-  environment_id: dataset + cell_context + modality + condition
-  biological_instance_id: environment + perturbation + dose + timepoint
+  environment_id: dataset + cell_context + readout_modality + condition
+  semantic_context_fields: [cell_context, perturbation_modality, readout_modality, condition, platform]
+  biological_instance_id: environment + signature_id + dose + timepoint
+  perturbation_group_id: environment + perturbation_label
   prediction_id: biological_instance + predictor + predictor_split + model_seed
   fold_group: biological_instance_id
   model_gene_space_separate_from_evaluation_gene_space: true

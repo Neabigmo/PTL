@@ -44,18 +44,43 @@ def summarize_ensemble(predictions: np.ndarray, top_k: int = 50) -> EnsembleUQ:
 
 
 def empirical_quantile(values: np.ndarray, reference: np.ndarray) -> np.ndarray:
-    """Map uncertainty to a predictor-relative empirical quantile."""
+    """Map uncertainty to a predictor-relative mid-rank empirical quantile."""
 
     values = np.asarray(values, dtype=float)
     reference = np.asarray(reference, dtype=float)
     reference = np.sort(reference[np.isfinite(reference)])
     if reference.size == 0:
         raise ValueError("reference uncertainty distribution is empty")
-    ranks = np.searchsorted(reference, values, side="right")
-    return np.clip((ranks - 0.5) / reference.size, 0.0, 1.0)
+    left = np.searchsorted(reference, values, side="left")
+    right = np.searchsorted(reference, values, side="right")
+    ranks = (left + right) / 2.0
+    return np.clip(ranks / reference.size, 0.0, 1.0)
 
 
 def confidence_from_uq(values: np.ndarray, reference: np.ndarray) -> np.ndarray:
     """Convert high-uncertainty quantiles to high-is-good confidence."""
 
     return 1.0 - empirical_quantile(values, reference)
+
+
+@dataclass(frozen=True)
+class UQNormalizer:
+    """Train-only empirical UQ normalization with explicit degeneracy status."""
+
+    reference: np.ndarray
+    degenerate: bool = False
+
+    @classmethod
+    def fit(cls, reference: np.ndarray) -> "UQNormalizer":
+        values = np.asarray(reference, dtype=float)
+        values = values[np.isfinite(values)]
+        if values.size == 0:
+            raise ValueError("cannot fit UQ normalizer on an empty reference")
+        values = np.sort(values)
+        return cls(values, bool(values.size < 2 or np.std(values) <= 1e-12))
+
+    def transform(self, values: np.ndarray) -> np.ndarray:
+        values = np.asarray(values, dtype=float)
+        if self.degenerate:
+            return np.full(values.shape, 0.5, dtype=float)
+        return confidence_from_uq(values, self.reference)

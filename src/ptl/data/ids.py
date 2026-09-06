@@ -34,7 +34,12 @@ def biological_instance_id(
     dose: object | None = None,
     timepoint: object | None = None,
 ) -> str:
-    """Identify one ground-truth response shared by predictors and seeds."""
+    """Identify one ground-truth response shared by predictors and seeds.
+
+    The perturbation argument is the semantically validated signature-level
+    instance key. Use :func:`perturbation_group_id` for repeated signatures
+    sharing one perturbation label.
+    """
 
     values = [_part(environment), _part(perturbation)]
     if dose is not None and str(dose).strip():
@@ -42,6 +47,12 @@ def biological_instance_id(
     if timepoint is not None and str(timepoint).strip():
         values.append(_part(timepoint))
     return "bio__" + "__".join(values)
+
+
+def perturbation_group_id(environment: object, perturbation: object) -> str:
+    """Identify a perturbation group without collapsing signature instances."""
+
+    return "pert__" + "__".join((_part(environment), _part(perturbation)))
 
 
 def prediction_id(
