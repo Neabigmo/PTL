@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2",
+  "split_id": "ptl_biological_instance_split_v1",
+  "predictors": [
+    "mean_matching",
+    "strong_linear"
+  ],
+  "environments": 8,
+  "model_seeds": [
+    0,
+    1,
+    2
+  ],
+  "metric_rows": 64,
+  "contract_rows": 4530,
+  "metrics_path": "artifacts/manifests/formal_v2_predictor_metrics.csv",
+  "contract_path": "artifacts/manifests/formal_v2_prediction_index.csv",
+  "status": "formal_v2_simple_predictors_executed"
+}

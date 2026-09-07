@@ -2,7 +2,7 @@
   "schema_version": 2,
   "benchmark_id": "ptl_context_v2",
   "environment_count": 8,
-  "environment_ids": [
+  "environment_keys": [
     "norman_k562",
     "replogle_k562_essential",
     "replogle_rpe1",
@@ -11,6 +11,26 @@
     "frangieh_melanoma_control",
     "frangieh_melanoma_coculture",
     "frangieh_melanoma_ifng"
+  ],
+  "environment_ids": [
+    "env__v~normanweissman2019%5Ffiltered__v~k562__v~rna__v~baseline",
+    "env__v~replogleweissman2022%5Fk562%5Fessential__v~k562__v~rna__v~essential%5Fgene%5Fscreen",
+    "env__v~replogleweissman2022%5Frpe1__v~rpe1__v~rna__v~baseline",
+    "env__v~tiankampmann2021%5Fcrispra__v~ipsc-induced%5Fneuron__v~rna__v~baseline",
+    "env__v~tiankampmann2021%5Fcrispri__v~ipsc-induced%5Fneuron__v~rna__v~baseline",
+    "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~control",
+    "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~co-culture",
+    "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~ifn%CE%B3"
+  ],
+  "canonical_environment_ids": [
+    "env__v~normanweissman2019%5Ffiltered__v~k562__v~rna__v~baseline",
+    "env__v~replogleweissman2022%5Fk562%5Fessential__v~k562__v~rna__v~essential%5Fgene%5Fscreen",
+    "env__v~replogleweissman2022%5Frpe1__v~rpe1__v~rna__v~baseline",
+    "env__v~tiankampmann2021%5Fcrispra__v~ipsc-induced%5Fneuron__v~rna__v~baseline",
+    "env__v~tiankampmann2021%5Fcrispri__v~ipsc-induced%5Fneuron__v~rna__v~baseline",
+    "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~control",
+    "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~co-culture",
+    "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~ifn%CE%B3"
   ],
   "dataset_count": 6,
   "dataset_feature_counts": {

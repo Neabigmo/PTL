@@ -22,7 +22,7 @@ Single-cell perturbation predictors are increasingly used outside the
 experimental context in which they were trained, but a model's native
 uncertainty need not remain a reliable signal of prediction fidelity under
 structured biological shift. We introduce a target-free reliability layer,
-\ptl, that calibrates a predictor's native uncertainty using prediction
+\ptl, that calibrates a predictor's uncertainty using prediction
 geometry, training support, perturbation novelty and explicit biological
 context. The method separates predictions, deployment-time features, observed
 outcomes and grouped cross-fitting assignments, so reliability decisions cannot
@@ -73,7 +73,7 @@ coverage after batch-aware eligibility.
   \centering
   \includegraphics[width=\textwidth]{../../results/figures/nature/nature_fig1_framework.pdf}
   \caption{\textbf{Reliability framework and data boundary.} (a) \ptl{} combines
-  native uncertainty $U$ with target-free prediction geometry, support,
+  predictor uncertainty $U$ with target-free prediction geometry, support,
   novelty and biological context before a keep/abstain decision. (b) Context
   expansion is recorded by raw biological semantics. (c) The GWPS audit shows
   that attrition is dominated by batch--perturbation eligibility rather than
@@ -176,7 +176,7 @@ cells.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{../../results/figures/nature/nature_fig2_native_uq.pdf}
-  \caption{\textbf{Native uncertainty under structured shift.} Observation-level
+  \caption{\textbf{Predictor uncertainty under structured shift.} Observation-level
   UQ quantiles and realized delta-cosine fidelity are shown for the three
   pilot predictors across random, unseen-perturbation and dataset-held-out
   splits. Aggregate panels show that the uncertainty scale and its relation to
@@ -186,7 +186,7 @@ cells.
 \end{figure*}
 
 \section{Results}
-\subsection{Native uncertainty is not transportability-invariant}
+\subsection{Predictor uncertainty is not transportability-invariant}
 Figure~\ref{fig:native-uq} shows the central failure mode motivating \ptl{}.
 Uncertainty quantiles occupy different ranges across split families, and the
 relationship between the quantile and realized delta-cosine fidelity changes

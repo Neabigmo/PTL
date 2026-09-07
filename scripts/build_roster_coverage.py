@@ -18,9 +18,28 @@ def load_yaml(path: Path) -> dict[str, Any]:
     return value
 
 
-def build_matrix(root: Path, benchmark_path: Path, roster_path: Path, output_path: Path, summary_path: Path) -> dict[str, Any]:
+def load_registry(path: Path) -> dict[str, dict[str, Any]]:
+    registry = pd.read_csv(path)
+    required = {"environment_id", "environment_key"}
+    missing = required.difference(registry.columns)
+    if missing:
+        raise ValueError(f"Canonical environment registry is missing columns: {sorted(missing)}")
+    if registry["environment_id"].duplicated().any() or registry["environment_key"].duplicated().any():
+        raise ValueError("Canonical environment registry IDs and keys must be unique")
+    return {str(row.environment_key): row._asdict() for row in registry.itertuples(index=False)}
+
+
+def build_matrix(
+    root: Path,
+    benchmark_path: Path,
+    roster_path: Path,
+    registry_path: Path,
+    output_path: Path,
+    summary_path: Path,
+) -> dict[str, Any]:
     benchmark = load_yaml(benchmark_path)
     roster = load_yaml(roster_path)
+    registry = load_registry(registry_path)
     environments = benchmark.get("environments", [])
     predictors = roster.get("predictors", [])
     if len(environments) != 8:
@@ -30,13 +49,18 @@ def build_matrix(root: Path, benchmark_path: Path, roster_path: Path, output_pat
     rows: list[dict[str, Any]] = []
     for predictor in predictors:
         for environment in environments:
+            environment_key = str(environment["environment_id"])
+            if environment_key not in registry:
+                raise ValueError(f"Benchmark environment key is absent from registry: {environment_key}")
+            canonical = registry[environment_key]
             rows.append(
                 {
                     "predictor_id": predictor["predictor_id"],
                     "predictor_family": predictor["family"],
                     "roster_role": predictor["role"],
                     "predictor_status": predictor["status"],
-                    "environment_id": environment["environment_id"],
+                    "environment_id": canonical["environment_id"],
+                    "environment_key": environment_key,
                     "dataset_id": environment["dataset_id"],
                     "cell_context": environment["cell_context"],
                     "condition": environment["condition"],
@@ -56,7 +80,8 @@ def build_matrix(root: Path, benchmark_path: Path, roster_path: Path, output_pat
         "predictor_count": len(predictors),
         "environment_count": len(environments),
         "matrix_rows": len(frame),
-        "ensemble_seeds": roster["uq_policy"]["ensemble_seeds"],
+        "split_seed": roster["uq_policy"]["split_seed"],
+        "model_seeds": roster["uq_policy"]["model_seeds"],
         "native_uq_preferred": bool(roster["uq_policy"]["native_uq_preferred"]),
         "evaluation_gene_space": roster["uq_policy"]["evaluation_gene_space"],
         "status": "planning_matrix_only_no_scientific_results_claimed",
@@ -72,6 +97,7 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--benchmark", type=Path, default=None)
     parser.add_argument("--roster", type=Path, default=None)
+    parser.add_argument("--registry", type=Path, default=None)
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--summary", type=Path, default=None)
     args = parser.parse_args()
@@ -80,6 +106,7 @@ def main() -> int:
         root,
         (args.benchmark or root / "configs/context_benchmark.yaml").resolve(),
         (args.roster or root / "configs/model_roster.yaml").resolve(),
+        (args.registry or root / "artifacts/manifests/environment_registry.csv").resolve(),
         (args.output or root / "artifacts/manifests/predictor_environment_coverage.csv").resolve(),
         (args.summary or root / "artifacts/manifests/predictor_environment_coverage.json").resolve(),
     )

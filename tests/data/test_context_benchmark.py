@@ -20,6 +20,7 @@ def test_materialized_registry_and_panel_are_consistent() -> None:
     registry = pd.read_csv("artifacts/manifests/environment_registry.csv")
     panel = pd.read_csv("artifacts/manifests/evaluation_gene_space.csv")
     assert len(registry) == 8
+    assert registry["environment_key"].is_unique
     assert registry["environment_id"].is_unique
     assert len(panel) == 6897
     assert panel["gene_symbol"].is_unique

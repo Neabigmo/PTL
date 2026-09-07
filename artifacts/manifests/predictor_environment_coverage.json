@@ -5,7 +5,8 @@
   "predictor_count": 6,
   "environment_count": 8,
   "matrix_rows": 48,
-  "ensemble_seeds": [
+  "split_seed": 20260907,
+  "model_seeds": [
     0,
     1,
     2

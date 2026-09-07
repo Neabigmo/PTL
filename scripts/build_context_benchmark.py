@@ -22,6 +22,7 @@ from ptl.data.ids import environment_id as stable_environment_id
 
 REGISTRY_COLUMNS = [
     "environment_id",
+    "environment_key",
     "dataset_id",
     "cell_context",
     "perturbation_modality",
@@ -90,6 +91,7 @@ def materialize(root: Path, spec_path: Path, registry_path: Path, gene_space_pat
         writer.writeheader()
         for row in environments:
             registry_row = {column: row.get(column, "") for column in REGISTRY_COLUMNS}
+            registry_row["environment_key"] = row["environment_id"]
             registry_row["environment_id"] = stable_environment_id(
                 row["dataset_id"], row["cell_context"], row["readout_modality"], row["condition"]
             )
@@ -118,7 +120,15 @@ def materialize(root: Path, spec_path: Path, registry_path: Path, gene_space_pat
         "schema_version": 2,
         "benchmark_id": spec["benchmark_id"],
         "environment_count": len(environments),
-        "environment_ids": [row["environment_id"] for row in environments],
+        "environment_keys": [row["environment_id"] for row in environments],
+        "environment_ids": [
+            stable_environment_id(row["dataset_id"], row["cell_context"], row["readout_modality"], row["condition"])
+            for row in environments
+        ],
+        "canonical_environment_ids": [
+            stable_environment_id(row["dataset_id"], row["cell_context"], row["readout_modality"], row["condition"])
+            for row in environments
+        ],
         "dataset_count": len(dataset_to_genes),
         "dataset_feature_counts": {key: len(value) for key, value in sorted(dataset_to_genes.items())},
         "shared_gene_count": len(common_genes),

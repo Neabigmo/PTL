@@ -1,4 +1,14 @@
 schema_version: 1
+formal_benchmark:
+  biological_instance_unit: environment_id + perturbation_label + dose + timepoint
+  split_id: ptl_biological_instance_split_v1
+  split_seed: 20260907
+  model_seeds: [0, 1, 2]
+  split_strategy: per_environment_condition_grouped
+  split_fractions: {train: 0.6, validation: 0.2, test: 0.2}
+  reliability_target: I[fidelity >= tau * median(validation_fidelity)]
+  primary_tau: 0.8
+  tau_sensitivity: [0.6, 0.7, 0.8, 0.9]
 folds:
   method: grouped_stratified_if_available
   n_splits: 5

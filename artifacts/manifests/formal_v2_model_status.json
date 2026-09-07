@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "roster_id": "ptl_formal_predictor_roster_v2",
+  "split_id": "ptl_biological_instance_split_v1",
+  "rows": 48,
+  "status_counts": {
+    "unsupported": 24,
+    "success": 16,
+    "pending": 8
+  },
+  "result_claims": 16,
+  "status": "formal_v2_roster_status_audited"
+}

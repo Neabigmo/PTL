@@ -78,7 +78,7 @@ external_b_freeze:
 identity_policy:
   environment_id: dataset + cell_context + readout_modality + condition
   semantic_context_fields: [cell_context, perturbation_modality, readout_modality, condition, platform]
-  biological_instance_id: environment + signature_id + dose + timepoint
+  biological_instance_id: "formal_v2: environment_id + perturbation_label + dose + timepoint; legacy_replay: environment + signature_id + dose + timepoint"
   perturbation_group_id: environment + perturbation_label
   prediction_id: biological_instance + predictor + predictor_split + model_seed
   fold_group: biological_instance_id

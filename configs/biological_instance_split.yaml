@@ -1,0 +1,18 @@
+schema_version: 1
+split_id: ptl_biological_instance_split_v1
+unit: environment_id x perturbation_label x dose x timepoint
+split_strategy: per_environment_condition_grouped
+split_seed: 20260907
+model_seeds: [0, 1, 2]
+split_fractions:
+  train: 0.6
+  validation: 0.2
+  test: 0.2
+reliability_target:
+  definition: fidelity >= tau * median(validation_fidelity)
+  primary_tau: 0.8
+  tau_sensitivity: [0.6, 0.7, 0.8, 0.9]
+aggregation:
+  definition: weighted_mean_of_batch_matched_deltas
+  weight: valid_cell_count_per_reference_group
+  controls: matched_within_reference_group

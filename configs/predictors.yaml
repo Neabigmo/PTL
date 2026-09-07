@@ -18,8 +18,8 @@ predictors:
     native_uq: bootstrap_across_training_instances
   strong_linear:
     family: bilinear_linear
-    implementation: pending_ahlmann_eltze_reproduction
-    headline_status: contract_only
+    implementation: ahlmann_eltze_bilinear_ridge
+    headline_status: formal_reproduction_pending
     native_uq: bootstrap_across_training_instances
   official_gears:
     family: graph_neural_network

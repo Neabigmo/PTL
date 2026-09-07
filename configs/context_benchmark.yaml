@@ -13,12 +13,12 @@ environments:
   - environment_id: norman_k562
     dataset_id: NormanWeissman2019_filtered
     cell_context: K562
-    perturbation_modality: CRISPR_screen
+    perturbation_modality: CRISPRa
     readout_modality: RNA
     platform: Perturb-seq
     condition: baseline
     role: common_core
-    semantic_status: raw_context_verified_modality_family_unspecified
+    semantic_status: raw_context_verified_crispra
     status: ready_signature_surface
   - environment_id: replogle_k562_essential
     dataset_id: ReplogleWeissman2022_K562_essential
@@ -63,33 +63,33 @@ environments:
   - environment_id: frangieh_melanoma_control
     dataset_id: FrangiehIzar2021_RNA
     cell_context: patient-derived_melanoma
-    perturbation_modality: CRISPR_screen
+    perturbation_modality: CRISPRn
     readout_modality: RNA
     platform: Perturb-CITE-seq
     condition: Control
     condition_field: perturbation_2
     role: context_expansion
-    semantic_status: raw_condition_field_verified
+    semantic_status: raw_condition_field_verified_crisprn
     status: ready_signature_surface
   - environment_id: frangieh_melanoma_coculture
     dataset_id: FrangiehIzar2021_RNA
     cell_context: patient-derived_melanoma
-    perturbation_modality: CRISPR_screen
+    perturbation_modality: CRISPRn
     readout_modality: RNA
     platform: Perturb-CITE-seq
     condition: Co-culture
     condition_field: perturbation_2
     role: context_expansion
-    semantic_status: raw_condition_field_verified
+    semantic_status: raw_condition_field_verified_crisprn
     status: ready_signature_surface
   - environment_id: frangieh_melanoma_ifng
     dataset_id: FrangiehIzar2021_RNA
     cell_context: patient-derived_melanoma
-    perturbation_modality: CRISPR_screen
+    perturbation_modality: CRISPRn
     readout_modality: RNA
     platform: Perturb-CITE-seq
     condition: IFNγ
     condition_field: perturbation_2
     role: context_expansion
-    semantic_status: raw_condition_field_verified
+    semantic_status: raw_condition_field_verified_crisprn
     status: ready_signature_surface

@@ -16,6 +16,7 @@ from matplotlib.colors import TwoSlopeNorm
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 import numpy as np
 import pandas as pd
+import yaml
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -178,7 +179,7 @@ def fig1_framework(output_dir: Path) -> list[Path]:
     ax.text(0.01, 0.91, "Deployment-time reliability layer", transform=ax.transAxes,
             fontsize=8, fontweight="bold", color=COLORS["ink"])
     draw_box(ax, 0.02, 0.48, 0.17, 0.27, "Perturbation", "predictor output", COLORS["light_blue"], COLORS["blue"])
-    draw_box(ax, 0.26, 0.64, 0.15, 0.22, "U", "native UQ", COLORS["light_orange"], COLORS["orange"])
+    draw_box(ax, 0.26, 0.64, 0.15, 0.22, "U", "predictor UQ", COLORS["light_orange"], COLORS["orange"])
     draw_box(ax, 0.26, 0.30, 0.15, 0.22, "z", "deployment context", COLORS["light_teal"], COLORS["teal"])
     draw_box(ax, 0.50, 0.48, 0.19, 0.27, "PTL calibrator", "context-conditioned p", COLORS["light_purple"], COLORS["purple"])
     draw_box(ax, 0.79, 0.48, 0.18, 0.27, "Decision", "keep / abstain", COLORS["light_grey"], COLORS["ink"])
@@ -269,7 +270,7 @@ def fig1_framework(output_dir: Path) -> list[Path]:
     ax.add_patch(FancyBboxPatch((0.05, 0.54), 0.90, 0.27, boxstyle="round,pad=0.02",
                                 facecolor=COLORS["light_orange"], edgecolor=COLORS["orange"], linewidth=0.8))
     ax.text(0.50, 0.68, "GWPS → GEARS contract pilot", ha="center", va="center", fontsize=7.2, fontweight="bold")
-    ax.text(0.50, 0.58, "native UQ + condition holdout", ha="center", va="center", fontsize=6.2, color=COLORS["muted"])
+    ax.text(0.50, 0.58, "predictor UQ + condition holdout", ha="center", va="center", fontsize=6.2, color=COLORS["muted"])
     ax.add_patch(FancyBboxPatch((0.05, 0.16), 0.90, 0.27, boxstyle="round,pad=0.02",
                                 facecolor=COLORS["light_teal"], edgecolor=COLORS["teal"], linewidth=0.8))
     ax.text(0.50, 0.30, "K562 essential → headline common core", ha="center", va="center", fontsize=7.2, fontweight="bold")
@@ -282,7 +283,7 @@ def fig2_native_uq(output_dir: Path) -> list[Path]:
     df = df[df["split_family"].isin(SPLIT_ORDER)].copy()
     fig = plt.figure(figsize=(7.2, 4.65))
     gs = fig.add_gridspec(2, 3, height_ratios=[1.5, 1.0], hspace=0.62, wspace=0.38)
-    fig.suptitle("Native uncertainty changes meaning across structured shift", x=0.06, y=0.985,
+    fig.suptitle("Predictor uncertainty changes meaning across structured shift", x=0.06, y=0.985,
                  ha="left", fontsize=11, fontweight="bold", color=COLORS["ink"])
     fig.text(0.06, 0.953, "Current PTL replay: observation-level uncertainty quantiles versus realized delta-cosine fidelity.",
              ha="left", va="top", fontsize=7, color=COLORS["muted"])
@@ -423,6 +424,7 @@ def fig3_selective(output_dir: Path) -> list[Path]:
 def fig4_information_blocks(output_dir: Path) -> list[Path]:
     deployment = load("deployment_features.csv", SOURCE)
     g4 = load("g4_method_comparison.csv", SOURCE)
+    reliability = yaml.safe_load((ROOT / "configs" / "reliability.yaml").read_text(encoding="utf-8"))
     block_order = ["U", "P", "S", "N", "C"]
     block_labels = {
         "U": "U · prediction / UQ",
@@ -431,13 +433,7 @@ def fig4_information_blocks(output_dir: Path) -> list[Path]:
         "N": "N · novelty",
         "C": "C · biological context",
     }
-    block_columns = {
-        "U": ["prediction_norm", "prediction_sparsity", "prediction_concentration"],
-        "P": ["prediction_manifold_distance"],
-        "S": ["support_cells", "support_signatures", "reference_key_overlap"],
-        "N": ["perturbation_seen_fraction", "component_seen_fraction", "combination_novelty", "perturbation_novelty"],
-        "C": ["cell_context", "perturbation_modality", "readout_modality", "condition", "platform", "batch_distance"],
-    }
+    block_columns = {block: list(columns) for block, columns in reliability["feature_blocks"].items()}
     counts = pd.Series({block: len(columns) for block, columns in block_columns.items()}).reindex(block_order)
 
     fig = plt.figure(figsize=(7.2, 4.9))
