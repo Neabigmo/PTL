@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "benchmark_id": "ptl_context_v2",
-  "prediction_source": "formal_v2_exact_linear_20260907_validation_test_only",
+  "prediction_source": "formal_v2_predictors_validation_test_only",
   "split_id": "ptl_biological_instance_split_v1",
   "calibration_split": "validation",
   "final_evaluation_split": "test",
@@ -12,6 +12,7 @@
   ],
   "predictors_executed": [
     "mean_matching",
+    "slim_string",
     "strong_linear"
   ],
   "predictors_not_executed": [
@@ -35,9 +36,9 @@
       "prediction_manifold_distance"
     ],
     "S": [
-      "support_cells",
-      "support_signatures",
-      "reference_key_overlap"
+      "exact_training_support_fraction",
+      "component_training_support_fraction",
+      "training_neighborhood_density"
     ],
     "N": [
       "perturbation_seen_fraction",
@@ -46,7 +47,6 @@
       "perturbation_novelty"
     ],
     "C": [
-      "batch_distance",
       "cell_context",
       "perturbation_modality",
       "readout_modality",
@@ -54,19 +54,48 @@
       "platform"
     ]
   },
-  "feature_policy": "identity_free_shared_estimator_train_only_uq_normalization",
+  "feature_policy": "identity_free_shared_estimator_train_only_uq_normalization_deployment_only_support",
+  "feature_transform": {
+    "uq": "predictor-relative empirical confidence fitted on calibration rows only",
+    "prediction_manifold_distance": "nearest calibration prediction in calibration-only standardized PCA space",
+    "numeric_imputation": "calibration-row median",
+    "categorical_encoding": "calibration-local one-hot with unknown-zero fallback"
+  },
+  "native_uq_audit_columns": [
+    "native_uq_mean_gene_variance",
+    "native_uq_median_gene_variance",
+    "native_uq_top_effect_variance",
+    "native_uq_cosine_disagreement",
+    "native_uq_effect_norm_variance"
+  ],
+  "methods": [
+    "raw_normalized_uq",
+    "best_scalar_uq",
+    "platt_logistic",
+    "isotonic",
+    "u_only_rf",
+    "u_p_rf",
+    "u_ps_rf",
+    "u_psn_rf",
+    "ptl_rf"
+  ],
   "forbidden_headline_features": [
     "environment_id",
     "environment_key",
     "predictor",
     "fidelity",
     "continuous_risk",
-    "reliable_label"
+    "reliable_label",
+    "total_cells",
+    "n_reference_groups",
+    "source_reference_keys",
+    "batch_distance"
   ],
-  "rows": 2292,
-  "metric_rows": 70,
+  "rows": 3438,
+  "metric_rows": 387,
   "score_path": "artifacts/source_data/formal_v2_reliability_predictions.csv",
   "feature_path": "artifacts/source_data/formal_v2_reliability_deployment_features.csv",
   "metrics_path": "artifacts/manifests/formal_v2_reliability_metrics.csv",
+  "bootstrap_ci_path": "artifacts/manifests/formal_v2_reliability_bootstrap_ci.csv",
   "status": "formal_v2_reliability_executed"
 }

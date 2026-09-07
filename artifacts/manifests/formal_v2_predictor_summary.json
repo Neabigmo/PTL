@@ -4,7 +4,8 @@
   "split_id": "ptl_biological_instance_split_v1",
   "predictors": [
     "mean_matching",
-    "strong_linear"
+    "strong_linear",
+    "slim_string"
   ],
   "environments": 8,
   "model_seeds": [
@@ -12,9 +13,15 @@
     1,
     2
   ],
-  "metric_rows": 64,
-  "contract_rows": 4530,
+  "metric_rows": 96,
+  "contract_rows": 6795,
   "predictor_version": "formal_v2_exact_linear_20260907",
+  "predictor_versions": {
+    "mean_matching": "formal_v2_mean_matching_bootstrap_20260907",
+    "strong_linear": "formal_v2_exact_linear_20260907",
+    "slim_string": "formal_v2_slim_string_v0.3_20260907"
+  },
+  "slim_embedding_path": "data/external/slim/gene_string_embeddings.v0.3.h5",
   "metrics_path": "artifacts/manifests/formal_v2_predictor_metrics.csv",
   "contract_path": "artifacts/manifests/formal_v2_prediction_index.csv",
   "evaluation_gene_space": "ptl_context_v2_intersection",

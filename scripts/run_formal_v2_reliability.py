@@ -18,6 +18,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.isotonic import IsotonicRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score, log_loss, roc_auc_score
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,6 +28,7 @@ if str(ROOT) not in sys.path:
 
 from scripts.run_formal_v2_predictors import (  # noqa: E402
     METADATA_COLUMNS,
+    PREDICTOR_VERSIONS,
     components,
     load_manifest,
     load_panel,
@@ -50,14 +53,18 @@ P_COLUMNS = (
     "prediction_concentration",
     "prediction_manifold_distance",
 )
-S_COLUMNS = ("support_cells", "support_signatures", "reference_key_overlap")
+S_COLUMNS = (
+    "exact_training_support_fraction",
+    "component_training_support_fraction",
+    "training_neighborhood_density",
+)
 N_COLUMNS = (
     "perturbation_seen_fraction",
     "component_seen_fraction",
     "combination_novelty",
     "perturbation_novelty",
 )
-C_NUMERIC_COLUMNS = ("batch_distance",)
+C_NUMERIC_COLUMNS: tuple[str, ...] = ()
 C_CATEGORICAL_COLUMNS = (
     "cell_context",
     "perturbation_modality",
@@ -66,8 +73,19 @@ C_CATEGORICAL_COLUMNS = (
     "platform",
 )
 FEATURE_COLUMNS = UQ_COLUMNS + P_COLUMNS + S_COLUMNS + N_COLUMNS + C_NUMERIC_COLUMNS + C_CATEGORICAL_COLUMNS
-PREDICTORS = ("mean_matching", "strong_linear")
+PREDICTORS = ("mean_matching", "strong_linear", "slim_string")
 SCENARIOS = ("in_domain", "leave_environment_out", "leave_predictor_out")
+METHODS = (
+    "raw_normalized_uq",
+    "best_scalar_uq",
+    "platt_logistic",
+    "isotonic",
+    "u_only_rf",
+    "u_p_rf",
+    "u_ps_rf",
+    "u_psn_rf",
+    "ptl_rf",
+)
 REFERENCE_KEY_PATTERN = re.compile(r"[,;|+]+")
 
 
@@ -177,13 +195,24 @@ def _manifold_distance(reference: np.ndarray, queries: np.ndarray, *, exclude_se
     return distances
 
 
-def _numeric_frame(frame: pd.DataFrame, columns: tuple[str, ...]) -> np.ndarray:
+def _numeric_frame(
+    frame: pd.DataFrame,
+    columns: tuple[str, ...],
+    fill_values: dict[str, float] | None = None,
+) -> tuple[np.ndarray, dict[str, float]]:
     values = []
+    fills: dict[str, float] = {}
     for column in columns:
         series = pd.to_numeric(frame[column], errors="coerce")
-        fill = float(series.median()) if series.notna().any() else 0.0
+        fill = (
+            float(fill_values[column])
+            if fill_values is not None and column in fill_values
+            else float(series.median()) if series.notna().any() else 0.0
+        )
+        fills[column] = fill
         values.append(series.fillna(fill).to_numpy(dtype=np.float64))
-    return np.column_stack(values) if values else np.empty((len(frame), 0), dtype=np.float64)
+    matrix = np.column_stack(values) if values else np.empty((len(frame), 0), dtype=np.float64)
+    return matrix, fills
 
 
 def _normalized_uq(train_frame: pd.DataFrame, query_frame: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
@@ -214,7 +243,7 @@ def _normalized_uq(train_frame: pd.DataFrame, query_frame: pd.DataFrame) -> tupl
 def _feature_matrix(
     train_frame: pd.DataFrame,
     query_frame: pd.DataFrame,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[dict[str, tuple[np.ndarray, np.ndarray]], pd.DataFrame, pd.DataFrame]:
     train_vectors = np.stack(train_frame["prediction_vector"].to_numpy())
     query_vectors = np.stack(query_frame["prediction_vector"].to_numpy())
     train_manifold = _manifold_distance(train_vectors, train_vectors, exclude_self=True)
@@ -225,38 +254,132 @@ def _feature_matrix(
     query_work["prediction_manifold_distance"] = query_manifold
 
     train_uq, query_uq = _normalized_uq(train_work, query_work)
-    numeric_columns = P_COLUMNS + S_COLUMNS + N_COLUMNS + C_NUMERIC_COLUMNS
-    train_numeric = _numeric_frame(train_work, numeric_columns)
-    query_numeric = _numeric_frame(query_work, numeric_columns)
+    train_p, p_fills = _numeric_frame(train_work, P_COLUMNS)
+    query_p, _ = _numeric_frame(query_work, P_COLUMNS, p_fills)
+    train_s, s_fills = _numeric_frame(train_work, S_COLUMNS)
+    query_s, _ = _numeric_frame(query_work, S_COLUMNS, s_fills)
+    train_n, n_fills = _numeric_frame(train_work, N_COLUMNS)
+    query_n, _ = _numeric_frame(query_work, N_COLUMNS, n_fills)
+    train_c_numeric, c_fills = _numeric_frame(train_work, C_NUMERIC_COLUMNS)
+    query_c_numeric, _ = _numeric_frame(query_work, C_NUMERIC_COLUMNS, c_fills)
     train_categories, query_categories = _fold_local_one_hot(
         train_work[list(C_CATEGORICAL_COLUMNS)].astype(str).to_numpy(),
         query_work[list(C_CATEGORICAL_COLUMNS)].astype(str).to_numpy(),
     )
-    train_features = np.column_stack([train_uq, train_numeric, train_categories])
-    query_features = np.column_stack([query_uq, query_numeric, query_categories])
-    return train_features, query_features, train_uq, query_uq
+    train_blocks = {
+        "U": train_uq,
+        "P": train_p,
+        "S": train_s,
+        "N": train_n,
+        "C": np.column_stack([train_c_numeric, train_categories]),
+    }
+    query_blocks = {
+        "U": query_uq,
+        "P": query_p,
+        "S": query_s,
+        "N": query_n,
+        "C": np.column_stack([query_c_numeric, query_categories]),
+    }
+    block_sets = {
+        "U": ("U",),
+        "U+P": ("U", "P"),
+        "U+P+S": ("U", "P", "S"),
+        "U+P+S+N": ("U", "P", "S", "N"),
+        "U+P+S+N+C": ("U", "P", "S", "N", "C"),
+    }
+    matrices = {
+        name: (
+            np.column_stack([train_blocks[block] for block in blocks]),
+            np.column_stack([query_blocks[block] for block in blocks]),
+        )
+        for name, blocks in block_sets.items()
+    }
+    materialized_train = pd.DataFrame(index=train_work.index)
+    materialized_query = pd.DataFrame(index=query_work.index)
+    for index, column in enumerate(UQ_COLUMNS):
+        materialized_train[column] = train_uq[:, index]
+        materialized_query[column] = query_uq[:, index]
+    for matrix, columns, output in (
+        (train_p, P_COLUMNS, materialized_train),
+        (query_p, P_COLUMNS, materialized_query),
+        (train_s, S_COLUMNS, materialized_train),
+        (query_s, S_COLUMNS, materialized_query),
+        (train_n, N_COLUMNS, materialized_train),
+        (query_n, N_COLUMNS, materialized_query),
+    ):
+        for index, column in enumerate(columns):
+            output[column] = matrix[:, index]
+    for column in C_NUMERIC_COLUMNS + C_CATEGORICAL_COLUMNS:
+        materialized_train[column] = train_work[column].astype(str).to_numpy()
+        materialized_query[column] = query_work[column].astype(str).to_numpy()
+    return matrices, materialized_train, materialized_query
 
 
-def _fit_ptl(train_frame: pd.DataFrame, query_frame: pd.DataFrame) -> tuple[np.ndarray, np.ndarray, float, str]:
+def _fit_random_forest(train_features: np.ndarray, query_features: np.ndarray, labels: np.ndarray) -> np.ndarray:
+    if np.unique(labels).size < 2:
+        return np.full(len(query_features), float(labels.mean()), dtype=np.float64)
+    model = RandomForestClassifier(
+        n_estimators=300,
+        min_samples_leaf=10,
+        class_weight="balanced",
+        random_state=20260907,
+        n_jobs=1,
+    )
+    model.fit(train_features, labels)
+    return model.predict_proba(query_features)[:, 1]
+
+
+def _fit_ptl(
+    train_frame: pd.DataFrame,
+    query_frame: pd.DataFrame,
+) -> tuple[dict[str, np.ndarray], float, str, pd.DataFrame, pd.DataFrame]:
     threshold = 0.8 * float(np.median(train_frame["fidelity"].to_numpy(dtype=float)))
     train_labels = (train_frame["fidelity"].to_numpy(dtype=float) >= threshold).astype(int)
-    train_features, query_features, train_uq, query_uq = _feature_matrix(train_frame, query_frame)
-    raw_confidence = query_uq[:, UQ_COLUMNS.index("uq_mean_gene_variance")]
+    matrices, materialized_train, materialized_query = _feature_matrix(train_frame, query_frame)
+    train_uq = matrices["U"][0]
+    query_uq = matrices["U"][1]
+    train_risk = train_frame["continuous_risk"].to_numpy(dtype=float)
+    scalar_scores = {
+        f"uq_{column}": train_uq[:, index]
+        for index, column in enumerate(UQ_COLUMNS)
+    }
+    query_scalar_scores = {
+        f"uq_{column}": query_uq[:, index]
+        for index, column in enumerate(UQ_COLUMNS)
+    }
+    scalar_aurcs = {
+        name: _selective_metrics(train_risk, train_labels, values)["aurc"]
+        for name, values in scalar_scores.items()
+    }
+    best_scalar_name = min(scalar_aurcs, key=lambda name: (scalar_aurcs[name], name))
+    best_scalar_train = scalar_scores[best_scalar_name]
+    best_scalar_query = query_scalar_scores[best_scalar_name]
     if np.unique(train_labels).size < 2:
-        ptl = np.full(len(query_frame), float(train_labels.mean()), dtype=np.float64)
+        platt = np.full(len(query_frame), float(train_labels.mean()), dtype=np.float64)
+        isotonic = platt.copy()
         model_name = "constant_validation_label"
     else:
-        model = RandomForestClassifier(
-            n_estimators=300,
-            min_samples_leaf=10,
-            class_weight="balanced",
-            random_state=20260907,
-            n_jobs=1,
-        )
-        model.fit(train_features, train_labels)
-        ptl = model.predict_proba(query_features)[:, 1]
+        logistic = LogisticRegression(C=1.0, max_iter=1000, random_state=20260907)
+        logistic.fit(best_scalar_train.reshape(-1, 1), train_labels)
+        platt = logistic.predict_proba(best_scalar_query.reshape(-1, 1))[:, 1]
+        isotonic_model = IsotonicRegression(out_of_bounds="clip", increasing=True)
+        isotonic_model.fit(best_scalar_train, train_labels)
+        isotonic = isotonic_model.predict(best_scalar_query)
         model_name = "shared_identity_free_random_forest"
-    return raw_confidence, ptl, threshold, model_name
+    scores = {
+        "raw_normalized_uq": query_uq[:, UQ_COLUMNS.index("uq_mean_gene_variance")],
+        "best_scalar_uq": best_scalar_query,
+        "platt_logistic": platt,
+        "isotonic": isotonic,
+        "u_only_rf": _fit_random_forest(*matrices["U"], train_labels),
+        "u_p_rf": _fit_random_forest(*matrices["U+P"], train_labels),
+        "u_ps_rf": _fit_random_forest(*matrices["U+P+S"], train_labels),
+        "u_psn_rf": _fit_random_forest(*matrices["U+P+S+N"], train_labels),
+        "ptl_rf": _fit_random_forest(*matrices["U+P+S+N+C"], train_labels),
+    }
+    materialized_train.attrs["best_scalar_uq"] = best_scalar_name
+    materialized_query.attrs["best_scalar_uq"] = best_scalar_name
+    return scores, threshold, model_name, materialized_train, materialized_query
 
 
 def _prediction_rows(root: Path) -> pd.DataFrame:
@@ -287,11 +410,17 @@ def _prediction_rows(root: Path) -> pd.DataFrame:
             for label in train_labels
             for component in components(label)
         }
-        train_reference_keys = {
-            key
-            for value in train_manifest["source_reference_keys"]
-            for key in _reference_tokens(value)
+        train_count = max(1, len(train_manifest))
+        train_label_counts = train_manifest["perturbation_label"].astype(str).value_counts().to_dict()
+        train_label_components = {
+            str(label): set(components(label))
+            for label in train_label_counts
         }
+        train_labels_by_component: dict[str, set[str]] = {}
+        for label, label_parts in train_label_components.items():
+            for part in label_parts:
+                train_labels_by_component.setdefault(part, set()).add(label)
+        n_unique_train_labels = max(1, len(train_label_components))
         for predictor in PREDICTORS:
             array_path = root / "results/formal_v2/predictors" / f"{environment_key}__{predictor}.npz"
             if not array_path.is_file():
@@ -328,9 +457,14 @@ def _prediction_rows(root: Path) -> pd.DataFrame:
                     label = str(metadata["perturbation_label"])
                     parts = components(label)
                     known_parts = [part for part in parts if part in train_components]
-                    reference_overlap = bool(
-                        _reference_tokens(metadata["source_reference_keys"]).intersection(train_reference_keys)
+                    exact_support = float(train_label_counts.get(label, 0) / train_count)
+                    supported_labels = set().union(
+                        *(train_labels_by_component.get(part, set()) for part in parts)
+                    ) if parts else set()
+                    component_support = float(
+                        sum(train_label_counts.get(name, 0) for name in supported_labels) / train_count
                     )
+                    neighborhood_density = float(len(supported_labels) / n_unique_train_labels)
                     abs_prediction = np.abs(prediction_vector.astype(np.float64))
                     total_abs = float(abs_prediction.sum())
                     top_k = min(50, len(abs_prediction))
@@ -346,19 +480,18 @@ def _prediction_rows(root: Path) -> pd.DataFrame:
                         "environment_key": environment_key,
                         "dataset_id": dataset_id,
                         "predictor": predictor,
-                        "predictor_version": "formal_v2_exact_linear_20260907",
+                        "predictor_version": PREDICTOR_VERSIONS[predictor],
                         "split": split,
                         "perturbation_label": label,
                         "fidelity": float(safe_rowwise_cosine(truth_vector[None, :], prediction_vector[None, :])[0]),
                         "continuous_risk": float(1.0 - safe_rowwise_cosine(truth_vector[None, :], prediction_vector[None, :])[0]),
-                        "support_cells": numeric_metadata("total_cells"),
-                        "support_signatures": numeric_metadata("n_reference_groups"),
-                        "reference_key_overlap": float(reference_overlap),
+                        "exact_training_support_fraction": exact_support,
+                        "component_training_support_fraction": component_support,
+                        "training_neighborhood_density": neighborhood_density,
                         "perturbation_seen_fraction": float(label in train_labels),
                         "component_seen_fraction": float(len(known_parts) / len(parts)) if parts else 1.0,
                         "combination_novelty": float(len(parts) > 1 and label not in train_labels),
                         "perturbation_novelty": float(label not in train_labels),
-                        "batch_distance": float(not reference_overlap),
                         "cell_context": str(registry_by_id.loc[environment_id, "cell_context"]),
                         "perturbation_modality": str(registry_by_id.loc[environment_id, "perturbation_modality"]),
                         "readout_modality": str(registry_by_id.loc[environment_id, "readout_modality"]),
@@ -416,6 +549,83 @@ def _selective_metrics(risk: np.ndarray, reliable: np.ndarray, confidence: np.nd
     return row
 
 
+def _aurc_only(risk: np.ndarray, confidence: np.ndarray) -> float:
+    """Fast AURC-only path used inside bootstrap resampling."""
+
+    order = np.argsort(-np.asarray(confidence, dtype=float), kind="mergesort")
+    ordered_risk = np.asarray(risk, dtype=float)[order]
+    return float((np.cumsum(ordered_risk) / np.arange(1, len(ordered_risk) + 1)).mean())
+
+
+def _paired_hierarchical_bootstrap(
+    score_frame: pd.DataFrame,
+    scenario: str,
+    method: str,
+    *,
+    baseline: str = "raw_normalized_uq",
+    replicates: int = 500,
+) -> dict[str, Any]:
+    """Bootstrap paired selective-risk deltas by environment and row.
+
+    The outer resample preserves environment-level dependence; the inner
+    resample preserves the fact that rows within an environment share a
+    calibration/data context. Both methods use the same sampled rows, so the
+    interval is paired rather than a difference of independent estimates.
+    """
+
+    selected = score_frame.loc[score_frame["scenario"].eq(scenario)].copy()
+    cluster_columns = ["environment_id"]
+    if scenario == "leave_predictor_out":
+        cluster_columns.append("heldout_predictor")
+    groups = [group for _, group in selected.groupby(cluster_columns, sort=True)]
+    if not groups:
+        raise ValueError(f"no score groups available for bootstrap scenario {scenario}")
+
+    def grouped_aurc(column: str) -> float:
+        return float(np.mean([
+            _aurc_only(
+                group["continuous_risk"].to_numpy(dtype=float),
+                group[column].to_numpy(dtype=float),
+            )
+            for group in groups
+        ]))
+
+    observed_baseline = grouped_aurc(baseline)
+    observed_method = grouped_aurc(method)
+    rng = np.random.default_rng(20260907 + sum(ord(char) for char in f"{scenario}:{method}"))
+    deltas = np.empty(replicates, dtype=np.float64)
+    for replicate in range(replicates):
+        sampled_groups = rng.integers(0, len(groups), size=len(groups))
+        baseline_values: list[float] = []
+        method_values: list[float] = []
+        for group_index in sampled_groups:
+            group = groups[int(group_index)]
+            row_indices = rng.integers(0, len(group), size=len(group))
+            sampled = group.iloc[row_indices]
+            baseline_values.append(_aurc_only(
+                sampled["continuous_risk"].to_numpy(dtype=float),
+                sampled[baseline].to_numpy(dtype=float),
+            ))
+            method_values.append(_aurc_only(
+                sampled["continuous_risk"].to_numpy(dtype=float),
+                sampled[method].to_numpy(dtype=float),
+            ))
+        deltas[replicate] = float(np.mean(method_values) - np.mean(baseline_values))
+    return {
+        "aggregation_level": "paired_hierarchical_macro_ci",
+        "scenario": scenario,
+        "method": method,
+        "baseline": baseline,
+        "estimate_delta_aurc": observed_method - observed_baseline,
+        "baseline_aurc": observed_baseline,
+        "method_aurc": observed_method,
+        "ci_lower": float(np.quantile(deltas, 0.025)),
+        "ci_upper": float(np.quantile(deltas, 0.975)),
+        "n_clusters": len(groups),
+        "bootstrap_replicates": replicates,
+    }
+
+
 def run(root: Path) -> dict[str, Any]:
     validate_deployment_features(FEATURE_COLUMNS)
     frame = _prediction_rows(root)
@@ -426,31 +636,43 @@ def run(root: Path) -> dict[str, Any]:
         train, test = scenario_partition(subset, scenario, heldout)
         train_frame = subset.loc[train].copy()
         test_frame = subset.loc[test].copy()
-        raw_confidence, ptl_score, threshold, model_name = _fit_ptl(train_frame, test_frame)
+        method_scores, threshold, model_name, materialized_train, materialized_test = _fit_ptl(
+            train_frame, test_frame
+        )
         train_ids = set(train_frame["biological_instance_id"].astype(str))
         if train_ids.intersection(set(test_frame["biological_instance_id"].astype(str))):
             raise AssertionError("PTL train/test biological instance leakage")
         local_score_rows: list[dict[str, Any]] = []
-        for row_index, raw, score in zip(test_frame.index, raw_confidence, ptl_score):
+        for row_index in test_frame.index:
             row = test_frame.loc[row_index].drop(labels=["prediction_vector"])
             payload = row.to_dict()
+            native_uq = {
+                f"native_{column}": float(row[column])
+                for column in UQ_COLUMNS
+            }
+            transformed_features = materialized_test.loc[row_index].to_dict()
             payload.update({
                 "scenario": scenario,
                 "heldout_environment_id": heldout if scenario == "leave_environment_out" else "",
                 "heldout_predictor": heldout if scenario == "leave_predictor_out" else "",
-                "raw_normalized_uq": float(raw),
-                "ptl_rf": float(score),
                 "reliable_label": int(float(row["fidelity"]) >= threshold),
                 "calibration_threshold": float(threshold),
                 "calibration_rows": int(len(train_frame)),
                 "test_rows": int(len(test_frame)),
                 "ptl_model": model_name,
             })
+            payload.update(native_uq)
+            # The formal feature artifact must contain the values consumed by
+            # the estimator: train-only normalized UQ and the scenario-specific
+            # train/query transforms, not the raw target-side metadata.
+            payload.update(transformed_features)
+            for method, values in method_scores.items():
+                payload[method] = float(values[list(test_frame.index).index(row_index)])
             score_rows.append(payload)
             local_score_rows.append(payload)
         local_output = pd.DataFrame(local_score_rows)
         for environment_id, group_output in local_output.groupby("environment_id", sort=True):
-            for method in ("raw_normalized_uq", "ptl_rf"):
+            for method in METHODS:
                 metrics = _selective_metrics(
                     group_output["continuous_risk"].to_numpy(),
                     group_output["reliable_label"].to_numpy(),
@@ -496,6 +718,14 @@ def run(root: Path) -> dict[str, Any]:
     macro["heldout_predictor"] = ""
     metric_frame = pd.concat([metric_frame, macro[metric_frame.columns]], ignore_index=True)
 
+    bootstrap_rows = [
+        _paired_hierarchical_bootstrap(score_frame, scenario, method)
+        for scenario in SCENARIOS
+        for method in METHODS
+        if method != "raw_normalized_uq"
+    ]
+    bootstrap_frame = pd.DataFrame(bootstrap_rows)
+
     source_dir = root / "artifacts/source_data"
     manifest_dir = root / "artifacts/manifests"
     source_dir.mkdir(parents=True, exist_ok=True)
@@ -503,6 +733,7 @@ def run(root: Path) -> dict[str, Any]:
     score_path = source_dir / "formal_v2_reliability_predictions.csv"
     feature_path = source_dir / "formal_v2_reliability_deployment_features.csv"
     metrics_path = manifest_dir / "formal_v2_reliability_metrics.csv"
+    bootstrap_path = manifest_dir / "formal_v2_reliability_bootstrap_ci.csv"
     summary_path = manifest_dir / "formal_v2_reliability_summary.json"
     score_frame.to_csv(score_path, index=False)
     feature_columns = [
@@ -518,10 +749,11 @@ def run(root: Path) -> dict[str, Any]:
             feature_output[column] = ""
     feature_output[feature_columns].to_csv(feature_path, index=False)
     metric_frame.sort_values(["aggregation_level", "scenario", "method", "environment_id"], kind="stable").to_csv(metrics_path, index=False)
+    bootstrap_frame.sort_values(["scenario", "method"], kind="stable").to_csv(bootstrap_path, index=False)
     summary = {
         "schema_version": 1,
         "benchmark_id": "ptl_context_v2",
-        "prediction_source": "formal_v2_exact_linear_20260907_validation_test_only",
+        "prediction_source": "formal_v2_predictors_validation_test_only",
         "split_id": "ptl_biological_instance_split_v1",
         "calibration_split": "validation",
         "final_evaluation_split": "test",
@@ -529,13 +761,22 @@ def run(root: Path) -> dict[str, Any]:
         "predictors_executed": sorted(frame["predictor"].unique().tolist()),
         "predictors_not_executed": ["official_gears", "cpa", "scgpt", "prescribe"],
         "feature_blocks": {"U": list(UQ_COLUMNS), "P": list(P_COLUMNS), "S": list(S_COLUMNS), "N": list(N_COLUMNS), "C": list(C_NUMERIC_COLUMNS + C_CATEGORICAL_COLUMNS)},
-        "feature_policy": "identity_free_shared_estimator_train_only_uq_normalization",
-        "forbidden_headline_features": ["environment_id", "environment_key", "predictor", "fidelity", "continuous_risk", "reliable_label"],
+        "feature_policy": "identity_free_shared_estimator_train_only_uq_normalization_deployment_only_support",
+        "feature_transform": {
+            "uq": "predictor-relative empirical confidence fitted on calibration rows only",
+            "prediction_manifold_distance": "nearest calibration prediction in calibration-only standardized PCA space",
+            "numeric_imputation": "calibration-row median",
+            "categorical_encoding": "calibration-local one-hot with unknown-zero fallback",
+        },
+        "native_uq_audit_columns": [f"native_{column}" for column in UQ_COLUMNS],
+        "methods": list(METHODS),
+        "forbidden_headline_features": ["environment_id", "environment_key", "predictor", "fidelity", "continuous_risk", "reliable_label", "total_cells", "n_reference_groups", "source_reference_keys", "batch_distance"],
         "rows": int(len(score_frame)),
         "metric_rows": int(len(metric_frame)),
         "score_path": score_path.relative_to(root).as_posix(),
         "feature_path": feature_path.relative_to(root).as_posix(),
         "metrics_path": metrics_path.relative_to(root).as_posix(),
+        "bootstrap_ci_path": bootstrap_path.relative_to(root).as_posix(),
         "status": "formal_v2_reliability_executed",
     }
     summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

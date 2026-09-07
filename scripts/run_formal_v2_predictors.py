@@ -19,6 +19,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
+from sklearn.decomposition import PCA
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -30,11 +31,21 @@ from src.ptl.uncertainty.uq import summarize_ensemble
 
 SPLIT_ID = "ptl_biological_instance_split_v1"
 PREDICTOR_VERSION = "formal_v2_exact_linear_20260907"
+PREDICTOR_VERSIONS = {
+    "mean_matching": "formal_v2_mean_matching_bootstrap_20260907",
+    "strong_linear": PREDICTOR_VERSION,
+    "slim_string": "formal_v2_slim_string_v0.3_20260907",
+}
 COMPONENT_PATTERN = re.compile(r"[_+|;]+")
 METADATA_COLUMNS = {
     "biological_instance_id", "environment_id", "environment_key", "dataset_id",
     "condition", "condition_field", "perturbation_label", "dose", "timepoint",
     "n_reference_groups", "total_cells", "source_reference_keys", "aggregation_rule",
+}
+POST_METADATA_COLUMNS = {
+    "dataset_id", "source_dataset", "group_key", "reference_key", "perturbation_label",
+    "is_control", "cell_line", "cell_type", "perturbation_2", "batch", "replicate",
+    "time", "timepoint", "dose", "n_cells", "control_label_used",
 }
 
 
@@ -46,6 +57,27 @@ def current_commit(root: Path) -> str:
         ).stdout.strip()
     except (OSError, subprocess.CalledProcessError):
         return "working-tree"
+
+
+def load_slim_string_embeddings(root: Path) -> tuple[dict[str, np.ndarray], str]:
+    """Load the pinned public SLIM STRING embedding artifact."""
+
+    path = root / "data" / "external" / "slim" / "gene_string_embeddings.v0.3.h5"
+    if not path.is_file():
+        raise FileNotFoundError(f"missing SLIM STRING embedding artifact: {path}")
+    try:
+        import h5py
+    except ImportError as exc:  # pragma: no cover - environment dependent
+        raise RuntimeError("SLIM requires h5py to load the public STRING embedding artifact") from exc
+    with h5py.File(path, "r") as handle:
+        embeddings = {
+            str(gene): np.asarray(handle[gene][()], dtype=np.float64)
+            for gene in handle.keys()
+        }
+    dimensions = {value.shape for value in embeddings.values()}
+    if not embeddings or len(dimensions) != 1 or next(iter(dimensions))[0] <= 0:
+        raise ValueError("SLIM STRING embedding artifact is empty or dimensionally inconsistent")
+    return embeddings, str(path.relative_to(root).as_posix())
 
 
 def load_panel(root: Path) -> list[str]:
@@ -101,6 +133,82 @@ def read_ground_truth(root: Path, path: str, genes: list[str] | None = None) -> 
     return frame
 
 
+def read_training_post_expression(
+    root: Path,
+    dataset_id: str,
+    labels: set[str],
+    genes: list[str],
+    *,
+    condition_field: str = "",
+    condition: str = "",
+) -> tuple[dict[str, np.ndarray], np.ndarray]:
+    """Load train-condition post-expression for the official Ahlmann baseline.
+
+    The publication constructs ``G`` from post-perturbation pseudobulk ``X``
+    and fits the two-sided ridge to ``change``. The formal ground-truth table
+    stores only the latter, so this reads native pseudobulk X for train labels
+    only, using Parquet predicate pushdown to keep held-out conditions out.
+    """
+
+    if not labels:
+        raise ValueError(f"cannot build a post-expression embedding without training labels for {dataset_id}")
+    source = root / "data" / "processed" / f"{dataset_id}_pseudobulk.parquet"
+    if not source.is_file():
+        raise FileNotFoundError(f"missing native post-expression pseudobulk: {source}")
+    schema_columns = pq.read_schema(source).names
+    required = {"perturbation_label", "is_control", "n_cells"}
+    missing_metadata = required.difference(schema_columns)
+    if missing_metadata:
+        raise ValueError(f"{source} is missing post-expression metadata: {sorted(missing_metadata)}")
+    missing_genes = set(genes).difference(schema_columns)
+    if missing_genes:
+        raise ValueError(f"{source} is missing native genes required by the linear model: {sorted(missing_genes)[:5]}")
+    condition_field = str(condition_field or "").strip()
+    read_metadata = ["perturbation_label", "is_control", "n_cells"]
+    if condition_field:
+        if condition_field not in schema_columns:
+            raise ValueError(f"{source} is missing formal condition field {condition_field!r}")
+        read_metadata.append(condition_field)
+    filters: list[tuple[str, str, object]] = [("perturbation_label", "in", sorted(labels))]
+    if condition_field and condition:
+        filters.append((condition_field, "==", str(condition)))
+    frame = pq.read_table(
+        source,
+        columns=read_metadata + list(genes),
+        filters=filters,
+        use_threads=True,
+    ).to_pandas()
+    frame = frame.loc[~frame["is_control"].astype(bool)].copy()
+    frame["n_cells"] = pd.to_numeric(frame["n_cells"], errors="coerce")
+    frame = frame.loc[frame["n_cells"].gt(0)].copy()
+    observed = set(frame["perturbation_label"].astype(str))
+    missing_labels = set(labels).difference(observed)
+    if missing_labels:
+        raise ValueError(f"native post-expression surface has no train rows for {dataset_id}: {sorted(missing_labels)[:10]}")
+    result: dict[str, np.ndarray] = {}
+    for label, group in frame.groupby("perturbation_label", sort=True):
+        weights = group["n_cells"].to_numpy(dtype=np.float64)
+        values = group[genes].to_numpy(dtype=np.float64, copy=False)
+        result[str(label)] = weighted_mean(values, weights).astype(np.float32)
+    control_filters: list[tuple[str, str, object]] = [("is_control", "==", True)]
+    if condition_field and condition:
+        control_filters.append((condition_field, "==", str(condition)))
+    control_frame = pq.read_table(
+        source,
+        columns=read_metadata + list(genes),
+        filters=control_filters,
+        use_threads=True,
+    ).to_pandas()
+    control_frame["n_cells"] = pd.to_numeric(control_frame["n_cells"], errors="coerce")
+    control_frame = control_frame.loc[control_frame["n_cells"].gt(0)].copy()
+    if control_frame.empty:
+        raise ValueError(f"native post-expression surface has no matched controls for {dataset_id}")
+    control_values = control_frame[genes].to_numpy(dtype=np.float64, copy=False)
+    control_weights = control_frame["n_cells"].to_numpy(dtype=np.float64)
+    control_mean = weighted_mean(control_values, control_weights).astype(np.float32)
+    return result, control_mean
+
+
 def components(label: object) -> list[str]:
     value = str(label).strip()
     if not value or value.casefold() in {"control", "ctrl", "non-targeting", "ntc"}:
@@ -147,13 +255,17 @@ def fit_ahlmann_eltze_bilinear_ridge(
     train_values: np.ndarray,
     query_labels: np.ndarray,
     gene_names: list[str] | None = None,
+    post_train_values: np.ndarray | None = None,
     alpha: float = 0.1,
     n_components: int = 10,
 ) -> np.ndarray:
     """Fit the publication-style two-sided ridge predictor in native gene space.
 
-    PCA is fit only on the training response matrix. ``G`` contains the first
-    ``n_components`` PCA loading coordinates for every native gene, while ``P``
+    The official publication code fits PCA to post-perturbation pseudobulk
+    expression ``X`` (training conditions only), then fits the two-sided ridge
+    to the corresponding ``change`` response. ``post_train_values`` supplies X
+    in the same row order as ``train_values``. ``G`` contains the first
+    ``n_components`` PCA score coordinates for every native gene, while ``P``
     is formed by averaging the rows of ``G`` for the genes in each perturbation
     label. The fitted map is
 
@@ -169,6 +281,11 @@ def fit_ahlmann_eltze_bilinear_ridge(
         raise ValueError("train_values must be a non-empty 2D array")
     if len(train_labels) != train_values.shape[0]:
         raise ValueError("train_labels and train_values row counts differ")
+    if post_train_values is None:
+        raise ValueError("post_train_values is required: the official baseline fits G from post-expression X")
+    post_train_values = np.asarray(post_train_values, dtype=np.float64)
+    if post_train_values.shape != train_values.shape:
+        raise ValueError("post_train_values must have the same shape as train_values")
     if alpha <= 0 or n_components <= 0:
         raise ValueError("alpha and n_components must be positive")
     if gene_names is None:
@@ -179,11 +296,15 @@ def fit_ahlmann_eltze_bilinear_ridge(
 
     intercept = train_values.mean(axis=0)
     centered = train_values - intercept
-    _, _, vt = np.linalg.svd(centered, full_matrices=False)
-    rank = min(int(n_components), vt.shape[0], vt.shape[1])
+    # R's prcomp() is applied to genes x training-conditions. Its default
+    # centering subtracts the mean of each training condition across genes.
+    post_by_gene = post_train_values.T
+    post_centered = post_by_gene - post_by_gene.mean(axis=0, keepdims=True)
+    u, singular_values, _ = np.linalg.svd(post_centered, full_matrices=False)
+    rank = min(int(n_components), u.shape[0], u.shape[1])
     if rank == 0:
         return np.tile(intercept, (len(query_labels), 1)).astype(np.float32)
-    gene_embedding = vt[:rank].T
+    gene_embedding = u[:, :rank] * singular_values[:rank]
     gene_index = {gene: index for index, gene in enumerate(gene_names)}
 
     def perturbation_embedding(label: object) -> np.ndarray:
@@ -201,6 +322,72 @@ def fit_ahlmann_eltze_bilinear_ridge(
     except np.linalg.LinAlgError:
         weights = left @ np.linalg.pinv(right_gram)
     return ((gene_embedding @ weights @ query_p.T).T + intercept).astype(np.float32)
+
+
+def fit_slim_string_bilinear_ridge(
+    train_labels: np.ndarray,
+    train_post_values: np.ndarray,
+    control_mean: np.ndarray,
+    query_labels: np.ndarray,
+    gene_names: list[str],
+    string_embeddings: dict[str, np.ndarray],
+    *,
+    alpha: float = 0.1,
+    n_components: int = 10,
+    seed: int = 0,
+) -> np.ndarray:
+    """Fit the published SLIM basis/STRING bilinear model and return deltas.
+
+    SLIM fits its PCA basis to post-perturbation pseudobulk expression, uses
+    an external per-gene embedding for ``P``, solves the closed-form bilinear
+    ridge, and predicts post-expression. We subtract the matched control mean
+    here because the formal benchmark scores change-from-control responses.
+    Combination labels use the explicit mean of available component vectors;
+    absent components remain zero, matching SLIM's zero-fill inference policy.
+    """
+
+    post_values = np.asarray(train_post_values, dtype=np.float64)
+    control_mean = np.asarray(control_mean, dtype=np.float64)
+    if post_values.ndim != 2 or post_values.shape[0] == 0:
+        raise ValueError("train_post_values must be a non-empty 2D array")
+    if post_values.shape[1] != len(gene_names) or control_mean.shape != (len(gene_names),):
+        raise ValueError("SLIM post/control gene dimensions do not match gene_names")
+    if len(train_labels) != post_values.shape[0]:
+        raise ValueError("SLIM train labels and post-expression rows differ")
+    rank = min(int(n_components), post_values.shape[0] - 1, post_values.shape[1])
+    if rank <= 0:
+        return np.tile(post_values.mean(axis=0) - control_mean, (len(query_labels), 1)).astype(np.float32)
+    # This is the default SLIM pca_basis path: gene rows are samples and the
+    # train-mean-centered post-expression columns are the features.
+    post_centered = post_values.T - post_values.mean(axis=0)[:, None]
+    gene_embedding = PCA(n_components=rank, random_state=int(seed), svd_solver="auto").fit_transform(post_centered)
+    gene_index = {gene: index for index, gene in enumerate(gene_names)}
+    embedding_dim = len(next(iter(string_embeddings.values()))) if string_embeddings else 0
+
+    def perturbation_embedding(label: object) -> np.ndarray:
+        rows = [
+            np.asarray(string_embeddings[part], dtype=np.float64)
+            for part in components(label)
+            if part in string_embeddings
+        ]
+        return np.mean(rows, axis=0) if rows else np.zeros(embedding_dim, dtype=np.float64)
+
+    if embedding_dim == 0:
+        raise ValueError("SLIM requires a non-empty STRING embedding table")
+    train_p = np.stack([perturbation_embedding(label) for label in train_labels])
+    query_p = np.stack([perturbation_embedding(label) for label in query_labels])
+    response_bias = post_values.mean(axis=0)
+    centered_response = post_values.T - response_bias[:, None]
+    left = np.linalg.solve(
+        gene_embedding.T @ gene_embedding + float(alpha) * np.eye(rank),
+        gene_embedding.T @ centered_response,
+    )
+    weights = np.linalg.solve(
+        train_p.T @ train_p + float(alpha) * np.eye(embedding_dim),
+        (left @ train_p).T,
+    ).T
+    predicted_post = (gene_embedding @ weights @ query_p.T).T + response_bias
+    return (predicted_post - control_mean).astype(np.float32)
 
 
 def split_frame(frame: pd.DataFrame, manifest: pd.DataFrame, environment_id: str) -> tuple[pd.DataFrame, dict[str, np.ndarray]]:
@@ -264,7 +451,8 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
     metric_rows: list[dict[str, Any]] = []
     contract_rows: list[dict[str, Any]] = []
     training_gene_counts_by_dataset: dict[str, int] = {}
-    predictor_names = ("mean_matching", "strong_linear")
+    predictor_names = ("mean_matching", "strong_linear", "slim_string")
+    slim_embeddings, slim_embedding_path = load_slim_string_embeddings(root)
 
     for dataset_id, registry_group in registry.groupby("dataset_id", sort=True):
         source = str(manifest.loc[manifest["environment_id"].isin(registry_group["environment_id"]), "ground_truth_path"].iloc[0])
@@ -277,6 +465,9 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
             )
         training_gene_counts_by_dataset[str(dataset_id)] = len(native_genes)
         evaluation_indices = [native_genes.index(gene) for gene in evaluation_genes]
+        post_expression_cache: dict[
+            tuple[str, str, tuple[str, ...]], tuple[dict[str, np.ndarray], np.ndarray]
+        ] = {}
         for _, registry_row in registry_group.iterrows():
             environment_id = str(registry_row["environment_id"])
             environment_key = str(registry_row["environment_key"])
@@ -285,6 +476,22 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
             y = native_values[:, evaluation_indices]
             labels = joined["perturbation_label"].astype(str).to_numpy()
             weights = pd.to_numeric(joined["total_cells"], errors="coerce").fillna(1).to_numpy(dtype=np.float64)
+            raw_condition_field = registry_row.get("condition_field", "")
+            raw_condition = registry_row.get("condition", "")
+            condition_field = "" if pd.isna(raw_condition_field) else str(raw_condition_field).strip()
+            condition = "" if pd.isna(raw_condition) else str(raw_condition).strip()
+            train_label_set = set(labels[indices["train"]].astype(str))
+            post_cache_key = (condition_field, condition, tuple(sorted(train_label_set)))
+            if post_cache_key not in post_expression_cache:
+                post_expression_cache[post_cache_key] = read_training_post_expression(
+                    root,
+                    str(dataset_id),
+                    train_label_set,
+                    native_genes,
+                    condition_field=condition_field,
+                    condition=condition,
+                )
+            post_by_label, control_mean = post_expression_cache[post_cache_key]
             seed_values = (0, 1, 2)
             saved: dict[str, dict[str, Any]] = {}
             for predictor in predictor_names:
@@ -297,6 +504,9 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                     train_labels = labels[bootstrap_indices]
                     train_values = y[bootstrap_indices]
                     native_train_values = native_values[bootstrap_indices]
+                    post_train_values = np.stack(
+                        [post_by_label[str(label)] for label in train_labels]
+                    )
                     train_weights = weights[bootstrap_indices]
                     query_validation = labels[indices["validation"]]
                     query_test = labels[indices["test"]]
@@ -304,12 +514,13 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                         validation_prediction = fit_matching_mean(train_labels, train_values, train_weights, query_validation)
                         test_prediction = fit_matching_mean(train_labels, train_values, train_weights, query_test)
                         uq_source = "training_bootstrap_disagreement"
-                    else:
+                    elif predictor == "strong_linear":
                         validation_prediction = fit_ahlmann_eltze_bilinear_ridge(
                             train_labels,
                             native_train_values,
                             query_validation,
                             gene_names=native_genes,
+                            post_train_values=post_train_values,
                             alpha=0.1,
                             n_components=10,
                         )[:, evaluation_indices]
@@ -318,8 +529,33 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                             native_train_values,
                             query_test,
                             gene_names=native_genes,
+                            post_train_values=post_train_values,
                             alpha=0.1,
                             n_components=10,
+                        )[:, evaluation_indices]
+                        uq_source = "training_bootstrap_disagreement"
+                    else:
+                        validation_prediction = fit_slim_string_bilinear_ridge(
+                            train_labels,
+                            post_train_values,
+                            control_mean,
+                            query_validation,
+                            native_genes,
+                            slim_embeddings,
+                            alpha=0.1,
+                            n_components=10,
+                            seed=seed,
+                        )[:, evaluation_indices]
+                        test_prediction = fit_slim_string_bilinear_ridge(
+                            train_labels,
+                            post_train_values,
+                            control_mean,
+                            query_test,
+                            native_genes,
+                            slim_embeddings,
+                            alpha=0.1,
+                            n_components=10,
+                            seed=seed,
                         )[:, evaluation_indices]
                         uq_source = "training_bootstrap_disagreement"
                     validation_members.append(validation_prediction)
@@ -334,6 +570,9 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                         "seed": str(seed),
                         "split_id": SPLIT_ID,
                         "uncertainty_source": uq_source,
+                        "linear_embedding_source": "native_post_expression_X_train_only" if predictor == "strong_linear" else "not_applicable",
+                        "linear_reference_release": "const-ae/linear_perturbation_prediction-Paper_publication_runner" if predictor == "strong_linear" else "not_applicable",
+                        "slim_embedding_path": slim_embedding_path if predictor == "slim_string" else "not_applicable",
                         "training_gene_space_policy": "native_predictor_gene_space",
                         "training_gene_count": len(native_genes),
                         "evaluation_gene_space": "ptl_context_v2_intersection",
@@ -365,6 +604,9 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                     "seed": "ensemble_mean",
                     "split_id": SPLIT_ID,
                     "uncertainty_source": uq_source,
+                    "linear_embedding_source": "native_post_expression_X_train_only" if predictor == "strong_linear" else "not_applicable",
+                    "linear_reference_release": "const-ae/linear_perturbation_prediction-Paper_publication_runner" if predictor == "strong_linear" else "not_applicable",
+                    "slim_embedding_path": slim_embedding_path if predictor == "slim_string" else "not_applicable",
                     "training_gene_space_policy": "native_predictor_gene_space",
                     "training_gene_count": len(native_genes),
                     "evaluation_gene_space": "ptl_context_v2_intersection",
@@ -384,7 +626,7 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                                 "environment_id": environment_id,
                                 "environment_key": environment_key,
                                 "predictor": predictor,
-                                "predictor_version": PREDICTOR_VERSION,
+                                "predictor_version": PREDICTOR_VERSIONS[predictor],
                                 "predictor_commit": commit,
                                 "predictor_split_id": SPLIT_ID,
                                 "seed": seed,
@@ -418,6 +660,8 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
         "metric_rows": int(len(metric_frame)),
         "contract_rows": int(len(contract_frame)),
         "predictor_version": PREDICTOR_VERSION,
+        "predictor_versions": PREDICTOR_VERSIONS,
+        "slim_embedding_path": slim_embedding_path,
         "metrics_path": metrics_path.relative_to(root).as_posix(),
         "contract_path": contract_path.relative_to(root).as_posix(),
         "evaluation_gene_space": "ptl_context_v2_intersection",

@@ -24,7 +24,7 @@ def dependency_status(predictor_id: str, root: Path | None = None) -> tuple[str,
     claim in the roster.
     """
 
-    if predictor_id in {"mean_matching", "strong_linear"}:
+    if predictor_id in {"mean_matching", "strong_linear", "slim_string"}:
         metrics_path = (root or ROOT) / "artifacts/manifests/formal_v2_predictor_metrics.csv"
         if metrics_path.exists():
             metrics = pd.read_csv(metrics_path, usecols=["predictor"])
@@ -34,6 +34,12 @@ def dependency_status(predictor_id: str, root: Path | None = None) -> tuple[str,
                     summary = json.loads(summary_path.read_text(encoding="utf-8")) if summary_path.exists() else {}
                     if summary.get("predictor_version") != "formal_v2_exact_linear_20260907":
                         return "supported", "ready", "exact_linear_run_pending_prior_approximation_present"
+                if predictor_id == "slim_string":
+                    summary_path = metrics_path.with_name("formal_v2_predictor_summary.json")
+                    summary = json.loads(summary_path.read_text(encoding="utf-8")) if summary_path.exists() else {}
+                    versions = summary.get("predictor_versions", {})
+                    if versions.get("slim_string") != "formal_v2_slim_string_v0.3_20260907":
+                        return "supported", "ready", "slim_embedding_run_pending"
                 return "supported", "success", "formal_v2_predictor_metrics_available"
         return "supported", "ready", "formal_v2_predictor_run_not_materialized"
     if predictor_id == "official_gears":

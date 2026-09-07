@@ -2,12 +2,12 @@
   "schema_version": 1,
   "roster_id": "ptl_formal_predictor_roster_v2",
   "split_id": "ptl_biological_instance_split_v1",
-  "rows": 48,
+  "rows": 56,
   "status_counts": {
     "dependency_missing": 24,
-    "success": 16,
+    "success": 24,
     "ready": 8
   },
-  "result_claims": 16,
+  "result_claims": 24,
   "status": "formal_v2_roster_status_audited"
 }

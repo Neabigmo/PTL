@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "source_url": "https://github.com/const-ae/linear_perturbation_prediction-Paper/blob/main/benchmark/src/run_linear_pretrained_model.R",
+  "pca_surface": "post_expression_X_train_only",
+  "response_surface": "change_train_only",
+  "pca_components": 10,
+  "ridge_penalty": 0.1,
+  "max_abs_error": 2.5388298574569035e-08,
+  "note": "R runtime unavailable; independent NumPy oracle mirrors the published solve_y_axb path."
+}

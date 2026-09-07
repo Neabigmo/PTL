@@ -1,4 +1,4 @@
-schema_version: 1
+schema_version: 2
 formal_benchmark:
   biological_instance_unit: environment_id + perturbation_label + dose + timepoint
   split_id: ptl_biological_instance_split_v1
@@ -37,9 +37,9 @@ tables:
 feature_blocks:
   U: [uq_mean_gene_variance, uq_median_gene_variance, uq_top_effect_variance, uq_cosine_disagreement, uq_effect_norm_variance]
   P: [prediction_norm, prediction_sparsity, prediction_concentration, prediction_manifold_distance]
-  S: [support_cells, support_signatures, reference_key_overlap]
+  S: [exact_training_support_fraction, component_training_support_fraction, training_neighborhood_density]
   N: [perturbation_seen_fraction, component_seen_fraction, combination_novelty, perturbation_novelty]
-  C: [cell_context, perturbation_modality, readout_modality, condition, platform, batch_distance]
+  C: [cell_context, perturbation_modality, readout_modality, condition, platform]
 forbidden_headline_features:
   - split_family
   - stress_family_flag
@@ -52,21 +52,19 @@ forbidden_headline_features:
   - retrieval
 methods:
   - raw_normalized_uq
+  - best_scalar_uq
   - platt_logistic
   - isotonic
-  - support_novelty_only
+  - u_only_rf
+  - u_p_rf
+  - u_ps_rf
+  - u_psn_rf
   - ptl_rf
-  - ptl_rf_full_id
-  - gbdt_uncalibrated
-  - gbdt_full_id
-  - ptl_context
-  - ptl_full_id
-  - ptl_no_context
 ptl_context:
   formula: sigmoid(exp(a(z)) * logit(p0) + b(z))
   scalar_uq_input: U
-  input_blocks: [P, S, N, C]
-  encoded_context_columns: [cell_context, perturbation_modality, readout_modality, condition, platform, batch_distance]
+  input_blocks: [U, P, S, N, C]
+  encoded_context_columns: [cell_context, perturbation_modality, readout_modality, condition, platform]
   categorical_encoding: fold_local_one_hot_with_unknown_zero_fallback
   initialization: identity_a_zero_b_zero
   correction_regularization: [a_squared, b_squared]
