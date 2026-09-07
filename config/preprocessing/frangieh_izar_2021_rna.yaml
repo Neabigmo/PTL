@@ -1,0 +1,47 @@
+dataset_id: FrangiehIzar2021_RNA
+source_dataset: scPerturb v1.4
+input_path: H:/2026try/9.5PTL/data/raw/scperturb_v1.4/FrangiehIzar2021_RNA.h5ad
+input_format: h5ad
+split_role: context_expansion
+output_dir: H:/2026try/9.5PTL/data/processed
+control_values:
+  - control
+obs_fields:
+  perturbation: perturbation
+  batch:
+  cell_context: celltype
+extra_metadata_fields:
+  - perturbation
+  - perturbation_2
+  - perturbation_type
+  - celltype
+  - tissue_type
+  - disease
+  - guide_id
+  - ncounts
+  - ngenes
+  - percent_mito
+  - percent_ribo
+  - nperts
+cell_context_fallbacks:
+  - celltype
+  - tissue_type
+qc:
+  min_genes: 700
+  min_counts: 1500
+  max_percent_mito: 25
+  chunk_size: 2048
+  gene_chunk_size: 256
+signature_target_sum: 10000
+min_cells_per_perturbation: 10
+var_name_column: gene_symbol
+write_convenience_adata: false
+convenience_adata_mode: none
+convenience_var_top_n:
+convenience_var_sort_by:
+label_strategy: direct
+label_strategy_kwargs: {}
+contract_filter_query:
+delta_reference_fields:
+  - perturbation_2
+matrix_store_mode: backed_source_with_qc_manifest

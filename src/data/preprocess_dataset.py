@@ -262,6 +262,9 @@ def compute_profiles(
     group_info: pd.DataFrame,
     config: DatasetConfig,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    if getattr(adata, "isbacked", False) and getattr(adata.X, "format", "") == "csc":
+        return compute_profiles_csc_backed(adata, metadata, group_info, config)
+
     var_frame = get_var_frame(adata, config)
     eligible_keys = group_info["group_key"].tolist()
     key_to_idx = {key: idx for idx, key in enumerate(eligible_keys)}
@@ -278,14 +281,28 @@ def compute_profiles(
         selected = x_chunk[local_keep]
         normalized = normalize_chunk(selected, config.signature_target_sum)
         chunk_keys = full_group[start:end][local_keep]
-        for key in np.unique(chunk_keys):
-            group_mask = chunk_keys == key
-            group_idx = key_to_idx[key]
-            if sparse.issparse(normalized):
-                sums[group_idx] += np.asarray(normalized[group_mask].sum(axis=0)).ravel()
-            else:
+        chunk_group_idx = np.fromiter(
+            (key_to_idx[key] for key in chunk_keys), dtype=np.int64, count=len(chunk_keys)
+        )
+        if sparse.issparse(normalized):
+            # Aggregate every row in one sparse multiplication. The previous
+            # implementation re-sliced the same chunk once per group, which
+            # made large sparse screens needlessly slow without changing the
+            # resulting pseudobulk sums.
+            design = sparse.csr_matrix(
+                (np.ones(len(chunk_group_idx), dtype=np.float32),
+                 (np.arange(len(chunk_group_idx)), chunk_group_idx)),
+                shape=(len(chunk_group_idx), len(eligible_keys)),
+            )
+            grouped = design.T @ normalized
+            sums += grouped.toarray().astype(np.float64, copy=False)
+            counts += np.bincount(chunk_group_idx, minlength=len(eligible_keys))
+        else:
+            for key in np.unique(chunk_keys):
+                group_mask = chunk_keys == key
+                group_idx = key_to_idx[key]
                 sums[group_idx] += normalized[group_mask].sum(axis=0)
-            counts[group_idx] += int(group_mask.sum())
+                counts[group_idx] += int(group_mask.sum())
 
     means = np.divide(sums, counts[:, None], out=np.zeros_like(sums), where=counts[:, None] != 0)
     gene_columns = var_frame.index.tolist()
@@ -297,7 +314,7 @@ def compute_profiles(
     pseudobulk_values = pd.DataFrame(means, index=pseudobulk.index, columns=gene_columns)
     pseudobulk = pd.concat([pseudobulk, pseudobulk_values], axis=1)
 
-    delta_rows: list[dict[str, Any]] = []
+    delta_frames: list[pd.DataFrame] = []
     for reference_key, frame in pseudobulk.groupby("reference_key", sort=False):
         control_row = None
         for control_label in config.control_values:
@@ -309,24 +326,140 @@ def compute_profiles(
             continue
         control_vector = control_row[gene_columns].to_numpy(dtype=np.float64, copy=False)
         control_label_used = str(control_row["perturbation_label"])
-        for _, row in frame.iterrows():
-            delta_values = row[gene_columns].to_numpy(dtype=np.float64, copy=False) - control_vector
-            row_dict = {
-                "dataset_id": config.dataset_id,
-                "source_dataset": config.source_dataset,
-                "signature_id": f"{config.dataset_id}__{reference_key}__{row['perturbation_label']}",
-                "reference_key": reference_key,
-                "perturbation_label": row["perturbation_label"],
-                "is_control": bool(row["is_control"]),
-                "n_cells": int(row["n_cells"]),
-                "control_label_used": control_label_used,
-            }
-            for field in [field for field in config.delta_reference_fields if field in row.index]:
-                row_dict[field] = row[field]
-            row_dict.update(dict(zip(gene_columns, delta_values)))
-            delta_rows.append(row_dict)
+        metadata_columns = [
+            "dataset_id",
+            "source_dataset",
+            "reference_key",
+            "perturbation_label",
+            "is_control",
+            "n_cells",
+        ] + [field for field in config.delta_reference_fields if field in frame.columns]
+        metadata = frame[metadata_columns].copy()
+        metadata.insert(
+            2,
+            "signature_id",
+            [f"{config.dataset_id}__{reference_key}__{label}" for label in frame["perturbation_label"].astype(str)],
+        )
+        metadata["control_label_used"] = control_label_used
+        delta_values = frame[gene_columns].to_numpy(dtype=np.float64, copy=False) - control_vector
+        delta_genes = pd.DataFrame(delta_values, columns=gene_columns, index=metadata.index)
+        delta_frames.append(pd.concat([metadata, delta_genes], axis=1).reset_index(drop=True))
 
-    delta_signatures = pd.DataFrame(delta_rows)
+    delta_signatures = pd.concat(delta_frames, ignore_index=True) if delta_frames else pd.DataFrame()
+    return pseudobulk, delta_signatures
+
+
+def compute_profiles_csc_backed(
+    adata: ad.AnnData,
+    metadata: pd.DataFrame,
+    group_info: pd.DataFrame,
+    config: DatasetConfig,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Compute profiles from a backed CSC matrix in gene blocks.
+
+    H5AD screens are commonly stored as CSC. Row-chunking such a matrix makes
+    every chunk repeatedly traverse all gene columns. This path reads each
+    gene block once, applies the same library-size/log1p normalization, and
+    aggregates rows with one sparse group-design multiplication. It preserves
+    the existing signature contract while keeping peak memory independent of
+    the full raw expression matrix.
+    """
+    var_frame = get_var_frame(adata, config)
+    gene_columns = var_frame.index.tolist()
+    n_cells = int(adata.n_obs)
+    n_genes = int(adata.n_vars)
+    eligible_keys = group_info["group_key"].tolist()
+    key_to_idx = {key: idx for idx, key in enumerate(eligible_keys)}
+    keep_mask = metadata["keep_for_analysis"].to_numpy(dtype=bool)
+    keep_indices = np.flatnonzero(keep_mask)
+    kept_group_idx = np.fromiter(
+        (key_to_idx[key] for key in metadata.loc[keep_mask, "group_key"].astype(str)),
+        dtype=np.int64,
+        count=int(keep_mask.sum()),
+    )
+    counts = np.bincount(kept_group_idx, minlength=len(eligible_keys)).astype(np.int64, copy=False)
+
+    # The standardized metadata contains the same per-cell library-size field
+    # used by the QC contract. For this CSC path it avoids a second full pass
+    # over the 740M raw non-zero entries solely to recompute row sums.
+    if "ncounts" not in metadata.columns:
+        raise ValueError("CSC-backed preprocessing requires ncounts in metadata for normalization")
+    cell_counts = pd.to_numeric(metadata["ncounts"], errors="coerce").fillna(0.0).to_numpy(dtype=np.float32)
+    cell_counts[cell_counts <= 0] = 1.0
+    scales = (float(config.signature_target_sum) / cell_counts[keep_indices]).astype(np.float32, copy=False)
+
+    sums = np.zeros((len(eligible_keys), n_genes), dtype=np.float32)
+    design = sparse.csr_matrix(
+        (np.ones(len(kept_group_idx), dtype=np.float32),
+         (np.arange(len(kept_group_idx)), kept_group_idx)),
+        shape=(len(kept_group_idx), len(eligible_keys)),
+    )
+    h5_group = adata.X.group
+    data_ds = h5_group["data"]
+    indices_ds = h5_group["indices"]
+    indptr_ds = h5_group["indptr"]
+    gene_chunk_size = int(config.qc.get("gene_chunk_size", 256))
+
+    for gene_start in range(0, n_genes, gene_chunk_size):
+        gene_end = min(gene_start + gene_chunk_size, n_genes)
+        data_start = int(indptr_ds[gene_start])
+        data_end = int(indptr_ds[gene_end])
+        indptr = np.asarray(indptr_ds[gene_start:gene_end + 1], dtype=np.int64) - data_start
+        data = np.asarray(data_ds[data_start:data_end], dtype=np.float32)
+        indices = np.asarray(indices_ds[data_start:data_end], dtype=np.int32)
+        block = sparse.csc_matrix((data, indices, indptr), shape=(n_cells, gene_end - gene_start))
+        selected = block[keep_indices, :].tocsr()
+        selected = selected.multiply(scales[:, None]).tocsr()
+        selected.data = np.log1p(selected.data)
+
+        grouped = design.T @ selected
+        sums[:, gene_start:gene_end] = grouped.toarray().astype(np.float32, copy=False)
+
+    means = np.divide(
+        sums,
+        counts[:, None],
+        out=np.zeros_like(sums),
+        where=counts[:, None] != 0,
+    )
+    pseudobulk = group_info.copy()
+    pseudobulk["n_cells"] = counts
+    pseudobulk.insert(0, "dataset_id", config.dataset_id)
+    pseudobulk.insert(1, "source_dataset", config.source_dataset)
+    pseudobulk_values = pd.DataFrame(means, index=pseudobulk.index, columns=gene_columns)
+    pseudobulk = pd.concat([pseudobulk, pseudobulk_values], axis=1)
+
+    delta_frames: list[pd.DataFrame] = []
+    for reference_key, frame in pseudobulk.groupby("reference_key", sort=False):
+        control_row = None
+        for control_label in config.control_values:
+            hit = frame[frame["perturbation_label"].str.lower() == control_label]
+            if not hit.empty:
+                control_row = hit.iloc[0]
+                break
+        if control_row is None:
+            continue
+        control_vector = control_row[gene_columns].to_numpy(dtype=np.float32, copy=False)
+        control_label_used = str(control_row["perturbation_label"])
+        metadata_columns = [
+            "dataset_id",
+            "source_dataset",
+            "reference_key",
+            "perturbation_label",
+            "is_control",
+            "n_cells",
+        ] + [field for field in config.delta_reference_fields if field in frame.columns]
+        signature_metadata = frame[metadata_columns].copy()
+        signature_metadata.insert(
+            2,
+            "signature_id",
+            [f"{config.dataset_id}__{reference_key}__{label}" for label in frame["perturbation_label"].astype(str)],
+        )
+        signature_metadata["control_label_used"] = control_label_used
+        delta_values = frame[gene_columns].to_numpy(dtype=np.float32, copy=False) - control_vector
+        delta_genes = pd.DataFrame(delta_values, columns=gene_columns, index=signature_metadata.index)
+        delta_frames.append(pd.concat([signature_metadata, delta_genes], axis=1).reset_index(drop=True))
+
+    delta_signatures = pd.concat(delta_frames, ignore_index=True) if delta_frames else pd.DataFrame()
     return pseudobulk, delta_signatures
 
 

@@ -1,0 +1,224 @@
+{
+  "dataset_id": "ReplogleWeissman2022_K562_gwps",
+  "raw_path": "H:\\2026try\\9.5PTL\\data\\raw\\scperturb_v1.4\\ReplogleWeissman2022_K562_gwps.h5ad",
+  "processed_metadata_path": "H:\\2026try\\9.5PTL\\data\\processed\\ReplogleWeissman2022_K562_gwps_cell_metadata.parquet",
+  "processed_signatures_path": "H:\\2026try\\9.5PTL\\data\\processed\\ReplogleWeissman2022_K562_gwps_delta_signatures.parquet",
+  "qc": {
+    "min_genes": 700,
+    "min_counts": 1500,
+    "max_percent_mito": 25,
+    "min_cells_per_perturbation": 10
+  },
+  "raw": {
+    "n_cells": 1989578,
+    "n_perturbations": 9866,
+    "n_control_cells": 75328,
+    "n_unique_labels": 9867,
+    "label_counts_top50": {
+      "control": 75328,
+      "RPL3": 1963,
+      "PINK1": 1745,
+      "DUSP9": 1351,
+      "RAP1GAP": 1270,
+      "HBA2": 1199,
+      "SIMC1": 1170,
+      "STK38L": 1169,
+      "ANAPC15": 1091,
+      "PPP2R1A": 1061,
+      "FAM156B": 1006,
+      "ESPN": 1006,
+      "ZBTB7A": 970,
+      "RHOG": 956,
+      "PRODH": 939,
+      "DNAJC3": 933,
+      "CACNB3": 911,
+      "SRSF11": 880,
+      "ITPKA": 874,
+      "SLC1A5": 870,
+      "HSPG2": 860,
+      "CADM4": 845,
+      "SULT1A3": 843,
+      "FJX1": 825,
+      "MLLT6": 821,
+      "FOXP1": 816,
+      "ABHD14B": 802,
+      "SLC39A9": 800,
+      "CHPF": 798,
+      "FBXW7": 798,
+      "ZNF718": 795,
+      "PSMG3": 791,
+      "PSTK": 777,
+      "NUP205": 774,
+      "KIF11": 772,
+      "NSMF": 763,
+      "CCNK": 746,
+      "MSN": 742,
+      "ZNF580": 736,
+      "WDR4": 731,
+      "VPS41": 731,
+      "DDX19B": 722,
+      "TEAD3": 717,
+      "ABCA7": 708,
+      "RAB4B": 701,
+      "SNX15": 697,
+      "KRT8": 693,
+      "LRRC14": 691,
+      "DPH1": 689,
+      "COQ8A": 687
+    },
+    "perturbation_type_counts": {
+      "CRISPR": 1989578
+    }
+  },
+  "raw_qc_quantiles": {
+    "ngenes": [
+      323.0,
+      1199.0,
+      1705.0,
+      3215.0,
+      4439.0,
+      4959.0,
+      6853.0
+    ],
+    "ncounts": [
+      557.0,
+      2494.0,
+      4032.0,
+      11304.0,
+      20823.0,
+      26752.0,
+      72352.0
+    ],
+    "percent_mito": [
+      0.0,
+      0.051099237199999994,
+      0.077971876,
+      0.11764706,
+      0.16001612,
+      0.18601014459999998,
+      0.24997015
+    ]
+  },
+  "eligibility_diagnostics": {
+    "n_qc_non_control_labels": 9866,
+    "global_perturbation_labels_at_least_n_cells": {
+      "1": 9866,
+      "3": 9865,
+      "5": 9863,
+      "10": 9851,
+      "25": 9730,
+      "50": 9322,
+      "100": 7986
+    },
+    "batch_perturbation_groups_at_least_n_cells": {
+      "1": 1240153,
+      "3": 147615,
+      "5": 14365,
+      "10": 173,
+      "25": 0,
+      "50": 0,
+      "100": 0
+    },
+    "batch_perturbation_labels_with_at_least_one_eligible_group": {
+      "1": 9866,
+      "3": 8916,
+      "5": 3530,
+      "10": 31,
+      "25": 0,
+      "50": 0,
+      "100": 0
+    },
+    "global_labels_at_least_10_but_not_retained": 9820
+  },
+  "preprocessing_summary": {
+    "n_cells_input": 1989578,
+    "n_cells_contract": 1989578.0,
+    "n_cells_kept": 77168,
+    "n_pseudobulk_rows": 440.0,
+    "n_signature_rows": 440.0,
+    "n_unique_perturbations": 32.0,
+    "n_control_cells": 75247.0
+  },
+  "stages": [
+    {
+      "stage": "raw_obs",
+      "n_cells": 1989578,
+      "n_perturbations": 9866,
+      "n_control_cells": 75328,
+      "control_fraction": 0.03786129520933585,
+      "n_unique_labels": 9867,
+      "filter_rule": "raw obs perturbation metadata"
+    },
+    {
+      "stage": "label_parsing",
+      "n_cells": 1989578,
+      "n_perturbations": 9866,
+      "n_control_cells": 75328,
+      "control_fraction": 0.03786129520933585,
+      "n_unique_labels": 9867,
+      "filter_rule": "direct perturbation -> perturbation_label; control == control"
+    },
+    {
+      "stage": "contract_filter",
+      "n_cells": 1989578,
+      "n_perturbations": 9866,
+      "n_control_cells": 75328,
+      "control_fraction": 0.03786129520933585,
+      "n_unique_labels": 9867,
+      "filter_rule": "contract_filter_query (empty in GWPS config)"
+    },
+    {
+      "stage": "qc_min_genes",
+      "n_cells": 1988532,
+      "n_perturbations": 9866,
+      "n_control_cells": 75293,
+      "control_fraction": 0.03786360993939247,
+      "n_unique_labels": 9867,
+      "filter_rule": "ngenes >= 700"
+    },
+    {
+      "stage": "qc_min_counts",
+      "n_cells": 1986836,
+      "n_perturbations": 9866,
+      "n_control_cells": 75247,
+      "control_fraction": 0.037872778628935656,
+      "n_unique_labels": 9867,
+      "filter_rule": "ncounts >= 1500"
+    },
+    {
+      "stage": "qc_max_percent_mito",
+      "n_cells": 1986836,
+      "n_perturbations": 9866,
+      "n_control_cells": 75247,
+      "control_fraction": 0.037872778628935656,
+      "n_unique_labels": 9867,
+      "filter_rule": "percent_mito <= 25"
+    },
+    {
+      "stage": "min_cells_per_perturbation",
+      "n_cells": 77168,
+      "n_perturbations": 31,
+      "n_control_cells": 75247,
+      "control_fraction": 0.9751062616628654,
+      "n_unique_labels": 32,
+      "filter_rule": "grouped by batch + perturbation; non-control groups >= 10 cells; controls retained",
+      "n_reference_groups": 440
+    },
+    {
+      "stage": "reference_matching",
+      "n_cells": 77168,
+      "n_perturbations": 31,
+      "n_control_cells": 267,
+      "control_fraction": 0.6068181818181818,
+      "n_unique_labels": 32,
+      "n_signatures": 440,
+      "n_pseudobulk_rows": 440,
+      "filter_rule": "reference_key must contain a control profile before delta signature is emitted"
+    }
+  ],
+  "interpretation": {
+    "final_surface_is_small": true,
+    "coverage_loss_is_qc_dominated": true,
+    "not_a_headline_genome_wide_benchmark": true
+  }
+}

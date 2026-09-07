@@ -1,0 +1,4 @@
+dataset_id,raw_file,n_cells,n_genes,cell_context,perturbation_modality,condition_field,condition_values,semantic_status,celltype_values,tissue_type_values,disease_values,perturbation_type_values
+TianKampmann2021_CRISPRa,H:\2026try\9.5PTL\data\raw\scperturb_v1.4\TianKampmann2021_CRISPRa.h5ad,21193,33538,iPSC-induced_neuron,CRISPRa,,,raw_celltype_verified,iPSC-induced neuron,primary,healthy,CRISPR
+TianKampmann2021_CRISPRi,H:\2026try\9.5PTL\data\raw\scperturb_v1.4\TianKampmann2021_CRISPRi.h5ad,32300,33538,iPSC-induced_neuron,CRISPRi,,,raw_celltype_verified,iPSC-induced neuron,primary,healthy,CRISPR
+FrangiehIzar2021_RNA,H:\2026try\9.5PTL\data\raw\scperturb_v1.4\FrangiehIzar2021_RNA.h5ad,218331,23712,patient-derived_melanoma,CRISPR,perturbation_2,Control|Co-culture|IFNγ,raw_condition_field_verified,melanocytes,cell_line_co-culture,melanoma,CRISPR

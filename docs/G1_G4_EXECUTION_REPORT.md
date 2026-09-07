@@ -49,6 +49,14 @@ dataset). The run matrix records `split_protocol=random_condition_holdout` and
 The split audit verifies zero train/validation/test condition overlap. These
 are adapter-validation metrics, not final PTL-v2 claims.
 
+Iteration 6 then audited context expansion before adding new environments. The
+GWPS coverage audit shows that batch-by-perturbation eligibility, rather than
+label parsing or cell-level QC, reduces a 1,989,578-cell raw screen to 31
+non-control labels. GWPS is therefore a separate GEARS contract pilot and the
+K562 essential surface is the current common-core fallback. Raw metadata also
+verifies Tian as iPSC-induced neurons and Frangieh as a melanoma co-culture
+screen with Control, Co-culture and IFNγ conditions.
+
 | Surface | Seeds | Test non-control / control | Genes | MSE range |
 |---|---:|---:|---:|---:|
 | Norman | 0--2 | 346--363 / 0 | 4,096 | 0.011972--0.014306 |
@@ -161,9 +169,11 @@ smaller value when CPU or memory is constrained. This is process-level
 parallelism within the existing protocol, not a bypass of operating-system or
 account limits; data, model settings, splits and metrics are unchanged.
 
-The current next action is independent C2C review of the completed GEARS audit
-before any G2 status change or commit. The next scientific step after review is
-G5 predictor expansion and then G6 full RQ1--RQ4 experiments. The current GEARS
-results remain an adapter-validation pilot: full PTL-v2 claims still require
-the planned learned-model roster, native UQ comparison, and final multi-seed
+Iteration 6 additionally produced a science-first ICLR draft in
+`paper/iclr2027/main.tex`, an explicit Nature-style figure contract, and four
+Python-generated SVG/PDF/TIFF figure bundles from real source tables. The next
+scientific step is G5 predictor expansion and then G6 full RQ1--RQ4 experiments
+on the common-core and context-expansion surfaces. The current GEARS results
+remain an adapter-validation pilot: full PTL-v2 claims still require the
+planned learned-model roster, native UQ comparison, and final multi-seed
 training budget.

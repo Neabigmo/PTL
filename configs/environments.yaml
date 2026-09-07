@@ -8,6 +8,15 @@ environments:
     platform: processed_signature_table
     condition: baseline
     role: common_core
+  replogle_k562_essential:
+    dataset_id: ReplogleWeissman2022_K562_essential
+    cell_context: K562
+    perturbation_modality: metadata_pending
+    readout_modality: RNA
+    platform: processed_signature_table
+    condition: essential_legacy_pilot
+    role: common_core
+    semantic_status: existing_replay_surface
   replogle_k562_gwps:
     dataset_id: ReplogleWeissman2022_K562_gwps
     cell_context: K562
@@ -15,7 +24,8 @@ environments:
     readout_modality: RNA
     platform: processed_signature_table
     condition: GWPS
-    role: common_core
+    role: gears_contract_pilot
+    semantic_status: coverage_limited_by_batch_eligibility
   replogle_rpe1:
     dataset_id: ReplogleWeissman2022_rpe1
     cell_context: RPE1
@@ -33,30 +43,38 @@ environments:
     condition: multi_accession_candidate
     role: common_core_candidate
     status: pending_adamson_audit
-  tian_k562_crispra:
+  tian_neuron_crispra:
     dataset_id: TianKampmann2021_CRISPRa
-    cell_context: K562
+    cell_context: iPSC-induced_neuron
     perturbation_modality: CRISPRa
     readout_modality: RNA
     platform: processed_signature_table
     condition: baseline
     role: context_expansion
-  tian_k562_crispri:
+    semantic_status: raw_celltype_verified
+  tian_neuron_crispri:
     dataset_id: TianKampmann2021_CRISPRi
-    cell_context: K562
+    cell_context: iPSC-induced_neuron
     perturbation_modality: CRISPRi
     readout_modality: RNA
     platform: processed_signature_table
     condition: baseline
     role: context_expansion
-  frangieh_thp1_rna:
+    semantic_status: raw_celltype_verified
+  frangieh_melanoma_rna:
     dataset_id: FrangiehIzar2021_RNA
-    cell_context: THP-1/monocytes
+    cell_context: patient-derived_melanoma
     perturbation_modality: metadata_pending
     readout_modality: RNA
     platform: processed_signature_table
-    condition: metadata_defined
+    condition: multi_condition
+    condition_field: perturbation_2
+    condition_values:
+      - Control
+      - Co-culture
+      - IFNγ
     role: context_expansion
+    semantic_status: raw_condition_field_verified
   papalexi_eccite_rna:
     dataset_id: PapalexiSatija2021_eccite_RNA
     cell_context: K562

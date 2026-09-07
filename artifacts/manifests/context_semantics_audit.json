@@ -1,0 +1,97 @@
+{
+  "targets": [
+    {
+      "dataset_id": "TianKampmann2021_CRISPRa",
+      "raw_file": "H:\\2026try\\9.5PTL\\data\\raw\\scperturb_v1.4\\TianKampmann2021_CRISPRa.h5ad",
+      "n_cells": 21193,
+      "n_genes": 33538,
+      "proposed_semantics": {
+        "filename": "TianKampmann2021_CRISPRa.h5ad",
+        "cell_context": "iPSC-induced_neuron",
+        "perturbation_modality": "CRISPRa",
+        "condition_field": "",
+        "condition_values": [],
+        "semantic_status": "raw_celltype_verified"
+      },
+      "raw_observation_values": {
+        "celltype": {
+          "iPSC-induced neuron": 21193
+        },
+        "tissue_type": {
+          "primary": 21193
+        },
+        "disease": {
+          "healthy": 21193
+        },
+        "perturbation_type": {
+          "CRISPR": 21193
+        }
+      }
+    },
+    {
+      "dataset_id": "TianKampmann2021_CRISPRi",
+      "raw_file": "H:\\2026try\\9.5PTL\\data\\raw\\scperturb_v1.4\\TianKampmann2021_CRISPRi.h5ad",
+      "n_cells": 32300,
+      "n_genes": 33538,
+      "proposed_semantics": {
+        "filename": "TianKampmann2021_CRISPRi.h5ad",
+        "cell_context": "iPSC-induced_neuron",
+        "perturbation_modality": "CRISPRi",
+        "condition_field": "",
+        "condition_values": [],
+        "semantic_status": "raw_celltype_verified"
+      },
+      "raw_observation_values": {
+        "celltype": {
+          "iPSC-induced neuron": 32300
+        },
+        "tissue_type": {
+          "primary": 32300
+        },
+        "disease": {
+          "healthy": 32300
+        },
+        "perturbation_type": {
+          "CRISPR": 32300
+        }
+      }
+    },
+    {
+      "dataset_id": "FrangiehIzar2021_RNA",
+      "raw_file": "H:\\2026try\\9.5PTL\\data\\raw\\scperturb_v1.4\\FrangiehIzar2021_RNA.h5ad",
+      "n_cells": 218331,
+      "n_genes": 23712,
+      "proposed_semantics": {
+        "filename": "FrangiehIzar2021_RNA.h5ad",
+        "cell_context": "patient-derived_melanoma",
+        "perturbation_modality": "CRISPR",
+        "condition_field": "perturbation_2",
+        "condition_values": [
+          "Control",
+          "Co-culture",
+          "IFNγ"
+        ],
+        "semantic_status": "raw_condition_field_verified"
+      },
+      "raw_observation_values": {
+        "celltype": {
+          "melanocytes": 218331
+        },
+        "tissue_type": {
+          "cell_line_co-culture": 218331
+        },
+        "disease": {
+          "melanoma": 218331
+        },
+        "perturbation_type": {
+          "CRISPR": 218331
+        },
+        "perturbation_2": {
+          "Co-culture": 73114,
+          "Control": 57627,
+          "IFNγ": 87590
+        }
+      }
+    }
+  ]
+}

@@ -1003,7 +1003,7 @@ def run_pilot(root: str | Path) -> dict[str, object]:
         "split_families": list(PILOT_SPLITS),
         "transportability_target": "T_i = I[F_i >= 0.8 * median(F_random_anchor)]",
         "transportability_tau_sensitivity": [0.6, 0.7, 0.8, 0.9],
-        "gears": "official_gears_scientific_pilot_condition_disjoint_completed; see artifacts/manifests/gears_pilot_audit.csv; G2 remains pending independent review",
+        "gears": "official_gears_scientific_pilot_condition_holdout_completed; see artifacts/manifests/gears_pilot_audit.csv; G2 predictor contract passed independent review",
         "k562_surface": "PTL baseline uses the ReplogleWeissman2022_K562_essential legacy surface; the separate GEARS pilot includes ReplogleWeissman2022_K562_gwps",
         "outputs": {key: _relative(root, value) for key, value in paths.items()},
     }

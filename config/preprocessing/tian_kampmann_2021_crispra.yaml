@@ -1,0 +1,46 @@
+dataset_id: TianKampmann2021_CRISPRa
+source_dataset: scPerturb v1.4
+input_path: H:/2026try/9.5PTL/data/raw/scperturb_v1.4/TianKampmann2021_CRISPRa.h5ad
+input_format: h5ad
+split_role: context_expansion
+output_dir: H:/2026try/9.5PTL/data/processed
+control_values:
+  - control
+obs_fields:
+  perturbation: perturbation
+  batch: batch
+  cell_context: celltype
+extra_metadata_fields:
+  - perturbation
+  - batch
+  - celltype
+  - tissue_type
+  - disease
+  - guide_id
+  - perturbation_type
+  - ncounts
+  - ngenes
+  - percent_mito
+  - percent_ribo
+  - nperts
+cell_context_fallbacks:
+  - celltype
+  - tissue_type
+qc:
+  min_genes: 700
+  min_counts: 1500
+  max_percent_mito: 25
+  chunk_size: 2048
+signature_target_sum: 10000
+min_cells_per_perturbation: 10
+var_name_column:
+write_convenience_adata: false
+convenience_adata_mode: none
+convenience_var_top_n:
+convenience_var_sort_by:
+label_strategy: direct
+label_strategy_kwargs: {}
+contract_filter_query:
+delta_reference_fields:
+  - batch
+matrix_store_mode: backed_source_with_qc_manifest

@@ -7,7 +7,7 @@ task_policy:
 common_matrix:
   environments:
     - norman_k562_rna
-    - replogle_k562_gwps
+    - replogle_k562_essential
     - replogle_rpe1
   predictors:
     - mean_global
@@ -20,10 +20,12 @@ common_matrix:
     - combinatorial_response_when_supported
 extended_matrix:
   context_expansion:
-    - tian_k562_crispra
-    - tian_k562_crispri
-    - frangieh_thp1_rna
+    - tian_neuron_crispra
+    - tian_neuron_crispri
+    - frangieh_melanoma_rna
     - papalexi_eccite_rna
+  gears_contract_pilots:
+    - replogle_k562_gwps
   external_validation:
     - wessels_thp1
   model_specific_rules:

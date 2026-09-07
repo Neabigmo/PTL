@@ -10,8 +10,8 @@ common_core:
     source_file: data/raw/scperturb_v1.4/NormanWeissman2019_filtered.h5ad
     role: common_core
     headline_eligible: true
-  - dataset_id: ReplogleWeissman2022_K562_gwps
-    source_file: data/raw/scperturb_v1.4/ReplogleWeissman2022_K562_gwps.h5ad
+  - dataset_id: ReplogleWeissman2022_K562_essential
+    source_file: data/raw/scperturb_v1.4/ReplogleWeissman2022_K562_essential.h5ad
     role: common_core_primary_k562
     headline_eligible: true
   - dataset_id: ReplogleWeissman2022_rpe1
@@ -27,8 +27,14 @@ common_core:
     headline_eligible: false
     status: pending_adamson_audit
 
+gears_contract_pilots:
+  - dataset_id: ReplogleWeissman2022_K562_gwps
+    source_file: data/raw/scperturb_v1.4/ReplogleWeissman2022_K562_gwps.h5ad
+    role: gears_contract_pilot
+    headline_eligible: false
+    status: coverage_limited_by_batch_eligibility
+
 extended_existing:
-  - ReplogleWeissman2022_K562_essential
   - PapalexiSatija2021_eccite_RNA
   - DatlingerBock2017
   - DatlingerBock2021
