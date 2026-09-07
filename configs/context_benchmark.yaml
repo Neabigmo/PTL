@@ -1,0 +1,95 @@
+schema_version: 2
+benchmark_id: ptl_context_v2
+description: >-
+  Eight-environment context benchmark for prediction-level reliability. The
+  predictor may retain its native gene space; this benchmark defines the
+  shared feature space used only for comparable evaluation.
+evaluation:
+  gene_id_field: feature_name
+  gene_id_normalization: strip_exact_case_preserving
+  panel_policy: intersection_of_formal_environment_feature_universes
+  predictor_native_space_separate: true
+environments:
+  - environment_id: norman_k562
+    dataset_id: NormanWeissman2019_filtered
+    cell_context: K562
+    perturbation_modality: CRISPR_screen
+    readout_modality: RNA
+    platform: Perturb-seq
+    condition: baseline
+    role: common_core
+    semantic_status: raw_context_verified_modality_family_unspecified
+    status: ready_signature_surface
+  - environment_id: replogle_k562_essential
+    dataset_id: ReplogleWeissman2022_K562_essential
+    cell_context: K562
+    perturbation_modality: CRISPRi
+    readout_modality: RNA
+    platform: Perturb-seq
+    condition: essential_gene_screen
+    role: common_core
+    semantic_status: raw_context_verified
+    status: ready_signature_surface
+  - environment_id: replogle_rpe1
+    dataset_id: ReplogleWeissman2022_rpe1
+    cell_context: RPE1
+    perturbation_modality: CRISPRi
+    readout_modality: RNA
+    platform: Perturb-seq
+    condition: baseline
+    role: common_core
+    semantic_status: raw_context_verified
+    status: ready_signature_surface
+  - environment_id: tian_neuron_crispra
+    dataset_id: TianKampmann2021_CRISPRa
+    cell_context: iPSC-induced_neuron
+    perturbation_modality: CRISPRa
+    readout_modality: RNA
+    platform: Perturb-seq
+    condition: baseline
+    role: context_expansion
+    semantic_status: raw_celltype_and_modality_verified
+    status: ready_signature_surface
+  - environment_id: tian_neuron_crispri
+    dataset_id: TianKampmann2021_CRISPRi
+    cell_context: iPSC-induced_neuron
+    perturbation_modality: CRISPRi
+    readout_modality: RNA
+    platform: Perturb-seq
+    condition: baseline
+    role: context_expansion
+    semantic_status: raw_celltype_and_modality_verified
+    status: ready_signature_surface
+  - environment_id: frangieh_melanoma_control
+    dataset_id: FrangiehIzar2021_RNA
+    cell_context: patient-derived_melanoma
+    perturbation_modality: CRISPR_screen
+    readout_modality: RNA
+    platform: Perturb-CITE-seq
+    condition: Control
+    condition_field: perturbation_2
+    role: context_expansion
+    semantic_status: raw_condition_field_verified
+    status: ready_signature_surface
+  - environment_id: frangieh_melanoma_coculture
+    dataset_id: FrangiehIzar2021_RNA
+    cell_context: patient-derived_melanoma
+    perturbation_modality: CRISPR_screen
+    readout_modality: RNA
+    platform: Perturb-CITE-seq
+    condition: Co-culture
+    condition_field: perturbation_2
+    role: context_expansion
+    semantic_status: raw_condition_field_verified
+    status: ready_signature_surface
+  - environment_id: frangieh_melanoma_ifng
+    dataset_id: FrangiehIzar2021_RNA
+    cell_context: patient-derived_melanoma
+    perturbation_modality: CRISPR_screen
+    readout_modality: RNA
+    platform: Perturb-CITE-seq
+    condition: IFNγ
+    condition_field: perturbation_2
+    role: context_expansion
+    semantic_status: raw_condition_field_verified
+    status: ready_signature_surface

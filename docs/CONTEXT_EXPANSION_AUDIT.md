@@ -77,3 +77,23 @@ the GWPS or semantic checks. The staged preprocessing configs are:
 The active task registry places Tian and Frangieh in context expansion and
 places GWPS in `gears_contract_pilots`; only K562 essential is selected for
 the headline common matrix at this stage.
+
+## Formal context-v2 surface
+
+The formal benchmark surface is now materialized by
+`configs/context_benchmark.yaml` and `scripts/build_context_benchmark.py`.
+It contains eight explicit environments: Norman K562, Replogle K562
+essential, Replogle RPE1, Tian CRISPRa, Tian CRISPRi, and three Frangieh
+conditions (Control, Co-culture, and IFNγ). Frangieh conditions are separate
+environment rows and use the raw `perturbation_2` field.
+
+The v2 evaluation panel is the exact intersection of the six source feature
+universes after explicit whitespace normalization, with 6,897 shared genes.
+Predictor-native training spaces remain separate from this comparison panel;
+the panel is not a claim that every predictor supports every environment.
+
+The predictor-by-environment matrix in
+`artifacts/manifests/predictor_environment_coverage.csv` is planning metadata
+only. It enumerates the six-predictor roster and 48 planned cells, while
+learned-model outputs, uncertainty estimates, and transfer metrics remain
+pending until the corresponding runs complete.

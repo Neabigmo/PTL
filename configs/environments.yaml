@@ -3,52 +3,55 @@ environments:
   norman_k562_rna:
     dataset_id: NormanWeissman2019_filtered
     cell_context: K562
-    perturbation_modality: metadata_pending
+    perturbation_modality: CRISPR_screen
     readout_modality: RNA
-    platform: processed_signature_table
+    platform: Perturb-seq
     condition: baseline
     role: common_core
+    semantic_status: raw_context_verified_modality_family_unspecified
   replogle_k562_essential:
     dataset_id: ReplogleWeissman2022_K562_essential
     cell_context: K562
-    perturbation_modality: metadata_pending
+    perturbation_modality: CRISPRi
     readout_modality: RNA
-    platform: processed_signature_table
+    platform: Perturb-seq
     condition: essential_legacy_pilot
     role: common_core
-    semantic_status: existing_replay_surface
+    semantic_status: raw_context_verified
   replogle_k562_gwps:
     dataset_id: ReplogleWeissman2022_K562_gwps
     cell_context: K562
-    perturbation_modality: metadata_pending
+    perturbation_modality: CRISPRi
     readout_modality: RNA
-    platform: processed_signature_table
+    platform: Perturb-seq
     condition: GWPS
     role: gears_contract_pilot
-    semantic_status: coverage_limited_by_batch_eligibility
+    semantic_status: raw_context_verified_coverage_limited_by_batch_eligibility
   replogle_rpe1:
     dataset_id: ReplogleWeissman2022_rpe1
     cell_context: RPE1
-    perturbation_modality: metadata_pending
+    perturbation_modality: CRISPRi
     readout_modality: RNA
-    platform: processed_signature_table
+    platform: Perturb-seq
     condition: baseline
     role: common_core
+    semantic_status: raw_context_verified
   adamson_k562_full_candidate:
     dataset_id: AdamsonWeissman2016_full_candidate
     cell_context: K562
-    perturbation_modality: metadata_pending
+    perturbation_modality: CRISPR_screen
     readout_modality: RNA
-    platform: processed_signature_table
+    platform: Perturb-seq
     condition: multi_accession_candidate
     role: common_core_candidate
+    semantic_status: raw_context_verified_modality_family_unspecified
     status: pending_adamson_audit
   tian_neuron_crispra:
     dataset_id: TianKampmann2021_CRISPRa
     cell_context: iPSC-induced_neuron
     perturbation_modality: CRISPRa
     readout_modality: RNA
-    platform: processed_signature_table
+    platform: Perturb-seq
     condition: baseline
     role: context_expansion
     semantic_status: raw_celltype_verified
@@ -57,16 +60,16 @@ environments:
     cell_context: iPSC-induced_neuron
     perturbation_modality: CRISPRi
     readout_modality: RNA
-    platform: processed_signature_table
+    platform: Perturb-seq
     condition: baseline
     role: context_expansion
     semantic_status: raw_celltype_verified
   frangieh_melanoma_rna:
     dataset_id: FrangiehIzar2021_RNA
     cell_context: patient-derived_melanoma
-    perturbation_modality: metadata_pending
+    perturbation_modality: CRISPR_screen
     readout_modality: RNA
-    platform: processed_signature_table
+    platform: Perturb-CITE-seq
     condition: multi_condition
     condition_field: perturbation_2
     condition_values:
@@ -78,9 +81,9 @@ environments:
   papalexi_eccite_rna:
     dataset_id: PapalexiSatija2021_eccite_RNA
     cell_context: K562
-    perturbation_modality: metadata_pending
+    perturbation_modality: CRISPR_screen
     readout_modality: RNA+protein
-    platform: processed_signature_table
+    platform: Perturb-CITE-seq
     condition: ECCITE-seq
     role: context_expansion
   wessels_thp1:
@@ -88,7 +91,8 @@ environments:
     cell_context: THP-1/monocytes
     perturbation_modality: CRISPR-Cas13
     readout_modality: RNA
-    platform: processed_signature_table
+    platform: Perturb-seq
     condition: metadata_defined
     role: external_b
     frozen: true
+    semantic_status: raw_context_verified

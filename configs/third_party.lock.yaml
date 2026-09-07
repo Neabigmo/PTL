@@ -14,11 +14,11 @@ entries:
     license: "Use subject to the venue's current author instructions; verify before redistribution."
     status: vendored
   - name: Systema
-    url: null
-    pinned_commit: null
-    role: "Planned perturbation-specific metric robustness reference."
+    url: https://github.com/mlbio-epfl/systema.git
+    pinned_commit: aaf5b5353993b48b78543f2f93b3e18ca65df515
+    role: "Perturbation-specific metric and unified predictor-pipeline reference; checked out locally but not vendored."
     license: "To be verified before code or data reuse."
-    status: planned
+    status: reference_checked_out
   - name: scPertEval
     url: null
     pinned_commit: null

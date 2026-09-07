@@ -43,9 +43,9 @@ from ptl.uncertainty.uq import UQNormalizer, summarize_ensemble
 PILOT_DATASETS = {
     "NormanWeissman2019_filtered": {
         "cell_context": "K562",
-        "perturbation_modality": "metadata_pending",
+        "perturbation_modality": "CRISPR_screen",
         "readout_modality": "RNA",
-        "platform": "processed_signature_table",
+        "platform": "Perturb-seq",
         "modality": "RNA",
         "condition": "baseline",
     },
@@ -53,17 +53,17 @@ PILOT_DATASETS = {
     # surface, but it has no compatible processed prediction arrays yet.
     "ReplogleWeissman2022_K562_essential": {
         "cell_context": "K562",
-        "perturbation_modality": "metadata_pending",
+        "perturbation_modality": "CRISPRi",
         "readout_modality": "RNA",
-        "platform": "processed_signature_table",
+        "platform": "Perturb-seq",
         "modality": "RNA",
         "condition": "essential_legacy_pilot",
     },
     "ReplogleWeissman2022_rpe1": {
         "cell_context": "RPE1",
-        "perturbation_modality": "metadata_pending",
+        "perturbation_modality": "CRISPRi",
         "readout_modality": "RNA",
-        "platform": "processed_signature_table",
+        "platform": "Perturb-seq",
         "modality": "RNA",
         "condition": "baseline",
     },
@@ -795,25 +795,29 @@ def _write_outputs(root: Path, frame: pd.DataFrame, fold_predictions: pd.DataFra
         )
     )
     fold_summary.to_csv(paths["fold_summary"], index=False)
-    environment_registry = pd.DataFrame(
-        [
-            {
-                "environment_id": environment_id(
-                    dataset_id, details["cell_context"], details["modality"], details["condition"]
-                ),
-                "dataset_id": dataset_id,
-                "cell_context": details["cell_context"],
-                "perturbation_modality": details["perturbation_modality"],
-                "readout_modality": details["readout_modality"],
-                "platform": details["platform"],
-                "condition": details["condition"],
-                "role": "pilot_replay",
-                "semantic_status": "core_pilot_fields_explicit_metadata_expansion_pending",
-                "status": "active_legacy_prediction_surface" if "legacy" in details["condition"] else "active_pilot_surface",
-            }
-            for dataset_id, details in PILOT_DATASETS.items()
-        ]
-    )
+    formal_registry_path = root / "artifacts/manifests/environment_registry.csv"
+    if formal_registry_path.exists():
+        environment_registry = pd.read_csv(formal_registry_path)
+    else:
+        environment_registry = pd.DataFrame(
+            [
+                {
+                    "environment_id": environment_id(
+                        dataset_id, details["cell_context"], details["modality"], details["condition"]
+                    ),
+                    "dataset_id": dataset_id,
+                    "cell_context": details["cell_context"],
+                    "perturbation_modality": details["perturbation_modality"],
+                    "readout_modality": details["readout_modality"],
+                    "platform": details["platform"],
+                    "condition": details["condition"],
+                    "role": "pilot_replay",
+                    "semantic_status": "core_pilot_fields_verified",
+                    "status": "active_legacy_prediction_surface" if "legacy" in details["condition"] else "active_pilot_surface",
+                }
+                for dataset_id, details in PILOT_DATASETS.items()
+            ]
+        )
     environment_registry.to_csv(paths["environment_registry"], index=False)
 
     sensitivity_rows = []

@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "roster_id": "ptl_formal_predictor_roster_v2",
+  "benchmark_id": "ptl_context_v2",
+  "predictor_count": 6,
+  "environment_count": 8,
+  "matrix_rows": 48,
+  "ensemble_seeds": [
+    0,
+    1,
+    2
+  ],
+  "native_uq_preferred": true,
+  "evaluation_gene_space": "ptl_context_v2_intersection",
+  "status": "planning_matrix_only_no_scientific_results_claimed",
+  "matrix_path": "artifacts/manifests/predictor_environment_coverage.csv"
+}
