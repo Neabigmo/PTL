@@ -59,15 +59,23 @@ def test_backed_csc_profiles_preserve_controls_and_reference_deltas(tmp_path):
         qc={"gene_chunk_size": 2},
     )
 
+    generic_pseudobulk, generic_signatures = compute_profiles(source, metadata, group_info, config)
+
     try:
         pseudobulk, signatures = compute_profiles(backed, metadata, group_info, config)
     finally:
         backed.file.close()
 
+    gene_columns = ["g1", "g2", "g3"]
+    assert np.allclose(
+        pseudobulk[gene_columns].to_numpy(), generic_pseudobulk[gene_columns].to_numpy(), rtol=1e-5, atol=1e-5
+    )
+    assert np.allclose(
+        signatures[gene_columns].to_numpy(), generic_signatures[gene_columns].to_numpy(), rtol=1e-5, atol=1e-5
+    )
     assert pseudobulk.shape == (4, 10)
     assert signatures.shape == (4, 11)
     assert signatures["signature_id"].is_unique
-    gene_columns = ["g1", "g2", "g3"]
     controls = signatures[signatures["is_control"]]
     assert np.allclose(controls[gene_columns].to_numpy(), 0.0, atol=1e-6)
     assert set(signatures["reference_key"]) == {"ref1", "ref2"}

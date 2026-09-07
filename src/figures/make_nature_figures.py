@@ -21,7 +21,6 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "artifacts" / "source_data"
 MANIFEST = ROOT / "artifacts" / "manifests"
-TABLES = ROOT / "results" / "tables"
 DEFAULT_OUTPUT = ROOT / "results" / "figures" / "nature"
 
 COLORS = {
@@ -422,27 +421,30 @@ def fig3_selective(output_dir: Path) -> list[Path]:
 
 
 def fig4_information_blocks(output_dir: Path) -> list[Path]:
-    abl = load("ptl_ablation.csv", TABLES)
-    feat = load("ptl_feature_audit.csv", TABLES)
-    feat = feat[(feat["deployment_available"] == True) & (feat["excluded_from_ptl"] == False)]
-    block_order = ["prediction_confidence_uncertainty", "context_distance", "support_availability", "perturbation_novelty", "model_split_dataset_indicator", "other"]
+    deployment = load("deployment_features.csv", SOURCE)
+    g4 = load("g4_method_comparison.csv", SOURCE)
+    block_order = ["U", "P", "S", "N", "C"]
     block_labels = {
-        "prediction_confidence_uncertainty": "U · prediction / UQ",
-        "context_distance": "P/C · geometry / context",
-        "support_availability": "S · support",
-        "perturbation_novelty": "N · novelty",
-        "model_split_dataset_indicator": "design indicators",
-        "other": "other deployment fields",
+        "U": "U · prediction / UQ",
+        "P": "P · geometry",
+        "S": "S · support",
+        "N": "N · novelty",
+        "C": "C · biological context",
     }
-    counts = feat.groupby("source_group").size().reindex(block_order).fillna(0)
-    completed = abl[abl["status"] == "completed"].copy()
-    completed = completed.sort_values("mean_false_transportability_rate_gain_vs_naive", ascending=True)
+    block_columns = {
+        "U": ["prediction_norm", "prediction_sparsity", "prediction_concentration"],
+        "P": ["prediction_manifold_distance"],
+        "S": ["support_cells", "support_signatures", "reference_key_overlap"],
+        "N": ["perturbation_seen_fraction", "component_seen_fraction", "combination_novelty", "perturbation_novelty"],
+        "C": ["cell_context", "perturbation_modality", "readout_modality", "condition", "platform", "batch_distance"],
+    }
+    counts = pd.Series({block: len(columns) for block, columns in block_columns.items()}).reindex(block_order)
 
     fig = plt.figure(figsize=(7.2, 4.9))
     gs = fig.add_gridspec(2, 2, height_ratios=[1.15, 1.0], hspace=0.66, wspace=0.42)
-    fig.suptitle("Reliability is assembled from deployment-time information blocks", x=0.06, y=0.985,
+    fig.suptitle("Deployment-time information blocks and validation boundaries", x=0.06, y=0.985,
                  ha="left", fontsize=11, fontweight="bold", color=COLORS["ink"])
-    fig.text(0.06, 0.953, "Current replay probes the blocks by ablation; the full incremental ladder is reserved for the expanded benchmark.",
+    fig.text(0.06, 0.953, "The v2 pilot declares the blocks; formal incremental ablations are held for the learned-model benchmark.",
              ha="left", va="top", fontsize=7, color=COLORS["muted"])
 
     ax = fig.add_subplot(gs[0, 0])
@@ -451,7 +453,7 @@ def fig4_information_blocks(output_dir: Path) -> list[Path]:
     block_colors = [COLORS["orange"], COLORS["blue"], COLORS["teal"], COLORS["verm"], COLORS["purple"], COLORS["muted"]]
     ax.barh(y, counts.to_numpy(), color=block_colors, height=0.57)
     ax.set_yticks(y); ax.set_yticklabels([block_labels[b] for b in block_order])
-    ax.invert_yaxis(); ax.set_xlabel("deployment features")
+    ax.invert_yaxis(); ax.set_xlabel("declared v2 fields")
     for yi, val in zip(y, counts.to_numpy()):
         if val:
             ax.text(val + 0.6, yi, str(int(val)), va="center", fontsize=6.2, color=COLORS["ink"])
@@ -475,26 +477,23 @@ def fig4_information_blocks(output_dir: Path) -> list[Path]:
 
     ax = fig.add_subplot(gs[1, 0])
     add_panel_label(ax, "c")
-    vals = completed["mean_false_transportability_rate_gain_vs_naive"].to_numpy()
-    labels = ["full PTL", "no context distance", "no perturb. novelty", "no UQ features"]
-    name_map = {"full_PTL": "full PTL", "no_context_distance": "no context distance", "no_perturbation_novelty": "no perturb. novelty", "no_uncertainty_features": "no UQ features"}
-    labels = [name_map.get(v, v) for v in completed["ablation"]]
-    y = np.arange(len(labels))
-    ax.barh(y, vals, color=[COLORS["teal"] if "full" in lab else COLORS["blue"] for lab in labels], height=0.56)
-    ax.set_yticks(y); ax.set_yticklabels(labels); ax.invert_yaxis()
-    ax.set_xlabel("FTR gain vs raw UQ")
-    ax.axvline(0, color=COLORS["ink"], linewidth=0.7)
-    for yi, val in zip(y, vals):
-        ax.text(val + 0.008, yi, f"{val:.3f}", va="center", fontsize=6.1)
+    observed = g4[g4["method"].isin(["raw_normalized_uq", "ptl_rf"])].groupby("method")["aurc"].mean()
+    observed = observed.reindex(["raw_normalized_uq", "ptl_rf"]).dropna()
+    ax.bar(np.arange(len(observed)), observed.to_numpy(), color=[COLORS["orange"], COLORS["teal"]], width=0.56)
+    ax.set_xticks(np.arange(len(observed))); ax.set_xticklabels(["Raw UQ", "PTL"])
+    ax.set_ylabel("pilot AURC")
+    ax.set_title("Observed v2 pilot comparison", loc="left", fontsize=7.5, pad=5)
+    for xi, val in enumerate(observed.to_numpy()):
+        ax.text(xi, val + 0.008, f"{val:.3f}", ha="center", fontsize=6.1)
     clean_axis(ax, grid=True)
 
     ax = fig.add_subplot(gs[1, 1])
     add_panel_label(ax, "d")
     ax.set_axis_off()
-    ax.text(0.02, 0.84, "Design constraint", fontsize=8, fontweight="bold", color=COLORS["ink"])
+    ax.text(0.02, 0.84, "Provenance constraint", fontsize=8, fontweight="bold", color=COLORS["ink"])
     ax.text(0.02, 0.63, "Only information available\nbefore observing the target\nmay enter PTL.", fontsize=8,
             color=COLORS["navy"], fontweight="bold", va="top")
-    ax.text(0.02, 0.23, "Outcome-derived fields are retained\nfor evaluation and excluded from\nthe deployment feature allowlist.", fontsize=6.8,
+    ax.text(0.02, 0.23, f"{len(deployment):,} v2 pilot rows are sourced\nfrom artifacts/source_data; v1\nptl_* tables are excluded.", fontsize=6.8,
             color=COLORS["muted"], va="top")
     return save_publication(fig, output_dir, "nature_fig4_information_blocks")
 

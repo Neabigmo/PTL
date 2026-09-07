@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "normalization_field": "obs.ncounts",
+  "comparison": "absolute(metadata_ncounts - matrix_row_sum) / max(abs(matrix_row_sum), 1e-12)",
+  "datasets": [
+    {
+      "dataset_id": "TianKampmann2021_CRISPRa",
+      "path": "data/raw/scperturb_v1.4/TianKampmann2021_CRISPRa.h5ad",
+      "sample_count": 8,
+      "seed": 20260907,
+      "max_relative_error": 0.0,
+      "mean_relative_error": 0.0,
+      "ncounts_all_finite": true,
+      "matrix_row_sums_all_finite": true
+    },
+    {
+      "dataset_id": "TianKampmann2021_CRISPRi",
+      "path": "data/raw/scperturb_v1.4/TianKampmann2021_CRISPRi.h5ad",
+      "sample_count": 8,
+      "seed": 20260907,
+      "max_relative_error": 0.0,
+      "mean_relative_error": 0.0,
+      "ncounts_all_finite": true,
+      "matrix_row_sums_all_finite": true
+    },
+    {
+      "dataset_id": "FrangiehIzar2021_RNA",
+      "path": "data/raw/scperturb_v1.4/FrangiehIzar2021_RNA.h5ad",
+      "sample_count": 8,
+      "seed": 20260907,
+      "max_relative_error": 0.0,
+      "mean_relative_error": 0.0,
+      "ncounts_all_finite": true,
+      "matrix_row_sums_all_finite": true
+    }
+  ]
+}

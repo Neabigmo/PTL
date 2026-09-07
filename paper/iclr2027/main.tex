@@ -236,29 +236,27 @@ PTL (random forest) & \textbf{0.3480} & \textbf{0.4505} & \textbf{0.5025} & \tex
 \end{figure*}
 
 \subsection{Reliability uses multiple deployment-time information blocks}
-The feature audit identifies 51 deployment features in the full pilot head,
-including uncertainty, prediction/context geometry, support, novelty and
-design-indicator blocks. Removing uncertainty features lowers the FTR gain
-versus raw UQ from 0.4758 to 0.4564, while removing perturbation novelty lowers
-it to 0.4709. Removing context-distance features has little effect on this
-small replay (gain 0.4770), which is evidence about the present surface rather
-than evidence that biological context is uninformative in general.
+The v2 pilot source contract exposes deployment-time fields in five blocks:
+prediction/UQ (3), geometry (1), support (3), novelty (4) and biological
+context (6). These counts describe the declared input surface, not a claim of
+final feature importance. The earlier v1 ablation tables are provenance-frozen
+and are not used as evidence for this draft.
 
 The intended expansion is an incremental information ladder
 $U\rightarrow U+P\rightarrow U+P+S\rightarrow U+P+S+N\rightarrow
 U+P+S+N+C$. The current table does not contain all five incremental fits, so
-we expose the ladder as a preregistered next-stage comparison rather than
-interpolating missing results. Figure~\ref{fig:blocks} displays the actual
-feature counts, current block-removal probes and the deployment-only rule.
+we expose the ladder as a next-stage comparison rather than interpolating
+missing results. Figure~\ref{fig:blocks} displays the declared v2 fields, the
+observed v2 pilot comparison and the provenance boundary.
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{../../results/figures/nature/nature_fig4_information_blocks.pdf}
-  \caption{\textbf{Information blocks and ablation boundary.} (a) Counts of
-  deployment-available features by source block. (b) The planned incremental
-  information ladder. (c) Current pilot reductions in false-transportability
-  rate versus raw UQ. (d) Outcome-derived fields are retained for evaluation
-  but excluded from the deployment feature allowlist.}
+  \caption{\textbf{Information blocks and validation boundary.} (a) Declared
+  v2 deployment-time fields by information block. (b) The planned incremental
+  information ladder. (c) The observed v2 pilot AURC comparison, shown only
+  as a replay diagnostic. (d) v1 tables are excluded from the v2 figure
+  provenance; formal learned-model ablations remain pending.}
   \label{fig:blocks}
 \end{figure*}
 
