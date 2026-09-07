@@ -27,6 +27,15 @@ def test_formal_deployment_features_exclude_outcomes_and_identity() -> None:
     assert all("fidelity" not in column for column in FEATURE_COLUMNS)
 
 
+@pytest.mark.parametrize(
+    "forbidden",
+    ["total_cells", "n_reference_groups", "source_reference_keys", "batch_distance", "support_cells"],
+)
+def test_deployment_features_reject_realized_assay_metadata(forbidden: str) -> None:
+    with pytest.raises(ValueError, match="outcome/benchmark"):
+        validate_deployment_features([*FEATURE_COLUMNS, forbidden])
+
+
 @pytest.mark.parametrize("scenario,heldout", [("in_domain", ""), ("leave_environment_out", "e2"), ("leave_predictor_out", "p2")])
 def test_scenario_partition_is_validation_to_test_and_respects_holdout(scenario: str, heldout: str) -> None:
     frame = toy_rows()

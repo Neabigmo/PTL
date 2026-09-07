@@ -39,7 +39,7 @@ def test_id_components_do_not_collapse_distinct_punctuation():
 def test_outcomes_cannot_enter_deployment_features():
     with pytest.raises(ValueError, match="outcome"):
         validate_feature_columns(["support_cells", "fidelity_delta_cosine"])
-    validate_feature_columns(["support_cells", "perturbation_novelty", "cell_context_code"])
+    validate_feature_columns(["training_support_fraction", "perturbation_novelty", "cell_context_code"])
 
 
 def test_path_resolver_rejects_legacy_absolute_path(tmp_path: Path):

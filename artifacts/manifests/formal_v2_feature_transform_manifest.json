@@ -1,0 +1,2100 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2",
+  "policy": "all transforms fit on the calibration-side reference population for each scenario",
+  "records": [
+    {
+      "scenario": "in_domain",
+      "heldout_environment_id": "",
+      "heldout_predictor": "",
+      "calibration_rows": 1119,
+      "test_rows": 1146,
+      "train_reference_population": {
+        "rows": 1119,
+        "biological_instances": 373,
+        "predictors": [
+          "mean_matching",
+          "slim_string",
+          "strong_linear"
+        ]
+      },
+      "uq_normalizer_summaries": {
+        "uq_mean_gene_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.4959785522788204,
+          "max": 0.9986595174262735
+        },
+        "uq_median_gene_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.4959785522788204,
+          "max": 0.9986595174262735
+        },
+        "uq_top_effect_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.49195710455764075,
+          "max": 0.9986595174262735
+        },
+        "uq_cosine_disagreement": {
+          "min": 0.0013404825737265424,
+          "median": 0.4785522788203753,
+          "max": 0.9986595174262735
+        },
+        "uq_effect_norm_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.4973190348525469,
+          "max": 0.9986595174262735
+        }
+      },
+      "categorical_vocabularies": {
+        "cell_context": [
+          "K562",
+          "RPE1",
+          "iPSC-induced_neuron",
+          "patient-derived_melanoma"
+        ],
+        "perturbation_modality": [
+          "CRISPRa",
+          "CRISPRi",
+          "CRISPRn"
+        ],
+        "readout_modality": [
+          "RNA"
+        ],
+        "condition": [
+          "Co-culture",
+          "Control",
+          "IFNγ",
+          "baseline",
+          "essential_gene_screen"
+        ],
+        "platform": [
+          "Perturb-CITE-seq",
+          "Perturb-seq"
+        ]
+      },
+      "pca_manifold_basis": {
+        "reference_space": "calibration_prediction_vectors",
+        "standardization": "calibration-column mean and population std",
+        "rank": 8,
+        "distance": "nearest calibration prediction Euclidean distance"
+      },
+      "numeric_imputation": {
+        "prediction_norm": 2.0192337036132812,
+        "prediction_sparsity": 0.0,
+        "prediction_concentration": 0.0508708953281104,
+        "prediction_manifold_distance": 2.21609370882927,
+        "exact_training_support_fraction": 0.0,
+        "component_training_support_fraction": 0.0,
+        "training_neighborhood_density": 0.0,
+        "perturbation_seen_fraction": 0.0,
+        "component_seen_fraction": 0.0,
+        "combination_novelty": 0.0,
+        "perturbation_novelty": 1.0
+      },
+      "feature_order": {
+        "U": [
+          "uq_mean_gene_variance",
+          "uq_median_gene_variance",
+          "uq_top_effect_variance",
+          "uq_cosine_disagreement",
+          "uq_effect_norm_variance"
+        ],
+        "P": [
+          "prediction_norm",
+          "prediction_sparsity",
+          "prediction_concentration",
+          "prediction_manifold_distance"
+        ],
+        "S": [
+          "exact_training_support_fraction",
+          "component_training_support_fraction",
+          "training_neighborhood_density"
+        ],
+        "N": [
+          "perturbation_seen_fraction",
+          "component_seen_fraction",
+          "combination_novelty",
+          "perturbation_novelty"
+        ],
+        "C": [
+          "cell_context",
+          "perturbation_modality",
+          "readout_modality",
+          "condition",
+          "platform"
+        ]
+      },
+      "feature_matrix_shapes": {
+        "U": {
+          "train": [
+            1119,
+            5
+          ],
+          "query": [
+            1146,
+            5
+          ]
+        },
+        "U+P": {
+          "train": [
+            1119,
+            9
+          ],
+          "query": [
+            1146,
+            9
+          ]
+        },
+        "U+P+S": {
+          "train": [
+            1119,
+            12
+          ],
+          "query": [
+            1146,
+            12
+          ]
+        },
+        "U+P+S+N": {
+          "train": [
+            1119,
+            16
+          ],
+          "query": [
+            1146,
+            16
+          ]
+        },
+        "U+P+S+N+C": {
+          "train": [
+            1119,
+            31
+          ],
+          "query": [
+            1146,
+            31
+          ]
+        }
+      },
+      "transform_signature": "84e5c94ceec287e16330f1f5d1f48b84e76dd9cd51c4558b9aad25083819b6ae"
+    },
+    {
+      "scenario": "leave_environment_out",
+      "heldout_environment_id": "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~co-culture",
+      "heldout_predictor": "",
+      "calibration_rows": 975,
+      "test_rows": 150,
+      "train_reference_population": {
+        "rows": 975,
+        "biological_instances": 325,
+        "predictors": [
+          "mean_matching",
+          "slim_string",
+          "strong_linear"
+        ]
+      },
+      "uq_normalizer_summaries": {
+        "uq_mean_gene_variance": {
+          "min": 0.0015384615384614886,
+          "median": 0.5061538461538462,
+          "max": 0.9984615384615385
+        },
+        "uq_median_gene_variance": {
+          "min": 0.0015384615384614886,
+          "median": 0.5061538461538462,
+          "max": 0.9984615384615385
+        },
+        "uq_top_effect_variance": {
+          "min": 0.0015384615384614886,
+          "median": 0.4538461538461539,
+          "max": 0.9984615384615385
+        },
+        "uq_cosine_disagreement": {
+          "min": 0.0015384615384614886,
+          "median": 0.5076923076923077,
+          "max": 0.9984615384615385
+        },
+        "uq_effect_norm_variance": {
+          "min": 0.0015384615384614886,
+          "median": 0.5123076923076924,
+          "max": 0.9984615384615385
+        }
+      },
+      "categorical_vocabularies": {
+        "cell_context": [
+          "K562",
+          "RPE1",
+          "iPSC-induced_neuron",
+          "patient-derived_melanoma"
+        ],
+        "perturbation_modality": [
+          "CRISPRa",
+          "CRISPRi",
+          "CRISPRn"
+        ],
+        "readout_modality": [
+          "RNA"
+        ],
+        "condition": [
+          "Control",
+          "IFNγ",
+          "baseline",
+          "essential_gene_screen"
+        ],
+        "platform": [
+          "Perturb-CITE-seq",
+          "Perturb-seq"
+        ]
+      },
+      "pca_manifold_basis": {
+        "reference_space": "calibration_prediction_vectors",
+        "standardization": "calibration-column mean and population std",
+        "rank": 8,
+        "distance": "nearest calibration prediction Euclidean distance"
+      },
+      "numeric_imputation": {
+        "prediction_norm": 2.1593241691589355,
+        "prediction_sparsity": 0.0,
+        "prediction_concentration": 0.053673516896577046,
+        "prediction_manifold_distance": 2.1985179798047523,
+        "exact_training_support_fraction": 0.0,
+        "component_training_support_fraction": 0.0,
+        "training_neighborhood_density": 0.0,
+        "perturbation_seen_fraction": 0.0,
+        "component_seen_fraction": 0.0,
+        "combination_novelty": 0.0,
+        "perturbation_novelty": 1.0
+      },
+      "feature_order": {
+        "U": [
+          "uq_mean_gene_variance",
+          "uq_median_gene_variance",
+          "uq_top_effect_variance",
+          "uq_cosine_disagreement",
+          "uq_effect_norm_variance"
+        ],
+        "P": [
+          "prediction_norm",
+          "prediction_sparsity",
+          "prediction_concentration",
+          "prediction_manifold_distance"
+        ],
+        "S": [
+          "exact_training_support_fraction",
+          "component_training_support_fraction",
+          "training_neighborhood_density"
+        ],
+        "N": [
+          "perturbation_seen_fraction",
+          "component_seen_fraction",
+          "combination_novelty",
+          "perturbation_novelty"
+        ],
+        "C": [
+          "cell_context",
+          "perturbation_modality",
+          "readout_modality",
+          "condition",
+          "platform"
+        ]
+      },
+      "feature_matrix_shapes": {
+        "U": {
+          "train": [
+            975,
+            5
+          ],
+          "query": [
+            150,
+            5
+          ]
+        },
+        "U+P": {
+          "train": [
+            975,
+            9
+          ],
+          "query": [
+            150,
+            9
+          ]
+        },
+        "U+P+S": {
+          "train": [
+            975,
+            12
+          ],
+          "query": [
+            150,
+            12
+          ]
+        },
+        "U+P+S+N": {
+          "train": [
+            975,
+            16
+          ],
+          "query": [
+            150,
+            16
+          ]
+        },
+        "U+P+S+N+C": {
+          "train": [
+            975,
+            30
+          ],
+          "query": [
+            150,
+            30
+          ]
+        }
+      },
+      "transform_signature": "f23a9cf05a1419377abfc244b94b91d20754ea3f10d1aac5772d47f55ddc6e0a"
+    },
+    {
+      "scenario": "leave_environment_out",
+      "heldout_environment_id": "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~control",
+      "heldout_predictor": "",
+      "calibration_rows": 975,
+      "test_rows": 150,
+      "train_reference_population": {
+        "rows": 975,
+        "biological_instances": 325,
+        "predictors": [
+          "mean_matching",
+          "slim_string",
+          "strong_linear"
+        ]
+      },
+      "uq_normalizer_summaries": {
+        "uq_mean_gene_variance": {
+          "min": 0.0015384615384614886,
+          "median": 0.5061538461538462,
+          "max": 0.9984615384615385
+        },
+        "uq_median_gene_variance": {
+          "min": 0.0015384615384614886,
+          "median": 0.5061538461538462,
+          "max": 0.9984615384615385
+        },
+        "uq_top_effect_variance": {
+          "min": 0.0015384615384614886,
+          "median": 0.4538461538461539,
+          "max": 0.9984615384615385
+        },
+        "uq_cosine_disagreement": {
+          "min": 0.0015384615384614886,
+          "median": 0.5076923076923077,
+          "max": 0.9984615384615385
+        },
+        "uq_effect_norm_variance": {
+          "min": 0.0015384615384614886,
+          "median": 0.5123076923076924,
+          "max": 0.9984615384615385
+        }
+      },
+      "categorical_vocabularies": {
+        "cell_context": [
+          "K562",
+          "RPE1",
+          "iPSC-induced_neuron",
+          "patient-derived_melanoma"
+        ],
+        "perturbation_modality": [
+          "CRISPRa",
+          "CRISPRi",
+          "CRISPRn"
+        ],
+        "readout_modality": [
+          "RNA"
+        ],
+        "condition": [
+          "Co-culture",
+          "IFNγ",
+          "baseline",
+          "essential_gene_screen"
+        ],
+        "platform": [
+          "Perturb-CITE-seq",
+          "Perturb-seq"
+        ]
+      },
+      "pca_manifold_basis": {
+        "reference_space": "calibration_prediction_vectors",
+        "standardization": "calibration-column mean and population std",
+        "rank": 8,
+        "distance": "nearest calibration prediction Euclidean distance"
+      },
+      "numeric_imputation": {
+        "prediction_norm": 2.1965062618255615,
+        "prediction_sparsity": 0.0,
+        "prediction_concentration": 0.050281511388393575,
+        "prediction_manifold_distance": 2.410123872766962,
+        "exact_training_support_fraction": 0.0,
+        "component_training_support_fraction": 0.0,
+        "training_neighborhood_density": 0.0,
+        "perturbation_seen_fraction": 0.0,
+        "component_seen_fraction": 0.0,
+        "combination_novelty": 0.0,
+        "perturbation_novelty": 1.0
+      },
+      "feature_order": {
+        "U": [
+          "uq_mean_gene_variance",
+          "uq_median_gene_variance",
+          "uq_top_effect_variance",
+          "uq_cosine_disagreement",
+          "uq_effect_norm_variance"
+        ],
+        "P": [
+          "prediction_norm",
+          "prediction_sparsity",
+          "prediction_concentration",
+          "prediction_manifold_distance"
+        ],
+        "S": [
+          "exact_training_support_fraction",
+          "component_training_support_fraction",
+          "training_neighborhood_density"
+        ],
+        "N": [
+          "perturbation_seen_fraction",
+          "component_seen_fraction",
+          "combination_novelty",
+          "perturbation_novelty"
+        ],
+        "C": [
+          "cell_context",
+          "perturbation_modality",
+          "readout_modality",
+          "condition",
+          "platform"
+        ]
+      },
+      "feature_matrix_shapes": {
+        "U": {
+          "train": [
+            975,
+            5
+          ],
+          "query": [
+            150,
+            5
+          ]
+        },
+        "U+P": {
+          "train": [
+            975,
+            9
+          ],
+          "query": [
+            150,
+            9
+          ]
+        },
+        "U+P+S": {
+          "train": [
+            975,
+            12
+          ],
+          "query": [
+            150,
+            12
+          ]
+        },
+        "U+P+S+N": {
+          "train": [
+            975,
+            16
+          ],
+          "query": [
+            150,
+            16
+          ]
+        },
+        "U+P+S+N+C": {
+          "train": [
+            975,
+            30
+          ],
+          "query": [
+            150,
+            30
+          ]
+        }
+      },
+      "transform_signature": "16a4e4ae1c9987b46dd32ccff5e969428fb8fbbb4b291cb4420049ffdef86d42"
+    },
+    {
+      "scenario": "leave_environment_out",
+      "heldout_environment_id": "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~ifn%CE%B3",
+      "heldout_predictor": "",
+      "calibration_rows": 972,
+      "test_rows": 150,
+      "train_reference_population": {
+        "rows": 972,
+        "biological_instances": 324,
+        "predictors": [
+          "mean_matching",
+          "slim_string",
+          "strong_linear"
+        ]
+      },
+      "uq_normalizer_summaries": {
+        "uq_mean_gene_variance": {
+          "min": 0.0015432098765432167,
+          "median": 0.5046296296296297,
+          "max": 0.9984567901234568
+        },
+        "uq_median_gene_variance": {
+          "min": 0.0015432098765432167,
+          "median": 0.5061728395061729,
+          "max": 0.9984567901234568
+        },
+        "uq_top_effect_variance": {
+          "min": 0.0015432098765432167,
+          "median": 0.4537037037037037,
+          "max": 0.9984567901234568
+        },
+        "uq_cosine_disagreement": {
+          "min": 0.0015432098765432167,
+          "median": 0.5061728395061729,
+          "max": 0.9984567901234568
+        },
+        "uq_effect_norm_variance": {
+          "min": 0.0015432098765432167,
+          "median": 0.5108024691358024,
+          "max": 0.9984567901234568
+        }
+      },
+      "categorical_vocabularies": {
+        "cell_context": [
+          "K562",
+          "RPE1",
+          "iPSC-induced_neuron",
+          "patient-derived_melanoma"
+        ],
+        "perturbation_modality": [
+          "CRISPRa",
+          "CRISPRi",
+          "CRISPRn"
+        ],
+        "readout_modality": [
+          "RNA"
+        ],
+        "condition": [
+          "Co-culture",
+          "Control",
+          "baseline",
+          "essential_gene_screen"
+        ],
+        "platform": [
+          "Perturb-CITE-seq",
+          "Perturb-seq"
+        ]
+      },
+      "pca_manifold_basis": {
+        "reference_space": "calibration_prediction_vectors",
+        "standardization": "calibration-column mean and population std",
+        "rank": 8,
+        "distance": "nearest calibration prediction Euclidean distance"
+      },
+      "numeric_imputation": {
+        "prediction_norm": 2.162392020225525,
+        "prediction_sparsity": 0.0,
+        "prediction_concentration": 0.050886794904329236,
+        "prediction_manifold_distance": 2.2013487306499573,
+        "exact_training_support_fraction": 0.0,
+        "component_training_support_fraction": 0.0,
+        "training_neighborhood_density": 0.0,
+        "perturbation_seen_fraction": 0.0,
+        "component_seen_fraction": 0.0,
+        "combination_novelty": 0.0,
+        "perturbation_novelty": 1.0
+      },
+      "feature_order": {
+        "U": [
+          "uq_mean_gene_variance",
+          "uq_median_gene_variance",
+          "uq_top_effect_variance",
+          "uq_cosine_disagreement",
+          "uq_effect_norm_variance"
+        ],
+        "P": [
+          "prediction_norm",
+          "prediction_sparsity",
+          "prediction_concentration",
+          "prediction_manifold_distance"
+        ],
+        "S": [
+          "exact_training_support_fraction",
+          "component_training_support_fraction",
+          "training_neighborhood_density"
+        ],
+        "N": [
+          "perturbation_seen_fraction",
+          "component_seen_fraction",
+          "combination_novelty",
+          "perturbation_novelty"
+        ],
+        "C": [
+          "cell_context",
+          "perturbation_modality",
+          "readout_modality",
+          "condition",
+          "platform"
+        ]
+      },
+      "feature_matrix_shapes": {
+        "U": {
+          "train": [
+            972,
+            5
+          ],
+          "query": [
+            150,
+            5
+          ]
+        },
+        "U+P": {
+          "train": [
+            972,
+            9
+          ],
+          "query": [
+            150,
+            9
+          ]
+        },
+        "U+P+S": {
+          "train": [
+            972,
+            12
+          ],
+          "query": [
+            150,
+            12
+          ]
+        },
+        "U+P+S+N": {
+          "train": [
+            972,
+            16
+          ],
+          "query": [
+            150,
+            16
+          ]
+        },
+        "U+P+S+N+C": {
+          "train": [
+            972,
+            30
+          ],
+          "query": [
+            150,
+            30
+          ]
+        }
+      },
+      "transform_signature": "bb0ceae9a62cc5bafe6f0d6d7974ca6f6a8155c60c3d8e926655da913b50792d"
+    },
+    {
+      "scenario": "leave_environment_out",
+      "heldout_environment_id": "env__v~normanweissman2019%5Ffiltered__v~k562__v~rna__v~baseline",
+      "heldout_predictor": "",
+      "calibration_rows": 978,
+      "test_rows": 144,
+      "train_reference_population": {
+        "rows": 978,
+        "biological_instances": 326,
+        "predictors": [
+          "mean_matching",
+          "slim_string",
+          "strong_linear"
+        ]
+      },
+      "uq_normalizer_summaries": {
+        "uq_mean_gene_variance": {
+          "min": 0.0015337423312883347,
+          "median": 0.5184049079754601,
+          "max": 0.9984662576687117
+        },
+        "uq_median_gene_variance": {
+          "min": 0.0015337423312883347,
+          "median": 0.5184049079754601,
+          "max": 0.9984662576687117
+        },
+        "uq_top_effect_variance": {
+          "min": 0.0015337423312883347,
+          "median": 0.5184049079754601,
+          "max": 0.9984662576687117
+        },
+        "uq_cosine_disagreement": {
+          "min": 0.0015337423312883347,
+          "median": 0.47699386503067487,
+          "max": 0.9984662576687117
+        },
+        "uq_effect_norm_variance": {
+          "min": 0.0015337423312883347,
+          "median": 0.5199386503067485,
+          "max": 0.9984662576687117
+        }
+      },
+      "categorical_vocabularies": {
+        "cell_context": [
+          "K562",
+          "RPE1",
+          "iPSC-induced_neuron",
+          "patient-derived_melanoma"
+        ],
+        "perturbation_modality": [
+          "CRISPRa",
+          "CRISPRi",
+          "CRISPRn"
+        ],
+        "readout_modality": [
+          "RNA"
+        ],
+        "condition": [
+          "Co-culture",
+          "Control",
+          "IFNγ",
+          "baseline",
+          "essential_gene_screen"
+        ],
+        "platform": [
+          "Perturb-CITE-seq",
+          "Perturb-seq"
+        ]
+      },
+      "pca_manifold_basis": {
+        "reference_space": "calibration_prediction_vectors",
+        "standardization": "calibration-column mean and population std",
+        "rank": 8,
+        "distance": "nearest calibration prediction Euclidean distance"
+      },
+      "numeric_imputation": {
+        "prediction_norm": 1.8587666749954224,
+        "prediction_sparsity": 0.0,
+        "prediction_concentration": 0.05000482572265812,
+        "prediction_manifold_distance": 1.7303130985873352,
+        "exact_training_support_fraction": 0.0,
+        "component_training_support_fraction": 0.0,
+        "training_neighborhood_density": 0.0,
+        "perturbation_seen_fraction": 0.0,
+        "component_seen_fraction": 0.0,
+        "combination_novelty": 0.0,
+        "perturbation_novelty": 1.0
+      },
+      "feature_order": {
+        "U": [
+          "uq_mean_gene_variance",
+          "uq_median_gene_variance",
+          "uq_top_effect_variance",
+          "uq_cosine_disagreement",
+          "uq_effect_norm_variance"
+        ],
+        "P": [
+          "prediction_norm",
+          "prediction_sparsity",
+          "prediction_concentration",
+          "prediction_manifold_distance"
+        ],
+        "S": [
+          "exact_training_support_fraction",
+          "component_training_support_fraction",
+          "training_neighborhood_density"
+        ],
+        "N": [
+          "perturbation_seen_fraction",
+          "component_seen_fraction",
+          "combination_novelty",
+          "perturbation_novelty"
+        ],
+        "C": [
+          "cell_context",
+          "perturbation_modality",
+          "readout_modality",
+          "condition",
+          "platform"
+        ]
+      },
+      "feature_matrix_shapes": {
+        "U": {
+          "train": [
+            978,
+            5
+          ],
+          "query": [
+            144,
+            5
+          ]
+        },
+        "U+P": {
+          "train": [
+            978,
+            9
+          ],
+          "query": [
+            144,
+            9
+          ]
+        },
+        "U+P+S": {
+          "train": [
+            978,
+            12
+          ],
+          "query": [
+            144,
+            12
+          ]
+        },
+        "U+P+S+N": {
+          "train": [
+            978,
+            16
+          ],
+          "query": [
+            144,
+            16
+          ]
+        },
+        "U+P+S+N+C": {
+          "train": [
+            978,
+            31
+          ],
+          "query": [
+            144,
+            31
+          ]
+        }
+      },
+      "transform_signature": "f8deb3a7e8f282b0bbceca892eae111b32dd7703fffb5f079aac1550e77bea4c"
+    },
+    {
+      "scenario": "leave_environment_out",
+      "heldout_environment_id": "env__v~replogleweissman2022%5Fk562%5Fessential__v~k562__v~rna__v~essential%5Fgene%5Fscreen",
+      "heldout_predictor": "",
+      "calibration_rows": 843,
+      "test_rows": 279,
+      "train_reference_population": {
+        "rows": 843,
+        "biological_instances": 281,
+        "predictors": [
+          "mean_matching",
+          "slim_string",
+          "strong_linear"
+        ]
+      },
+      "uq_normalizer_summaries": {
+        "uq_mean_gene_variance": {
+          "min": 0.001779359430605032,
+          "median": 0.4857651245551602,
+          "max": 0.998220640569395
+        },
+        "uq_median_gene_variance": {
+          "min": 0.001779359430605032,
+          "median": 0.48932384341637014,
+          "max": 0.998220640569395
+        },
+        "uq_top_effect_variance": {
+          "min": 0.001779359430605032,
+          "median": 0.4857651245551602,
+          "max": 0.998220640569395
+        },
+        "uq_cosine_disagreement": {
+          "min": 0.001779359430605032,
+          "median": 0.47864768683274017,
+          "max": 0.998220640569395
+        },
+        "uq_effect_norm_variance": {
+          "min": 0.001779359430605032,
+          "median": 0.4804270462633452,
+          "max": 0.998220640569395
+        }
+      },
+      "categorical_vocabularies": {
+        "cell_context": [
+          "K562",
+          "RPE1",
+          "iPSC-induced_neuron",
+          "patient-derived_melanoma"
+        ],
+        "perturbation_modality": [
+          "CRISPRa",
+          "CRISPRi",
+          "CRISPRn"
+        ],
+        "readout_modality": [
+          "RNA"
+        ],
+        "condition": [
+          "Co-culture",
+          "Control",
+          "IFNγ",
+          "baseline"
+        ],
+        "platform": [
+          "Perturb-CITE-seq",
+          "Perturb-seq"
+        ]
+      },
+      "pca_manifold_basis": {
+        "reference_space": "calibration_prediction_vectors",
+        "standardization": "calibration-column mean and population std",
+        "rank": 8,
+        "distance": "nearest calibration prediction Euclidean distance"
+      },
+      "numeric_imputation": {
+        "prediction_norm": 1.6375213861465454,
+        "prediction_sparsity": 0.0,
+        "prediction_concentration": 0.050281511388393575,
+        "prediction_manifold_distance": 1.7420980200190879,
+        "exact_training_support_fraction": 0.0,
+        "component_training_support_fraction": 0.0,
+        "training_neighborhood_density": 0.0,
+        "perturbation_seen_fraction": 0.0,
+        "component_seen_fraction": 0.0,
+        "combination_novelty": 0.0,
+        "perturbation_novelty": 1.0
+      },
+      "feature_order": {
+        "U": [
+          "uq_mean_gene_variance",
+          "uq_median_gene_variance",
+          "uq_top_effect_variance",
+          "uq_cosine_disagreement",
+          "uq_effect_norm_variance"
+        ],
+        "P": [
+          "prediction_norm",
+          "prediction_sparsity",
+          "prediction_concentration",
+          "prediction_manifold_distance"
+        ],
+        "S": [
+          "exact_training_support_fraction",
+          "component_training_support_fraction",
+          "training_neighborhood_density"
+        ],
+        "N": [
+          "perturbation_seen_fraction",
+          "component_seen_fraction",
+          "combination_novelty",
+          "perturbation_novelty"
+        ],
+        "C": [
+          "cell_context",
+          "perturbation_modality",
+          "readout_modality",
+          "condition",
+          "platform"
+        ]
+      },
+      "feature_matrix_shapes": {
+        "U": {
+          "train": [
+            843,
+            5
+          ],
+          "query": [
+            279,
+            5
+          ]
+        },
+        "U+P": {
+          "train": [
+            843,
+            9
+          ],
+          "query": [
+            279,
+            9
+          ]
+        },
+        "U+P+S": {
+          "train": [
+            843,
+            12
+          ],
+          "query": [
+            279,
+            12
+          ]
+        },
+        "U+P+S+N": {
+          "train": [
+            843,
+            16
+          ],
+          "query": [
+            279,
+            16
+          ]
+        },
+        "U+P+S+N+C": {
+          "train": [
+            843,
+            30
+          ],
+          "query": [
+            279,
+            30
+          ]
+        }
+      },
+      "transform_signature": "5c03cc06965701b3a5060c062d2f85ce6716bfb79d44d65338bab755eefcef2e"
+    },
+    {
+      "scenario": "leave_environment_out",
+      "heldout_environment_id": "env__v~replogleweissman2022%5Frpe1__v~rpe1__v~rna__v~baseline",
+      "heldout_predictor": "",
+      "calibration_rows": 1020,
+      "test_rows": 99,
+      "train_reference_population": {
+        "rows": 1020,
+        "biological_instances": 340,
+        "predictors": [
+          "mean_matching",
+          "slim_string",
+          "strong_linear"
+        ]
+      },
+      "uq_normalizer_summaries": {
+        "uq_mean_gene_variance": {
+          "min": 0.0014705882352941124,
+          "median": 0.5161764705882352,
+          "max": 0.9985294117647059
+        },
+        "uq_median_gene_variance": {
+          "min": 0.0014705882352941124,
+          "median": 0.5176470588235293,
+          "max": 0.9985294117647059
+        },
+        "uq_top_effect_variance": {
+          "min": 0.0014705882352941124,
+          "median": 0.5161764705882352,
+          "max": 0.9985294117647059
+        },
+        "uq_cosine_disagreement": {
+          "min": 0.0014705882352941124,
+          "median": 0.5,
+          "max": 0.9985294117647059
+        },
+        "uq_effect_norm_variance": {
+          "min": 0.0014705882352941124,
+          "median": 0.5191176470588235,
+          "max": 0.9985294117647059
+        }
+      },
+      "categorical_vocabularies": {
+        "cell_context": [
+          "K562",
+          "iPSC-induced_neuron",
+          "patient-derived_melanoma"
+        ],
+        "perturbation_modality": [
+          "CRISPRa",
+          "CRISPRi",
+          "CRISPRn"
+        ],
+        "readout_modality": [
+          "RNA"
+        ],
+        "condition": [
+          "Co-culture",
+          "Control",
+          "IFNγ",
+          "baseline",
+          "essential_gene_screen"
+        ],
+        "platform": [
+          "Perturb-CITE-seq",
+          "Perturb-seq"
+        ]
+      },
+      "pca_manifold_basis": {
+        "reference_space": "calibration_prediction_vectors",
+        "standardization": "calibration-column mean and population std",
+        "rank": 8,
+        "distance": "nearest calibration prediction Euclidean distance"
+      },
+      "numeric_imputation": {
+        "prediction_norm": 2.022014021873474,
+        "prediction_sparsity": 0.0,
+        "prediction_concentration": 0.05076983643203416,
+        "prediction_manifold_distance": 2.624768665138756,
+        "exact_training_support_fraction": 0.0,
+        "component_training_support_fraction": 0.0,
+        "training_neighborhood_density": 0.0,
+        "perturbation_seen_fraction": 0.0,
+        "component_seen_fraction": 0.0,
+        "combination_novelty": 0.0,
+        "perturbation_novelty": 1.0
+      },
+      "feature_order": {
+        "U": [
+          "uq_mean_gene_variance",
+          "uq_median_gene_variance",
+          "uq_top_effect_variance",
+          "uq_cosine_disagreement",
+          "uq_effect_norm_variance"
+        ],
+        "P": [
+          "prediction_norm",
+          "prediction_sparsity",
+          "prediction_concentration",
+          "prediction_manifold_distance"
+        ],
+        "S": [
+          "exact_training_support_fraction",
+          "component_training_support_fraction",
+          "training_neighborhood_density"
+        ],
+        "N": [
+          "perturbation_seen_fraction",
+          "component_seen_fraction",
+          "combination_novelty",
+          "perturbation_novelty"
+        ],
+        "C": [
+          "cell_context",
+          "perturbation_modality",
+          "readout_modality",
+          "condition",
+          "platform"
+        ]
+      },
+      "feature_matrix_shapes": {
+        "U": {
+          "train": [
+            1020,
+            5
+          ],
+          "query": [
+            99,
+            5
+          ]
+        },
+        "U+P": {
+          "train": [
+            1020,
+            9
+          ],
+          "query": [
+            99,
+            9
+          ]
+        },
+        "U+P+S": {
+          "train": [
+            1020,
+            12
+          ],
+          "query": [
+            99,
+            12
+          ]
+        },
+        "U+P+S+N": {
+          "train": [
+            1020,
+            16
+          ],
+          "query": [
+            99,
+            16
+          ]
+        },
+        "U+P+S+N+C": {
+          "train": [
+            1020,
+            30
+          ],
+          "query": [
+            99,
+            30
+          ]
+        }
+      },
+      "transform_signature": "695178e0c3fdff8cfb587fcc5ddc8fa1260d255a09c4d078229bd7bfac936a52"
+    },
+    {
+      "scenario": "leave_environment_out",
+      "heldout_environment_id": "env__v~tiankampmann2021%5Fcrispra__v~ipsc-induced%5Fneuron__v~rna__v~baseline",
+      "heldout_predictor": "",
+      "calibration_rows": 1059,
+      "test_rows": 60,
+      "train_reference_population": {
+        "rows": 1059,
+        "biological_instances": 353,
+        "predictors": [
+          "mean_matching",
+          "slim_string",
+          "strong_linear"
+        ]
+      },
+      "uq_normalizer_summaries": {
+        "uq_mean_gene_variance": {
+          "min": 0.0014164305949008194,
+          "median": 0.5056657223796034,
+          "max": 0.9985835694050992
+        },
+        "uq_median_gene_variance": {
+          "min": 0.0014164305949008194,
+          "median": 0.5084985835694051,
+          "max": 0.9985835694050992
+        },
+        "uq_top_effect_variance": {
+          "min": 0.0014164305949008194,
+          "median": 0.5056657223796034,
+          "max": 0.9985835694050992
+        },
+        "uq_cosine_disagreement": {
+          "min": 0.0014164305949008194,
+          "median": 0.5056657223796034,
+          "max": 0.9985835694050992
+        },
+        "uq_effect_norm_variance": {
+          "min": 0.0014164305949008194,
+          "median": 0.5056657223796034,
+          "max": 0.9985835694050992
+        }
+      },
+      "categorical_vocabularies": {
+        "cell_context": [
+          "K562",
+          "RPE1",
+          "iPSC-induced_neuron",
+          "patient-derived_melanoma"
+        ],
+        "perturbation_modality": [
+          "CRISPRa",
+          "CRISPRi",
+          "CRISPRn"
+        ],
+        "readout_modality": [
+          "RNA"
+        ],
+        "condition": [
+          "Co-culture",
+          "Control",
+          "IFNγ",
+          "baseline",
+          "essential_gene_screen"
+        ],
+        "platform": [
+          "Perturb-CITE-seq",
+          "Perturb-seq"
+        ]
+      },
+      "pca_manifold_basis": {
+        "reference_space": "calibration_prediction_vectors",
+        "standardization": "calibration-column mean and population std",
+        "rank": 8,
+        "distance": "nearest calibration prediction Euclidean distance"
+      },
+      "numeric_imputation": {
+        "prediction_norm": 1.9620956182479858,
+        "prediction_sparsity": 0.0,
+        "prediction_concentration": 0.051758512660908945,
+        "prediction_manifold_distance": 2.377083612308422,
+        "exact_training_support_fraction": 0.0,
+        "component_training_support_fraction": 0.0,
+        "training_neighborhood_density": 0.0,
+        "perturbation_seen_fraction": 0.0,
+        "component_seen_fraction": 0.0,
+        "combination_novelty": 0.0,
+        "perturbation_novelty": 1.0
+      },
+      "feature_order": {
+        "U": [
+          "uq_mean_gene_variance",
+          "uq_median_gene_variance",
+          "uq_top_effect_variance",
+          "uq_cosine_disagreement",
+          "uq_effect_norm_variance"
+        ],
+        "P": [
+          "prediction_norm",
+          "prediction_sparsity",
+          "prediction_concentration",
+          "prediction_manifold_distance"
+        ],
+        "S": [
+          "exact_training_support_fraction",
+          "component_training_support_fraction",
+          "training_neighborhood_density"
+        ],
+        "N": [
+          "perturbation_seen_fraction",
+          "component_seen_fraction",
+          "combination_novelty",
+          "perturbation_novelty"
+        ],
+        "C": [
+          "cell_context",
+          "perturbation_modality",
+          "readout_modality",
+          "condition",
+          "platform"
+        ]
+      },
+      "feature_matrix_shapes": {
+        "U": {
+          "train": [
+            1059,
+            5
+          ],
+          "query": [
+            60,
+            5
+          ]
+        },
+        "U+P": {
+          "train": [
+            1059,
+            9
+          ],
+          "query": [
+            60,
+            9
+          ]
+        },
+        "U+P+S": {
+          "train": [
+            1059,
+            12
+          ],
+          "query": [
+            60,
+            12
+          ]
+        },
+        "U+P+S+N": {
+          "train": [
+            1059,
+            16
+          ],
+          "query": [
+            60,
+            16
+          ]
+        },
+        "U+P+S+N+C": {
+          "train": [
+            1059,
+            31
+          ],
+          "query": [
+            60,
+            31
+          ]
+        }
+      },
+      "transform_signature": "95eef3bfaa95e4d38a6bd1a0890ff7cfb4c157d3eb1ebb54e75c525de7c8b7d1"
+    },
+    {
+      "scenario": "leave_environment_out",
+      "heldout_environment_id": "env__v~tiankampmann2021%5Fcrispri__v~ipsc-induced%5Fneuron__v~rna__v~baseline",
+      "heldout_predictor": "",
+      "calibration_rows": 1011,
+      "test_rows": 114,
+      "train_reference_population": {
+        "rows": 1011,
+        "biological_instances": 337,
+        "predictors": [
+          "mean_matching",
+          "slim_string",
+          "strong_linear"
+        ]
+      },
+      "uq_normalizer_summaries": {
+        "uq_mean_gene_variance": {
+          "min": 0.0014836795252225476,
+          "median": 0.5014836795252225,
+          "max": 0.9985163204747775
+        },
+        "uq_median_gene_variance": {
+          "min": 0.0014836795252225476,
+          "median": 0.49851632047477745,
+          "max": 0.9985163204747775
+        },
+        "uq_top_effect_variance": {
+          "min": 0.0014836795252225476,
+          "median": 0.46439169139465875,
+          "max": 0.9985163204747775
+        },
+        "uq_cosine_disagreement": {
+          "min": 0.0014836795252225476,
+          "median": 0.5207715133531157,
+          "max": 0.9985163204747775
+        },
+        "uq_effect_norm_variance": {
+          "min": 0.0014836795252225476,
+          "median": 0.5089020771513353,
+          "max": 0.9985163204747775
+        }
+      },
+      "categorical_vocabularies": {
+        "cell_context": [
+          "K562",
+          "RPE1",
+          "iPSC-induced_neuron",
+          "patient-derived_melanoma"
+        ],
+        "perturbation_modality": [
+          "CRISPRa",
+          "CRISPRi",
+          "CRISPRn"
+        ],
+        "readout_modality": [
+          "RNA"
+        ],
+        "condition": [
+          "Co-culture",
+          "Control",
+          "IFNγ",
+          "baseline",
+          "essential_gene_screen"
+        ],
+        "platform": [
+          "Perturb-CITE-seq",
+          "Perturb-seq"
+        ]
+      },
+      "pca_manifold_basis": {
+        "reference_space": "calibration_prediction_vectors",
+        "standardization": "calibration-column mean and population std",
+        "rank": 8,
+        "distance": "nearest calibration prediction Euclidean distance"
+      },
+      "numeric_imputation": {
+        "prediction_norm": 2.189934730529785,
+        "prediction_sparsity": 0.0,
+        "prediction_concentration": 0.052883243465026805,
+        "prediction_manifold_distance": 2.9633469013787654,
+        "exact_training_support_fraction": 0.0,
+        "component_training_support_fraction": 0.0,
+        "training_neighborhood_density": 0.0,
+        "perturbation_seen_fraction": 0.0,
+        "component_seen_fraction": 0.0,
+        "combination_novelty": 0.0,
+        "perturbation_novelty": 1.0
+      },
+      "feature_order": {
+        "U": [
+          "uq_mean_gene_variance",
+          "uq_median_gene_variance",
+          "uq_top_effect_variance",
+          "uq_cosine_disagreement",
+          "uq_effect_norm_variance"
+        ],
+        "P": [
+          "prediction_norm",
+          "prediction_sparsity",
+          "prediction_concentration",
+          "prediction_manifold_distance"
+        ],
+        "S": [
+          "exact_training_support_fraction",
+          "component_training_support_fraction",
+          "training_neighborhood_density"
+        ],
+        "N": [
+          "perturbation_seen_fraction",
+          "component_seen_fraction",
+          "combination_novelty",
+          "perturbation_novelty"
+        ],
+        "C": [
+          "cell_context",
+          "perturbation_modality",
+          "readout_modality",
+          "condition",
+          "platform"
+        ]
+      },
+      "feature_matrix_shapes": {
+        "U": {
+          "train": [
+            1011,
+            5
+          ],
+          "query": [
+            114,
+            5
+          ]
+        },
+        "U+P": {
+          "train": [
+            1011,
+            9
+          ],
+          "query": [
+            114,
+            9
+          ]
+        },
+        "U+P+S": {
+          "train": [
+            1011,
+            12
+          ],
+          "query": [
+            114,
+            12
+          ]
+        },
+        "U+P+S+N": {
+          "train": [
+            1011,
+            16
+          ],
+          "query": [
+            114,
+            16
+          ]
+        },
+        "U+P+S+N+C": {
+          "train": [
+            1011,
+            31
+          ],
+          "query": [
+            114,
+            31
+          ]
+        }
+      },
+      "transform_signature": "22578d34b612b19f2da7c4ab8399b68e9704d6e590bc87f13fa04f61c60578de"
+    },
+    {
+      "scenario": "leave_predictor_out",
+      "heldout_environment_id": "",
+      "heldout_predictor": "mean_matching",
+      "calibration_rows": 746,
+      "test_rows": 382,
+      "train_reference_population": {
+        "rows": 746,
+        "biological_instances": 373,
+        "predictors": [
+          "slim_string",
+          "strong_linear"
+        ]
+      },
+      "uq_normalizer_summaries": {
+        "uq_mean_gene_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.5,
+          "max": 0.9986595174262735
+        },
+        "uq_median_gene_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.5,
+          "max": 0.9986595174262735
+        },
+        "uq_top_effect_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.5,
+          "max": 0.9986595174262735
+        },
+        "uq_cosine_disagreement": {
+          "min": 0.0013404825737265424,
+          "median": 0.5,
+          "max": 0.9986595174262735
+        },
+        "uq_effect_norm_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.5,
+          "max": 0.9986595174262735
+        }
+      },
+      "categorical_vocabularies": {
+        "cell_context": [
+          "K562",
+          "RPE1",
+          "iPSC-induced_neuron",
+          "patient-derived_melanoma"
+        ],
+        "perturbation_modality": [
+          "CRISPRa",
+          "CRISPRi",
+          "CRISPRn"
+        ],
+        "readout_modality": [
+          "RNA"
+        ],
+        "condition": [
+          "Co-culture",
+          "Control",
+          "IFNγ",
+          "baseline",
+          "essential_gene_screen"
+        ],
+        "platform": [
+          "Perturb-CITE-seq",
+          "Perturb-seq"
+        ]
+      },
+      "pca_manifold_basis": {
+        "reference_space": "calibration_prediction_vectors",
+        "standardization": "calibration-column mean and population std",
+        "rank": 8,
+        "distance": "nearest calibration prediction Euclidean distance"
+      },
+      "numeric_imputation": {
+        "prediction_norm": 2.091208577156067,
+        "prediction_sparsity": 0.0,
+        "prediction_concentration": 0.04786893765573834,
+        "prediction_manifold_distance": 4.318902454843694,
+        "exact_training_support_fraction": 0.0,
+        "component_training_support_fraction": 0.0,
+        "training_neighborhood_density": 0.0,
+        "perturbation_seen_fraction": 0.0,
+        "component_seen_fraction": 0.0,
+        "combination_novelty": 0.0,
+        "perturbation_novelty": 1.0
+      },
+      "feature_order": {
+        "U": [
+          "uq_mean_gene_variance",
+          "uq_median_gene_variance",
+          "uq_top_effect_variance",
+          "uq_cosine_disagreement",
+          "uq_effect_norm_variance"
+        ],
+        "P": [
+          "prediction_norm",
+          "prediction_sparsity",
+          "prediction_concentration",
+          "prediction_manifold_distance"
+        ],
+        "S": [
+          "exact_training_support_fraction",
+          "component_training_support_fraction",
+          "training_neighborhood_density"
+        ],
+        "N": [
+          "perturbation_seen_fraction",
+          "component_seen_fraction",
+          "combination_novelty",
+          "perturbation_novelty"
+        ],
+        "C": [
+          "cell_context",
+          "perturbation_modality",
+          "readout_modality",
+          "condition",
+          "platform"
+        ]
+      },
+      "feature_matrix_shapes": {
+        "U": {
+          "train": [
+            746,
+            5
+          ],
+          "query": [
+            382,
+            5
+          ]
+        },
+        "U+P": {
+          "train": [
+            746,
+            9
+          ],
+          "query": [
+            382,
+            9
+          ]
+        },
+        "U+P+S": {
+          "train": [
+            746,
+            12
+          ],
+          "query": [
+            382,
+            12
+          ]
+        },
+        "U+P+S+N": {
+          "train": [
+            746,
+            16
+          ],
+          "query": [
+            382,
+            16
+          ]
+        },
+        "U+P+S+N+C": {
+          "train": [
+            746,
+            31
+          ],
+          "query": [
+            382,
+            31
+          ]
+        }
+      },
+      "transform_signature": "55033ba86746e4fbee2c901cd9930b7423a1da7284ff3e0df24948ea6801d90f"
+    },
+    {
+      "scenario": "leave_predictor_out",
+      "heldout_environment_id": "",
+      "heldout_predictor": "strong_linear",
+      "calibration_rows": 746,
+      "test_rows": 382,
+      "train_reference_population": {
+        "rows": 746,
+        "biological_instances": 373,
+        "predictors": [
+          "mean_matching",
+          "slim_string"
+        ]
+      },
+      "uq_normalizer_summaries": {
+        "uq_mean_gene_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.4959785522788204,
+          "max": 0.9986595174262735
+        },
+        "uq_median_gene_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.4959785522788204,
+          "max": 0.9986595174262735
+        },
+        "uq_top_effect_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.48525469168900803,
+          "max": 0.9986595174262735
+        },
+        "uq_cosine_disagreement": {
+          "min": 0.0013404825737265424,
+          "median": 0.4785522788203753,
+          "max": 0.9986595174262735
+        },
+        "uq_effect_norm_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.4959785522788204,
+          "max": 0.9986595174262735
+        }
+      },
+      "categorical_vocabularies": {
+        "cell_context": [
+          "K562",
+          "RPE1",
+          "iPSC-induced_neuron",
+          "patient-derived_melanoma"
+        ],
+        "perturbation_modality": [
+          "CRISPRa",
+          "CRISPRi",
+          "CRISPRn"
+        ],
+        "readout_modality": [
+          "RNA"
+        ],
+        "condition": [
+          "Co-culture",
+          "Control",
+          "IFNγ",
+          "baseline",
+          "essential_gene_screen"
+        ],
+        "platform": [
+          "Perturb-CITE-seq",
+          "Perturb-seq"
+        ]
+      },
+      "pca_manifold_basis": {
+        "reference_space": "calibration_prediction_vectors",
+        "standardization": "calibration-column mean and population std",
+        "rank": 8,
+        "distance": "nearest calibration prediction Euclidean distance"
+      },
+      "numeric_imputation": {
+        "prediction_norm": 2.312786817550659,
+        "prediction_sparsity": 0.0,
+        "prediction_concentration": 0.05028642399157547,
+        "prediction_manifold_distance": 2.185790638660153,
+        "exact_training_support_fraction": 0.0,
+        "component_training_support_fraction": 0.0,
+        "training_neighborhood_density": 0.0,
+        "perturbation_seen_fraction": 0.0,
+        "component_seen_fraction": 0.0,
+        "combination_novelty": 0.0,
+        "perturbation_novelty": 1.0
+      },
+      "feature_order": {
+        "U": [
+          "uq_mean_gene_variance",
+          "uq_median_gene_variance",
+          "uq_top_effect_variance",
+          "uq_cosine_disagreement",
+          "uq_effect_norm_variance"
+        ],
+        "P": [
+          "prediction_norm",
+          "prediction_sparsity",
+          "prediction_concentration",
+          "prediction_manifold_distance"
+        ],
+        "S": [
+          "exact_training_support_fraction",
+          "component_training_support_fraction",
+          "training_neighborhood_density"
+        ],
+        "N": [
+          "perturbation_seen_fraction",
+          "component_seen_fraction",
+          "combination_novelty",
+          "perturbation_novelty"
+        ],
+        "C": [
+          "cell_context",
+          "perturbation_modality",
+          "readout_modality",
+          "condition",
+          "platform"
+        ]
+      },
+      "feature_matrix_shapes": {
+        "U": {
+          "train": [
+            746,
+            5
+          ],
+          "query": [
+            382,
+            5
+          ]
+        },
+        "U+P": {
+          "train": [
+            746,
+            9
+          ],
+          "query": [
+            382,
+            9
+          ]
+        },
+        "U+P+S": {
+          "train": [
+            746,
+            12
+          ],
+          "query": [
+            382,
+            12
+          ]
+        },
+        "U+P+S+N": {
+          "train": [
+            746,
+            16
+          ],
+          "query": [
+            382,
+            16
+          ]
+        },
+        "U+P+S+N+C": {
+          "train": [
+            746,
+            31
+          ],
+          "query": [
+            382,
+            31
+          ]
+        }
+      },
+      "transform_signature": "a5e9686cfc4b292ff39065aea667a28c09b1129080a30a3b6e5c0a57be60eaaa"
+    },
+    {
+      "scenario": "leave_predictor_out",
+      "heldout_environment_id": "",
+      "heldout_predictor": "slim_string",
+      "calibration_rows": 746,
+      "test_rows": 382,
+      "train_reference_population": {
+        "rows": 746,
+        "biological_instances": 373,
+        "predictors": [
+          "mean_matching",
+          "strong_linear"
+        ]
+      },
+      "uq_normalizer_summaries": {
+        "uq_mean_gene_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.4959785522788204,
+          "max": 0.9986595174262735
+        },
+        "uq_median_gene_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.4959785522788204,
+          "max": 0.9986595174262735
+        },
+        "uq_top_effect_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.48525469168900803,
+          "max": 0.9986595174262735
+        },
+        "uq_cosine_disagreement": {
+          "min": 0.0013404825737265424,
+          "median": 0.4785522788203753,
+          "max": 0.9986595174262735
+        },
+        "uq_effect_norm_variance": {
+          "min": 0.0013404825737265424,
+          "median": 0.4959785522788204,
+          "max": 0.9986595174262735
+        }
+      },
+      "categorical_vocabularies": {
+        "cell_context": [
+          "K562",
+          "RPE1",
+          "iPSC-induced_neuron",
+          "patient-derived_melanoma"
+        ],
+        "perturbation_modality": [
+          "CRISPRa",
+          "CRISPRi",
+          "CRISPRn"
+        ],
+        "readout_modality": [
+          "RNA"
+        ],
+        "condition": [
+          "Co-culture",
+          "Control",
+          "IFNγ",
+          "baseline",
+          "essential_gene_screen"
+        ],
+        "platform": [
+          "Perturb-CITE-seq",
+          "Perturb-seq"
+        ]
+      },
+      "pca_manifold_basis": {
+        "reference_space": "calibration_prediction_vectors",
+        "standardization": "calibration-column mean and population std",
+        "rank": 8,
+        "distance": "nearest calibration prediction Euclidean distance"
+      },
+      "numeric_imputation": {
+        "prediction_norm": 1.5132193565368652,
+        "prediction_sparsity": 0.0,
+        "prediction_concentration": 0.054769258316426345,
+        "prediction_manifold_distance": 0.2859939864476615,
+        "exact_training_support_fraction": 0.0,
+        "component_training_support_fraction": 0.0,
+        "training_neighborhood_density": 0.0,
+        "perturbation_seen_fraction": 0.0,
+        "component_seen_fraction": 0.0,
+        "combination_novelty": 0.0,
+        "perturbation_novelty": 1.0
+      },
+      "feature_order": {
+        "U": [
+          "uq_mean_gene_variance",
+          "uq_median_gene_variance",
+          "uq_top_effect_variance",
+          "uq_cosine_disagreement",
+          "uq_effect_norm_variance"
+        ],
+        "P": [
+          "prediction_norm",
+          "prediction_sparsity",
+          "prediction_concentration",
+          "prediction_manifold_distance"
+        ],
+        "S": [
+          "exact_training_support_fraction",
+          "component_training_support_fraction",
+          "training_neighborhood_density"
+        ],
+        "N": [
+          "perturbation_seen_fraction",
+          "component_seen_fraction",
+          "combination_novelty",
+          "perturbation_novelty"
+        ],
+        "C": [
+          "cell_context",
+          "perturbation_modality",
+          "readout_modality",
+          "condition",
+          "platform"
+        ]
+      },
+      "feature_matrix_shapes": {
+        "U": {
+          "train": [
+            746,
+            5
+          ],
+          "query": [
+            382,
+            5
+          ]
+        },
+        "U+P": {
+          "train": [
+            746,
+            9
+          ],
+          "query": [
+            382,
+            9
+          ]
+        },
+        "U+P+S": {
+          "train": [
+            746,
+            12
+          ],
+          "query": [
+            382,
+            12
+          ]
+        },
+        "U+P+S+N": {
+          "train": [
+            746,
+            16
+          ],
+          "query": [
+            382,
+            16
+          ]
+        },
+        "U+P+S+N+C": {
+          "train": [
+            746,
+            31
+          ],
+          "query": [
+            382,
+            31
+          ]
+        }
+      },
+      "transform_signature": "ade375a6df53b0c000b2724c28ee1e7b774ebf2798fc0b6dbfdb30f8047dc93e"
+    }
+  ],
+  "status": "formal_v2_feature_transforms_materialized"
+}

@@ -9,6 +9,7 @@ are never included in the headline deployment feature matrix.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -86,6 +87,17 @@ METHODS = (
     "u_psn_rf",
     "ptl_rf",
 )
+INFORMATION_SET_BY_METHOD = {
+    "raw_normalized_uq": "U_scalar_raw",
+    "best_scalar_uq": "U_scalar_best_validation",
+    "platt_logistic": "U_scalar_platt",
+    "isotonic": "U_scalar_isotonic",
+    "u_only_rf": "U",
+    "u_p_rf": "U+P",
+    "u_ps_rf": "U+P+S",
+    "u_psn_rf": "U+P+S+N",
+    "ptl_rf": "U+P+S+N+C",
+}
 REFERENCE_KEY_PATTERN = re.compile(r"[,;|+]+")
 
 
@@ -312,6 +324,48 @@ def _feature_matrix(
     for column in C_NUMERIC_COLUMNS + C_CATEGORICAL_COLUMNS:
         materialized_train[column] = train_work[column].astype(str).to_numpy()
         materialized_query[column] = query_work[column].astype(str).to_numpy()
+    transform_metadata = {
+        "train_reference_population": {
+            "rows": int(len(train_work)),
+            "biological_instances": int(train_work["biological_instance_id"].nunique()),
+            "predictors": sorted(train_work["predictor"].astype(str).unique().tolist()),
+        },
+        "uq_normalizer_summaries": {
+            column: {
+                "min": float(np.nanmin(train_uq[:, index])),
+                "median": float(np.nanmedian(train_uq[:, index])),
+                "max": float(np.nanmax(train_uq[:, index])),
+            }
+            for index, column in enumerate(UQ_COLUMNS)
+        },
+        "categorical_vocabularies": {
+            column: sorted(train_work[column].astype(str).unique().tolist())
+            for column in C_CATEGORICAL_COLUMNS
+        },
+        "pca_manifold_basis": {
+            "reference_space": "calibration_prediction_vectors",
+            "standardization": "calibration-column mean and population std",
+            "rank": int(min(8, train_vectors.shape[0], train_vectors.shape[1])),
+            "distance": "nearest calibration prediction Euclidean distance",
+        },
+        "numeric_imputation": {**p_fills, **s_fills, **n_fills, **c_fills},
+        "feature_order": {
+            "U": list(UQ_COLUMNS),
+            "P": list(P_COLUMNS),
+            "S": list(S_COLUMNS),
+            "N": list(N_COLUMNS),
+            "C": list(C_NUMERIC_COLUMNS + C_CATEGORICAL_COLUMNS),
+        },
+        "feature_matrix_shapes": {
+            name: {"train": list(train_matrix.shape), "query": list(query_matrix.shape)}
+            for name, (train_matrix, query_matrix) in matrices.items()
+        },
+    }
+    transform_metadata["transform_signature"] = hashlib.sha256(
+        json.dumps(transform_metadata, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
+    materialized_train.attrs["transform_metadata"] = transform_metadata
+    materialized_query.attrs["transform_metadata"] = transform_metadata
     return matrices, materialized_train, materialized_query
 
 
@@ -631,6 +685,7 @@ def run(root: Path) -> dict[str, Any]:
     frame = _prediction_rows(root)
     score_rows: list[dict[str, Any]] = []
     metric_rows: list[dict[str, Any]] = []
+    transform_records: list[dict[str, Any]] = []
 
     def execute(scenario: str, heldout: str, subset: pd.DataFrame) -> None:
         train, test = scenario_partition(subset, scenario, heldout)
@@ -639,6 +694,14 @@ def run(root: Path) -> dict[str, Any]:
         method_scores, threshold, model_name, materialized_train, materialized_test = _fit_ptl(
             train_frame, test_frame
         )
+        transform_records.append({
+            "scenario": scenario,
+            "heldout_environment_id": heldout if scenario == "leave_environment_out" else "",
+            "heldout_predictor": heldout if scenario == "leave_predictor_out" else "",
+            "calibration_rows": int(len(train_frame)),
+            "test_rows": int(len(test_frame)),
+            **materialized_test.attrs["transform_metadata"],
+        })
         train_ids = set(train_frame["biological_instance_id"].astype(str))
         if train_ids.intersection(set(test_frame["biological_instance_id"].astype(str))):
             raise AssertionError("PTL train/test biological instance leakage")
@@ -690,6 +753,7 @@ def run(root: Path) -> dict[str, Any]:
                         if scenario == "leave_predictor_out"
                         else "identity_free_shared"
                     ),
+                    "information_set": INFORMATION_SET_BY_METHOD[method],
                     "method": method,
                     **metrics,
                 })
@@ -716,6 +780,7 @@ def run(root: Path) -> dict[str, Any]:
     macro["predictor"] = "identity_free_shared"
     macro["heldout_environment_id"] = ""
     macro["heldout_predictor"] = ""
+    macro["information_set"] = macro["method"].map(INFORMATION_SET_BY_METHOD)
     metric_frame = pd.concat([metric_frame, macro[metric_frame.columns]], ignore_index=True)
 
     bootstrap_rows = [
@@ -733,8 +798,11 @@ def run(root: Path) -> dict[str, Any]:
     score_path = source_dir / "formal_v2_reliability_predictions.csv"
     feature_path = source_dir / "formal_v2_reliability_deployment_features.csv"
     metrics_path = manifest_dir / "formal_v2_reliability_metrics.csv"
+    ablation_path = manifest_dir / "formal_v2_information_ablation_metrics.csv"
+    ablation_summary_path = manifest_dir / "formal_v2_information_ablation_summary.json"
     bootstrap_path = manifest_dir / "formal_v2_reliability_bootstrap_ci.csv"
     summary_path = manifest_dir / "formal_v2_reliability_summary.json"
+    transform_manifest_path = manifest_dir / "formal_v2_feature_transform_manifest.json"
     score_frame.to_csv(score_path, index=False)
     feature_columns = [
         "prediction_id", "biological_instance_id", "environment_id", "environment_key", "predictor",
@@ -749,6 +817,29 @@ def run(root: Path) -> dict[str, Any]:
             feature_output[column] = ""
     feature_output[feature_columns].to_csv(feature_path, index=False)
     metric_frame.sort_values(["aggregation_level", "scenario", "method", "environment_id"], kind="stable").to_csv(metrics_path, index=False)
+    ablation_frame = metric_frame.loc[metric_frame["method"].isin(METHODS)].copy()
+    ablation_frame.sort_values(
+        ["aggregation_level", "scenario", "information_set", "environment_id"], kind="stable"
+    ).to_csv(ablation_path, index=False)
+    ablation_macro = ablation_frame.loc[ablation_frame["aggregation_level"].eq("environment_macro")]
+    ablation_summary = {
+        "schema_version": 1,
+        "benchmark_id": "ptl_context_v2",
+        "source_metrics": metrics_path.relative_to(root).as_posix(),
+        "information_sets": [INFORMATION_SET_BY_METHOD[method] for method in METHODS],
+        "headline_comparison": "U-only RF versus U+P+S+N+C PTL",
+        "macro_rows": ablation_macro[["scenario", "method", "information_set", "aurc", "excess_aurc", "risk_at_80", "ftr_at_80"]].to_dict("records"),
+        "path": ablation_path.relative_to(root).as_posix(),
+    }
+    ablation_summary_path.write_text(json.dumps(ablation_summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    transform_manifest = {
+        "schema_version": 1,
+        "benchmark_id": "ptl_context_v2",
+        "policy": "all transforms fit on the calibration-side reference population for each scenario",
+        "records": transform_records,
+        "status": "formal_v2_feature_transforms_materialized",
+    }
+    transform_manifest_path.write_text(json.dumps(transform_manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     bootstrap_frame.sort_values(["scenario", "method"], kind="stable").to_csv(bootstrap_path, index=False)
     summary = {
         "schema_version": 1,
@@ -770,12 +861,20 @@ def run(root: Path) -> dict[str, Any]:
         },
         "native_uq_audit_columns": [f"native_{column}" for column in UQ_COLUMNS],
         "methods": list(METHODS),
-        "forbidden_headline_features": ["environment_id", "environment_key", "predictor", "fidelity", "continuous_risk", "reliable_label", "total_cells", "n_reference_groups", "source_reference_keys", "batch_distance"],
+        "forbidden_headline_features": [
+            "environment_id", "environment_key", "predictor", "fidelity", "continuous_risk", "reliable_label",
+            "total_cells", "n_reference_groups", "source_reference_keys", "batch_distance", "support_cells",
+            "support_signatures", "reference_key_overlap", "realized_cell_count", "realized_qc_count",
+            "target_batch_composition", "target_reproducibility",
+        ],
         "rows": int(len(score_frame)),
         "metric_rows": int(len(metric_frame)),
         "score_path": score_path.relative_to(root).as_posix(),
         "feature_path": feature_path.relative_to(root).as_posix(),
         "metrics_path": metrics_path.relative_to(root).as_posix(),
+        "information_ablation_path": ablation_path.relative_to(root).as_posix(),
+        "information_ablation_summary_path": ablation_summary_path.relative_to(root).as_posix(),
+        "feature_transform_manifest_path": transform_manifest_path.relative_to(root).as_posix(),
         "bootstrap_ci_path": bootstrap_path.relative_to(root).as_posix(),
         "status": "formal_v2_reliability_executed",
     }

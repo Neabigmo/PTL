@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2",
+  "matrix_shape": [
+    8,
+    8
+  ],
+  "matrix_rows": 128,
+  "baselines": [
+    "raw_scalar_uq",
+    "u_only_rf"
+  ],
+  "source_split": "one source environment validation set",
+  "target_split": "one target environment untouched test set",
+  "transfer_gain_definition": "baseline AURC - source-trained PTL AURC; positive is useful transfer",
+  "descriptors": [
+    "same_cell_context",
+    "same_perturbation_modality",
+    "same_platform",
+    "same_condition",
+    "same_dataset_family",
+    "prediction_geometry_distance",
+    "uq_distribution_distance"
+  ],
+  "matrix_path": "artifacts/manifests/formal_v2_environment_transfer_matrix.csv",
+  "summary_path": "artifacts/manifests/formal_v2_environment_transfer_summary.csv",
+  "status": "formal_v2_environment_transfer_atlas_executed"
+}

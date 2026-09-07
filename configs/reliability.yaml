@@ -50,6 +50,17 @@ forbidden_headline_features:
   - transportability_tau
   - deg
   - retrieval
+  - total_cells
+  - n_reference_groups
+  - source_reference_keys
+  - batch_distance
+  - support_cells
+  - support_signatures
+  - reference_key_overlap
+  - realized_cell_count
+  - realized_qc_count
+  - target_batch_composition
+  - target_reproducibility
 methods:
   - raw_normalized_uq
   - best_scalar_uq

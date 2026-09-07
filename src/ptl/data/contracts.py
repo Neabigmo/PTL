@@ -75,6 +75,23 @@ OUTCOME_TOKENS = (
     "retrieval",
 )
 FORBIDDEN_BENCHMARK_TOKENS = ("split_family", "stress_family_flag", "heldout_target")
+DEPLOYMENT_FORBIDDEN_FIELDS = frozenset(
+    {
+        # Realized target-side assay metadata is unavailable for an unseen
+        # perturbation and can proxy the quality of its observed outcome.
+        "total_cells",
+        "n_reference_groups",
+        "source_reference_keys",
+        "batch_distance",
+        "support_cells",
+        "support_signatures",
+        "reference_key_overlap",
+        "realized_cell_count",
+        "realized_qc_count",
+        "target_batch_composition",
+        "target_reproducibility",
+    }
+)
 
 
 def validate_feature_columns(columns: list[str] | tuple[str, ...]) -> None:
@@ -83,7 +100,10 @@ def validate_feature_columns(columns: list[str] | tuple[str, ...]) -> None:
     violations = []
     for column in columns:
         normalized = column.casefold()
-        if any(token in normalized for token in OUTCOME_TOKENS + FORBIDDEN_BENCHMARK_TOKENS):
+        if (
+            column in DEPLOYMENT_FORBIDDEN_FIELDS
+            or any(token in normalized for token in OUTCOME_TOKENS + FORBIDDEN_BENCHMARK_TOKENS)
+        ):
             violations.append(column)
     if violations:
         raise ValueError(f"outcome/benchmark columns cannot enter deployment features: {violations}")

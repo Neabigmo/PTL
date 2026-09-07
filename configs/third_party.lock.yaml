@@ -1,6 +1,12 @@
 schema_version: 1
 purpose: "Record external code and paper dependencies without vendoring large environments."
 entries:
+  - name: Ahlmann-Eltze linear perturbation prediction
+    url: https://github.com/const-ae/linear_perturbation_prediction-Paper.git
+    pinned_commit: bfa6eee
+    role: "Published bilinear linear-prediction reference for the formal strong baseline and oracle check."
+    license: "To be verified before code or data reuse."
+    status: oracle_validated
   - name: GEARS
     url: https://github.com/snap-stanford/GEARS.git
     pinned_commit: f374e43e197b295016d80395d7a54ddb81cc6769

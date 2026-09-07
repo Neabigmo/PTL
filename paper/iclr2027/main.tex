@@ -7,309 +7,274 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 
-\title{Context-Aware Reliability Calibration for Single-Cell Perturbation Response Prediction}
+\title{Beyond Confidence: Learning Transferable Reliability for Single-Cell Perturbation Prediction}
 \author{Anonymous Authors}
 
 \newcommand{\ptl}{\textsc{PTL}}
 \newcommand{\uq}{\textsc{UQ}}
 \newcommand{\gears}{\textsc{GEARS}}
+\newcommand{\slim}{\textsc{SLIM}}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Single-cell perturbation predictors are increasingly used outside the
-experimental context in which they were trained, but a model's native
-uncertainty need not remain a reliable signal of prediction fidelity under
-structured biological shift. We introduce a target-free reliability layer,
-\ptl, that calibrates a predictor's uncertainty using prediction
-geometry, training support, perturbation novelty and explicit biological
-context. The method separates predictions, deployment-time features, observed
-outcomes and grouped cross-fitting assignments, so reliability decisions cannot
-use the answer key. On a validated pilot replay of 23,226 prediction rows and
-6,884 biological instances across three environments and three stress
-families, a random-forest \ptl head reduces environment-macro AURC from 0.3790
-for raw normalized uncertainty to 0.3480 and reduces the corresponding Brier
-score from 0.3644 to 0.1754. These numbers are engineering and estimand
-validation, not a claim of final state-of-the-art prediction. We also audit
-context expansion before benchmarking: a raw Replogle GWPS screen contains
-nearly two million cells but retains only 31 non-control labels after
-batch-aware eligibility, whereas Tian and Frangieh metadata establish distinct
-iPSC-neuron and melanoma co-culture contexts. The result is a reproducible
-framework for asking when uncertainty is transportable, with explicit
-boundaries for the learned-model and multi-environment experiments still to
-come.
+Single-cell perturbation predictors are increasingly deployed across cell
+states, perturbation modalities and experimental conditions, yet a predictor's
+confidence need not retain the same meaning after such a shift. We study
+whether reliability can itself be learned from information available at
+prediction time. We introduce \ptl{}, an identity-free reliability layer that
+combines predictor uncertainty with prediction geometry, training support,
+perturbation novelty and known biological context. A formal benchmark contains
+1,881 condition-level biological instances from eight canonical environments,
+three verified predictor families (matching mean, an Ahlmann--Eltze-style
+bilinear model and \slim{} with a public STRING embedding), three shared model
+seeds, and a frozen 60/20/20 perturbation split. The deployment feature surface
+is constructed from training-side and design-side information only. Relative
+to an equal-capacity U-only random-forest baseline, \ptl{} reduces
+environment-macro AURC from 0.642 to 0.614 in-domain, from 0.656 to 0.641
+when environments are held out, and from 0.663 to 0.638 when predictor
+families are held out. The transfer atlas shows that these gains are not
+uniform: reliability knowledge is useful for some source--target pairs and
+harmful for others. Our result is therefore not that confidence is invariant,
+but that prediction failure contains a structured component that can be
+reused under explicit biological shifts.
 \end{abstract}
 
 \section{Introduction}
-Perturbation-response models promise to turn large single-cell screens into
-predictive maps of cellular state. Existing predictors span additive and
-linear baselines, neural optimal-transport and generative models, and graph
-neural networks such as \gears{}~\citep{norman2019manifolds,lotfollahi2019scgen,
-bunne2023cellot,lotfollahi2023cpa,roohani2023gears}. Their practical use,
-however, is not determined by prediction accuracy alone. A prediction may be
-well supported in one cell context and extrapolative in another; a native
-ensemble or model uncertainty may therefore be poorly aligned with realized
-fidelity under a held-out perturbation, cell state or experimental condition.
+Single-cell perturbation models convert large screens into predictions of
+cellular responses. Their usefulness, however, depends on whether a user can
+decide which predictions to trust before the corresponding experiment is
+performed. Existing predictors span simple matching baselines, linear
+perturbation models, generative models and graph neural networks such as
+\gears{}~\citep{norman2019manifolds,lotfollahi2019scgen,bunne2023cellot,
+lotfollahi2023cpa,roohani2023gears}. Most predictors expose some uncertainty
+descriptor, but uncertainty is not automatically comparable across a K562
+screen, an RPE1 screen, an iPSC-neuron screen or a melanoma co-culture.
 
-This paper studies a narrower and operationally useful question: can a
-target-free reliability layer improve selective decisions about which
-predictions to retain? The distinction is important. We do not treat
-reliability calibration as a new predictor, and we do not infer deployment
-features from the observed target. Instead, we construct a stress-aware
-evaluation surface and learn a small calibrator that can abstain from risky
-predictions using information available at prediction time.
+This paper asks a narrower operational question: can a target-free reliability
+layer improve selective prediction under structured biological shift? The
+layer is not a new response predictor. It ranks predictions by their expected
+failure risk using only quantities available at prediction time, while the
+observed response is used only to form calibration labels and final test
+outcomes. This separation matters because experimental support and assay
+reproducibility can themselves be correlated with the observed target.
 
-Our contributions are fourfold. First, we define an auditable contract for
-prediction, deployment evidence, outcomes and grouped cross-fitting. Second,
-we implement a monotonicity-preserving context-conditioned calibrator that
-starts from a scalar uncertainty baseline. Third, we report a reproducible
-pilot replay with environment-first aggregation and paired hierarchical
-bootstrap intervals. Fourth, we show why context expansion must be audited
-semantically: large raw cell counts do not guarantee broad perturbation
-coverage after batch-aware eligibility.
+Our central claim is deliberately conditional:
+\begin{quote}
+\emph{Confidence changes meaning across biology, but reliability transfer is
+structured, measurable and partly reusable.}
+\end{quote}
+
+We make four contributions. First, we define a formal, deployment-safe
+reliability surface with canonical environment and biological-instance keys.
+Second, we compare \ptl{} with an equal-capacity U-only random forest and an
+incremental information ladder, so gains cannot be attributed only to adding a
+more flexible classifier. Third, we build a source-to-target reliability
+atlas that makes transfer heterogeneity visible rather than averaging it
+away. Fourth, we release machine-readable contracts, formal-v2 source tables,
+vector figures and reproducible checks that keep unavailable predictors out of
+scientific claims.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/nature/nature_fig1_framework.pdf}
-  \caption{\textbf{Reliability framework and data boundary.} (a) \ptl{} combines
-  predictor uncertainty $U$ with target-free prediction geometry, support,
-  novelty and biological context before a keep/abstain decision. (b) Context
-  expansion is recorded by raw biological semantics. (c) The GWPS audit shows
-  that attrition is dominated by batch--perturbation eligibility rather than
-  cell-level QC. (d) Predictions, deployment features, outcomes and folds are
-  kept as separate evidence tables. (e) GWPS is consequently a \gears{}
-  contract pilot, while K562 essential is the current common-core fallback.}
-  \label{fig:framework}
+  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig2_confidence_semantics.pdf}
+  \caption{\textbf{Confidence changes meaning across environments.} All panels
+  use formal-v2 test rows. (a) Risk across within-environment and predictor
+  confidence deciles for biologically distinct environments. (b) Realized risk
+  among the top-confidence predictions. (c) Raw-UQ AURC varies across the
+  environment--predictor surface. (d) Matched-confidence examples show that
+  similar confidence can accompany very different outcomes.}
+  \label{fig:confidence}
 \end{figure*}
 
 \section{Problem formulation}
-Let $x_i$ denote the perturbation input and cell context for a biological
-instance, $\hat{y}_i=f(x_i)$ the predictor output, and $y_i$ the observed
-delta-expression response. A predictor may provide native uncertainty
-descriptors $u_i$, or we may derive predictor-relative uncertainty from aligned
-ensemble members. We define a fidelity score $F_i$ from the prediction and
-observed response, and a transportability label relative to a familiar/random
-anchor:
+For biological instance $i$, let $\hat y_i$ be a predictor output and $y_i$
+the observed delta-expression response. We compute a fidelity $F_i$ from the
+prediction and response and define continuous risk $R_i=1-F_i$. A binary
+reliability label is used only for calibration diagnostics:
 \begin{equation}
- T_i = \mathbb{I}\left[F_i \geq \tau\,\operatorname{median}(F_{\mathrm{random}})\right].
+ T_i = \mathbb{I}\left[F_i \geq \tau\,\operatorname{median}
+ (F_{\mathrm{validation}})\right], \qquad \tau=0.8.
 \end{equation}
-The label is used only in the outcome table and in training/evaluation inside
-cross-fitting folds; it is not a deployment feature.
+The threshold is computed separately from validation perturbations for each
+predictor--environment surface. Transfer results use continuous realized risk
+and AURC/eAURC as the primary outcomes, avoiding a target-dependent threshold
+in a held-out environment.
 
-The selective task is to rank predictions by estimated reliability. For a
-coverage level $c$, the selective risk is the mean realized risk among the
-highest-scoring $c$ fraction. We use AURC as the primary summary and report
-false-transportability rate (FTR), Brier score, log loss, AUROC and AUPRC as
-secondary diagnostics. All headline pilot summaries aggregate environments
-first, rather than allowing large environments to dominate the estimate.
+For a coverage level $c$, selective risk is the mean $R_i$ among the highest
+confidence-scored $c$ fraction. AURC is the integral of this curve; lower is
+better. We report environment-first averages, paired hierarchical bootstrap
+intervals, risk at 50/80\% coverage, false-transportability rate (FTR), Brier
+score, AUROC and AUPRC as secondary diagnostics.
 
-\section{Context-conditioned reliability layer}
+\section{Deployment-safe reliability layer}
 \subsection{Feature contract}
-We maintain four logical tables. The \emph{predictions} table contains
-prediction identifiers, model provenance, prediction summaries and native
-uncertainty. The \emph{deployment} table contains only information available
-before the target is observed: prediction geometry, training support,
-perturbation novelty and biological/experimental context. The \emph{outcomes}
-table contains fidelity, risk and transportability labels. The \emph{folds}
-table assigns all predictions for a biological instance to the same grouped
-cross-fitting fold. Tables are joined by a stable prediction identifier only
-inside evaluation code. A feature audit explicitly excludes target-derived
-quantities, identifiers that can memorize runs, and observed response metrics.
+The formal benchmark keeps four evidence surfaces separate: predictions,
+deployment features, observed outcomes and split assignments. The headline
+feature vector contains five blocks: $U$ (five predictor-uncertainty
+features), $P$ (four prediction-geometry features), $S$ (three training-
+support features), $N$ (four novelty features), and $C$ (five known-context
+features).
+The $S$ block is computed from training perturbations only: exact and
+component support, nearest training geometry and local training density. The
+$C$ block contains cell context, perturbation modality, readout modality,
+experimental condition and platform. Realized target cell counts, reference
+group membership, QC outcomes, target-side reproducibility, fidelity and all
+environment/predictor identifiers are excluded from the headline matrix.
 
-\subsection{Calibrator}
-We first map normalized predictor uncertainty to a scalar baseline probability
-$p_{0,i}$ using training-fold data only. Let $z_i$ be the concatenation of
-deployment-time blocks: $U$ for uncertainty descriptors, $P$ for prediction
-geometry, $S$ for support and availability, $N$ for perturbation/combination
-novelty, and $C$ for biological and experimental context. The main calibrator
-is
+\subsection{Calibration}
+We normalize each uncertainty descriptor using calibration rows only. For a
+deployment feature vector $z_i$, \ptl{} starts from the scalar UQ confidence
+$p_{0,i}$ and applies a context-conditioned correction,
 \begin{equation}
- p_i = \sigma\!\left(\exp(a_\phi(z_i))\operatorname{logit}(p_{0,i}) + b_\phi(z_i)\right),
+ p_i = \sigma\!\left(\exp(a_\phi(z_i))\operatorname{logit}(p_{0,i})+b_\phi(z_i)\right),
  \label{eq:ptl}
 \end{equation}
-where $a_\phi$ and $b_\phi$ are small learned heads initialized at zero. The
-initial mapping is therefore the identity, and the positive slope preserves
-the ordering in $p_0$ for a fixed context. We regularize the two heads toward
-zero so that context changes the baseline only when supported by the training
-fold. Tree-based and linear heads are retained as diagnostic comparators in
-the pilot, while the constrained form in Eq.~\ref{eq:ptl} defines the core
-method.
+where the heads are initialized at zero and regularized toward zero. The
+headline implementation is an identity-free random forest using the same
+capacity for the U-only comparator and the full $U+P+S+N+C$ surface. We also
+fit the incremental ladder
+\[
+ U \rightarrow U+P \rightarrow U+P+S \rightarrow U+P+S+N
+ \rightarrow U+P+S+N+C.
+\]
 
-\section{Benchmark and audit design}
-\subsection{Stress-aware replay}
-The current PTL replay contains 23,226 prediction rows and 6,884
-signature-level biological instances across Norman K562, Replogle K562
-essential and Replogle RPE1. It uses five grouped folds, three split families
-(random, unseen perturbation and dataset held out), and paired
-environment-then-instance bootstrap resampling. A three-member aligned seed
-surface supplies ensemble-derived uncertainty descriptors for the simple and
-linear predictors. The replay is deliberately separated from the official
-\gears{} adapter pilot, which uses condition-disjoint splits, a fixed 4,096-gene
-panel and native log-variance uncertainty.
+\section{Formal benchmark}
+The benchmark contains 1,881 biological instances, each defined by
+environment, perturbation condition, dose and time point. Batch-level
+signatures are aggregated into a weighted condition-level delta rather than
+being counted as independent samples. The eight canonical environments cover
+Norman K562 CRISPRa, Replogle K562 essential and RPE1 CRISPRi, Tian iPSC-neuron
+CRISPRa and CRISPRi, and three Frangieh patient-derived melanoma CRISPRn
+conditions (control, co-culture and IFN$\gamma$). The common scoring panel has
+6,897 genes; model fitting retains each predictor's native gene space.
 
-The pilot predictor families are global mean, perturbation-matching mean and
-Ridge. The reliability heads include raw normalized uncertainty, scalar
-calibrators, support/novelty-only features, \ptl{} variants, and tree-based
-diagnostics. Identity-rich full-ID variants are reported only as diagnostic
-upper bounds. The planned final roster adds a strong linear baseline and
-compatible CPA, scGPT and PRESCRIBE implementations; those learned-model
-runs are not silently substituted by the present pilot.
-
-\subsection{Semantic and coverage audit}
-Before adding contexts, we inspect raw H5AD metadata without loading expression
-matrices. The Replogle K562 GWPS file contains 1,989,578 cells and 9,866
-non-control perturbation labels. Cell-level label parsing and QC retain nearly
-all cells, but the batch--perturbation minimum-cell rule retains 77,168 cells,
-only 31 non-control labels and 440 reference groups. We therefore keep GWPS
-for the \gears{} contract pilot and use K562 essential for the current common
-matrix rather than presenting sparse GWPS coverage as broad benchmark evidence.
-
-The same audit corrects biological semantics before model comparison. Tian
-CRISPRa and CRISPRi are iPSC-induced-neuron screens, not K562 environments.
-Frangieh RNA is a melanoma co-culture screen whose raw `perturbation\_2' field
-contains Control, Co-culture and IFN$\gamma$ conditions, not a THP-1 label. The
-staged preprocessing retains these fields and generates 737 signatures across
-the three conditions (245, 245 and 247, respectively) from 216,931 retained
-cells.
+All predictor families use the same frozen split seed 20260907 and the same
+model seeds $0,1,2$. The split is 60\% predictor training, 20\% reliability
+calibration and 20\% untouched final test. The verified roster comprises
+matching mean, the bilinear Ahlmann--Eltze reproduction with $K=10$ and
+$\lambda=0.1$, and \slim{}, a lightweight STRING-embedding predictor. GEARS
+has a formal adapter path but remains ready-not-executed in this workspace;
+CPA, scGPT and PRESCRIBE remain dependency-missing or optional. These rows
+are status metadata and never enter averages, plots or prose as scores.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/nature/nature_fig2_native_uq.pdf}
-  \caption{\textbf{Predictor uncertainty under structured shift.} Observation-level
-  UQ quantiles and realized delta-cosine fidelity are shown for the three
-  pilot predictors across random, unseen-perturbation and dataset-held-out
-  splits. Aggregate panels show that the uncertainty scale and its relation to
-  fidelity change with the stress family. These are pilot replay diagnostics,
-  not final learned-model performance claims.}
-  \label{fig:native-uq}
+  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig3_reliability_transfer_atlas.pdf}
+  \caption{\textbf{Reliability transfer is structured.} (a) The hero panel is
+  the 8$\times$8 source-validation to target-test transfer atlas, with positive
+  values indicating lower PTL AURC than the equal-capacity U-only baseline.
+  (b) Target environments differ in their mean off-diagonal transfer gain.
+  (c) Context similarity is an explicit descriptive transfer covariate. (d)
+  Predictor-family holdout preserves the transfer comparison when valid
+  predictor families are available.}
+  \label{fig:atlas}
 \end{figure*}
 
 \section{Results}
-\subsection{Predictor uncertainty is not transportability-invariant}
-Figure~\ref{fig:native-uq} shows the central failure mode motivating \ptl{}.
-Uncertainty quantiles occupy different ranges across split families, and the
-relationship between the quantile and realized delta-cosine fidelity changes
-across global mean, matching mean and Ridge predictors. In the dataset-held-
-out replay, mean fidelity is 0.176 for the global mean, 0.167 for the matching
-mean and 0.088 for Ridge; the corresponding values in the random split are
-0.226, 0.376 and 0.431. The numbers should be read as a stress diagnostic,
-not as a predictor ranking: the held-out environments and the predictor
-families have different support conditions.
+\subsection{Confidence semantics vary across biology}
+Figure~\ref{fig:confidence} shows the motivating phenomenon on formal test
+rows. Within the same nominal confidence range, realized risk shifts across
+K562, RPE1, iPSC-neuron and melanoma contexts. The raw-UQ heatmap also shows
+that discrimination is not a property of the uncertainty descriptor alone;
+it depends on the predictor and environment in which that descriptor is
+interpreted.
 
-\subsection{Target-free PTL improves selective decisions in the pilot}
-Table~\ref{tab:pilot} reports the environment-macro replay. Raw normalized UQ
-has AURC 0.3790, while the current PTL random-forest head has AURC 0.3480.
-The same comparison reduces FTR at 80\% retained coverage from 0.5500 to
-0.5025 and Brier score from 0.3644 to 0.1754. The paired hierarchical
-bootstrap intervals are shown in Fig.~\ref{fig:selective}; they resample
-environments first and biological instances second.
+\subsection{Deployment-safe PTL improves selective prediction}
+Table~\ref{tab:formal} compares the full PTL surface with the fair U-only
+random-forest baseline. The full model improves the environment-macro AURC in
+all three protocols in the current formal surface. Paired bootstrap intervals
+for the full PTL versus raw normalized UQ comparison are reported in the
+machine-readable manifest; the implementation also records every information
+ablation under the same validation-to-test protocol.
 
 \begin{table}[t]
 \centering
-\caption{Environment-macro PTL replay summary. Lower AURC, FTR and Brier are
-better. These values are pilot estimates from the validated artifacts.}
-\label{tab:pilot}
-\begin{tabular}{lrrrr}
+\caption{Formal-v2 selective reliability. Lower AURC and excess AURC are
+better. Values are environment-macro test estimates; calibration uses
+validation rows only.}
+\label{tab:formal}
+\begin{tabular}{lrrr}
 \toprule
-Method & AURC & FTR@50 & FTR@80 & Brier \\
+Protocol & U-only RF & PTL & $\Delta$ AURC \\
 \midrule
-Raw normalized UQ & 0.3790 & 0.5730 & 0.5500 & 0.3644 \\
-Platt logistic & 0.3785 & 0.5740 & 0.5465 & 0.2777 \\
-PTL context & 0.3654 & 0.5374 & 0.5351 & 0.2258 \\
-GBDT & 0.3514 & 0.4646 & 0.5051 & 0.1914 \\
-PTL (random forest) & \textbf{0.3480} & \textbf{0.4505} & \textbf{0.5025} & \textbf{0.1754} \\
+In-domain & 0.642 & 0.614 & $-0.028$ \\
+Leave environment out & 0.656 & 0.641 & $-0.015$ \\
+Leave predictor out & 0.663 & 0.638 & $-0.025$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\textwidth]{../../results/figures/nature/nature_fig3_selective.pdf}
-  \caption{\textbf{Selective reliability.} (a) Environment-macro AURC with
-  paired hierarchical 95\% intervals. (b) False-transportability rate at 50\%
-  and 80\% retained coverage. (c) Split-family AURC improvement of PTL over
-  raw UQ, where positive values indicate lower PTL AURC. (d) Interpretation of
-  the present result: \ptl{} is a reliability layer, not a predictor
-  leaderboard.}
-  \label{fig:selective}
-\end{figure*}
+\subsection{Reliability knowledge transfers unevenly but systematically}
+The source-to-target atlas in Fig.~\ref{fig:atlas} trains PTL on one source
+environment's validation rows and evaluates it on each target environment's
+untouched test rows. It therefore exposes transfer topology rather than
+collapsing all held-out environments into one number. Positive and negative
+cells coexist, and target-level summaries differ substantially. We interpret
+the relationship between transfer gain and shared context, modality,
+platform, condition and prediction geometry descriptively; the atlas is not a
+causal analysis.
 
-\subsection{Reliability uses multiple deployment-time information blocks}
-The v2 pilot source contract exposes deployment-time fields in five blocks:
-prediction/UQ (3), geometry (1), support (3), novelty (4) and biological
-context (6). These counts describe the declared input surface, not a claim of
-final feature importance. The earlier v1 ablation tables are provenance-frozen
-and are not used as evidence for this draft.
-
-The intended expansion is an incremental information ladder
-$U\rightarrow U+P\rightarrow U+P+S\rightarrow U+P+S+N\rightarrow
-U+P+S+N+C$. The current table does not contain all five incremental fits, so
-we expose the ladder as a next-stage comparison rather than interpolating
-missing results. Figure~\ref{fig:blocks} displays the declared v2 fields, the
-observed v2 pilot comparison and the provenance boundary.
+\subsection{Information blocks and robustness controls}
+Figure~\ref{fig:robustness} reports the complete formal information ladder.
+The primary comparison is PTL versus U-only RF, while scalar calibration
+variants remain diagnostics. The same PTL score is reused for risk, FTR and
+Brier summaries, so the result is not obtained by retraining a separate
+reliability model for each metric. Restricting to reliability-positive test
+outcomes does not change the direction of the selective comparison in the
+current formal surface.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/nature/nature_fig4_information_blocks.pdf}
-  \caption{\textbf{Information blocks and validation boundary.} (a) Declared
-  v2 deployment-time fields by information block. (b) The planned incremental
-  information ladder. (c) The observed v2 pilot AURC comparison, shown only
-  as a replay diagnostic. (d) v1 tables are excluded from the v2 figure
-  provenance; formal learned-model ablations remain pending.}
-  \label{fig:blocks}
+  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig4_information_and_robustness.pdf}
+  \caption{\textbf{Information and robustness surface.} (a) Incremental
+  information ablation across the three formal protocols. (b) All test rows
+  versus the reliability-positive subset using the same scores. (c) A single
+  PTL score is evaluated under several selective outcomes. (d) The formal
+  predictor-by-environment fidelity surface used by the paper.}
+  \label{fig:robustness}
 \end{figure*}
 
 \section{Discussion}
-The pilot supports a methodological claim rather than a universal performance
-claim. A predictor's uncertainty is an input to reliability assessment, not a
-guarantee that its ordering remains valid after a shift in perturbation,
-support or biological context. On the present replay, target-free deployment
-features can improve selective decisions, and the improvement is measurable
-with environment-first aggregation rather than a pooled row average.
+The formal results support a calibrated scientific statement rather than a
+universal transfer claim. Predictor confidence changes meaning across
+biological environments, and a target-free reliability layer can extract
+additional signal from prediction geometry, training support, novelty and
+known context. The transfer atlas then shows where that knowledge is reusable
+and where it is not. This is a more informative object than a single pooled
+improvement because a negative source--target cell is itself evidence about
+the boundary of transportability.
 
-The data audit is part of the scientific result. A raw screen with almost two
-million cells can become a narrow perturbation surface when perturbations are
-distributed across batches and a batch-aware minimum-cell rule is applied.
-Treating that surface as broad coverage would conflate cell count with
-transportability. The semantic audit similarly prevents a model from receiving
-incorrect context labels: the Tian and Frangieh fields describe different
-biological and experimental axes, and those axes should enter the registry
-explicitly.
-
-The next phase is to complete staged Tian/Frangieh signature validation, audit
-the Xu mapping and Adamson full candidate, and run the formal predictor roster
-on the common K562-essential/RPE1/Norman surface plus context expansion. Only
-after those checks will the incremental information ladder, native learned
-model UQ and final multi-seed claims be promoted into the headline results.
+The distinction between deployment evidence and outcome evidence is central.
+Cell counts, QC results and perturbation reproducibility are valuable for
+auditing the benchmark, but they are not available when predicting an unseen
+perturbation and therefore cannot be headline PTL inputs. Similarly,
+experimental reproducibility and alternate response metrics are controls on
+the outcome surface, not shortcuts into the feature matrix.
 
 \section{Limitations and reproducibility}
-The present evidence is a CPU one-epoch \gears{} adapter pilot plus a
-five-fold PTL replay of existing predictor outputs. It validates contracts,
-data separation, split integrity and the selective estimand; it does not
-establish the final generalization ranking of GEARS, CPA, scGPT or PRESCRIBE.
-The raw GWPS surface is explicitly coverage-limited under the current
-batch-aware signature contract. The learned-model roster and full multi-
-environment context comparison remain pending, even though the Tian and
-Frangieh preprocessing surfaces are now staged. These limitations are visible in the registry and the audit
-manifests rather than hidden behind a single benchmark score.
+The current scientific roster contains three verified predictor families;
+dependency-heavy CPA and scGPT runs, as well as the formal GEARS execution,
+are not presented as completed scores. The Ahlmann--Eltze implementation is
+guarded by a small oracle comparison and the \slim{} embedding is retained as
+a local public reference artifact. The atlas is descriptive and does not
+identify a causal mechanism for transfer. Finally, the current figures report
+the formal-v2 results available in this workspace; experimental split-half
+reproducibility and independent Systema/scPertEval metrics remain planned
+controls and must be added before making stronger assay-robustness claims.
 
-The repository contains the source data tables used by the figures, the
-machine-readable GWPS and semantic audits, the Python figure generator, and
-the user-provided ICLR style files under `third\_party/iclr2027/'. The main
-replay can be regenerated with:
+The formal pipeline can be regenerated with:
 \begin{verbatim}
-F:\\anaconda3\\python.exe scripts\\run_ptl_v2_pilot.py
-  --root H:\\2026try\\9.5PTL
-F:\\anaconda3\\python.exe scripts\\audit_gwps_coverage.py
-  --root H:\\2026try\\9.5PTL
-F:\\anaconda3\\python.exe scripts\\audit_context_semantics.py
-  --root H:\\2026try\\9.5PTL
-F:\\anaconda3\\python.exe src\\figures\\make_nature_figures.py
+python scripts\\run_formal_v2_predictors.py
+python scripts\\run_formal_v2_reliability.py
+python scripts\\build_formal_v2_transfer_atlas.py
+python src\\figures\\make_iclr_formal_figures.py
 \end{verbatim}
-All figure exports keep editable text in SVG/PDF and include a 600-dpi TIFF
-alongside a PNG preview. Raw expression matrices and generated model artifacts
-remain outside the tracked source boundary.
+The output bundle includes machine-readable prediction, feature, ablation,
+bootstrap and transfer-atlas tables, editable SVG/PDF figures and 600-dpi
+PNG/TIFF previews. The figures record their source tables, split policy,
+aggregation and uncertainty definitions in a formal figure manifest.
 
 \bibliographystyle{../../third_party/iclr2027/iclr2027_conference}
 \bibliography{../../manuscript/references}
