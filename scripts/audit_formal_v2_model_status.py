@@ -15,23 +15,41 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def dependency_status(predictor_id: str) -> tuple[str, str]:
+def dependency_status(predictor_id: str, root: Path | None = None) -> tuple[str, str, str]:
+    """Return scientific support, runtime status, and an evidence reason.
+
+    Missing Python packages are runtime blockers, not evidence that a predictor
+    is scientifically incompatible with the benchmark. Keeping those axes
+    separate prevents a dependency gap from becoming an unsupported-method
+    claim in the roster.
+    """
+
     if predictor_id in {"mean_matching", "strong_linear"}:
-        return "success", "formal_v2_predictor_metrics_available"
+        metrics_path = (root or ROOT) / "artifacts/manifests/formal_v2_predictor_metrics.csv"
+        if metrics_path.exists():
+            metrics = pd.read_csv(metrics_path, usecols=["predictor"])
+            if metrics["predictor"].eq(predictor_id).any():
+                if predictor_id == "strong_linear":
+                    summary_path = metrics_path.with_name("formal_v2_predictor_summary.json")
+                    summary = json.loads(summary_path.read_text(encoding="utf-8")) if summary_path.exists() else {}
+                    if summary.get("predictor_version") != "formal_v2_exact_linear_20260907":
+                        return "supported", "ready", "exact_linear_run_pending_prior_approximation_present"
+                return "supported", "success", "formal_v2_predictor_metrics_available"
+        return "supported", "ready", "formal_v2_predictor_run_not_materialized"
     if predictor_id == "official_gears":
         if importlib.util.find_spec("gears") is None:
-            return "unsupported", "missing_importable_gears_dependency"
-        return "pending", "formal_raw_adata_adapter_not_yet_executed"
+            return "supported", "dependency_missing", "missing_importable_gears_dependency"
+        return "supported", "ready", "formal_raw_adata_adapter_not_yet_executed"
     if predictor_id in {"cpa", "scgpt"}:
         package = predictor_id
         if importlib.util.find_spec(package) is None:
-            return "unsupported", f"missing_optional_dependency:{package}"
-        return "pending", "formal_adapter_not_yet_executed"
+            return "supported", "dependency_missing", f"missing_optional_dependency:{package}"
+        return "supported", "ready", "formal_adapter_not_yet_executed"
     if predictor_id == "prescribe":
         if importlib.util.find_spec("prescribe") is None:
-            return "unsupported", "optional_predictor_not_installed_compatible_overlap_only"
-        return "pending", "compatible_overlap_only_formal_run_not_yet_executed"
-    return "pending", "unclassified_roster_entry"
+            return "incompatible", "dependency_missing", "optional_non_blocking_compatible_overlap_only"
+        return "incompatible", "ready", "compatible_overlap_only_formal_run_not_yet_executed"
+    return "unknown", "ready", "unclassified_roster_entry"
 
 
 def run(root: Path, output: Path) -> dict[str, Any]:
@@ -39,19 +57,23 @@ def run(root: Path, output: Path) -> dict[str, Any]:
     registry = pd.read_csv(root / "artifacts/manifests/environment_registry.csv")
     rows: list[dict[str, Any]] = []
     for predictor in roster["predictors"]:
-        status, reason = dependency_status(str(predictor["predictor_id"]))
+        scientific_support, runtime_status, reason = dependency_status(
+            str(predictor["predictor_id"]), root
+        )
         for _, environment in registry.iterrows():
             rows.append({
                 "predictor_id": predictor["predictor_id"],
                 "predictor_family": predictor["family"],
                 "environment_id": environment["environment_id"],
                 "environment_key": environment["environment_key"],
-                "status": status,
+                "scientific_support": scientific_support,
+                "runtime_status": runtime_status,
+                "status": runtime_status,
                 "reason": reason,
                 "split_id": roster["uq_policy"]["split_id"],
                 "split_seed": roster["uq_policy"]["split_seed"],
                 "model_seeds": ",".join(str(value) for value in roster["uq_policy"]["model_seeds"]),
-                "scientific_result_claimed": status == "success" and predictor["predictor_id"] in {"mean_matching", "strong_linear"},
+                "scientific_result_claimed": runtime_status == "success" and scientific_support == "supported",
             })
     frame = pd.DataFrame(rows).sort_values(["predictor_id", "environment_id"], kind="stable")
     output.parent.mkdir(parents=True, exist_ok=True)

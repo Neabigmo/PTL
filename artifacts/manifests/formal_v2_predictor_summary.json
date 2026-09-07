@@ -14,7 +14,19 @@
   ],
   "metric_rows": 64,
   "contract_rows": 4530,
+  "predictor_version": "formal_v2_exact_linear_20260907",
   "metrics_path": "artifacts/manifests/formal_v2_predictor_metrics.csv",
   "contract_path": "artifacts/manifests/formal_v2_prediction_index.csv",
+  "evaluation_gene_space": "ptl_context_v2_intersection",
+  "evaluation_gene_count": 6897,
+  "training_gene_space_policy": "native_predictor_gene_space",
+  "training_gene_counts_by_dataset": {
+    "FrangiehIzar2021_RNA": 23712,
+    "NormanWeissman2019_filtered": 33694,
+    "ReplogleWeissman2022_K562_essential": 8563,
+    "ReplogleWeissman2022_rpe1": 8749,
+    "TianKampmann2021_CRISPRa": 33538,
+    "TianKampmann2021_CRISPRi": 33538
+  },
   "status": "formal_v2_simple_predictors_executed"
 }

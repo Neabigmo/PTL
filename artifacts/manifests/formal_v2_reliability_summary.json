@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2",
+  "prediction_source": "formal_v2_exact_linear_20260907_validation_test_only",
+  "split_id": "ptl_biological_instance_split_v1",
+  "calibration_split": "validation",
+  "final_evaluation_split": "test",
+  "scenarios": [
+    "in_domain",
+    "leave_environment_out",
+    "leave_predictor_out"
+  ],
+  "predictors_executed": [
+    "mean_matching",
+    "strong_linear"
+  ],
+  "predictors_not_executed": [
+    "official_gears",
+    "cpa",
+    "scgpt",
+    "prescribe"
+  ],
+  "feature_blocks": {
+    "U": [
+      "uq_mean_gene_variance",
+      "uq_median_gene_variance",
+      "uq_top_effect_variance",
+      "uq_cosine_disagreement",
+      "uq_effect_norm_variance"
+    ],
+    "P": [
+      "prediction_norm",
+      "prediction_sparsity",
+      "prediction_concentration",
+      "prediction_manifold_distance"
+    ],
+    "S": [
+      "support_cells",
+      "support_signatures",
+      "reference_key_overlap"
+    ],
+    "N": [
+      "perturbation_seen_fraction",
+      "component_seen_fraction",
+      "combination_novelty",
+      "perturbation_novelty"
+    ],
+    "C": [
+      "batch_distance",
+      "cell_context",
+      "perturbation_modality",
+      "readout_modality",
+      "condition",
+      "platform"
+    ]
+  },
+  "feature_policy": "identity_free_shared_estimator_train_only_uq_normalization",
+  "forbidden_headline_features": [
+    "environment_id",
+    "environment_key",
+    "predictor",
+    "fidelity",
+    "continuous_risk",
+    "reliable_label"
+  ],
+  "rows": 2292,
+  "metric_rows": 70,
+  "score_path": "artifacts/source_data/formal_v2_reliability_predictions.csv",
+  "feature_path": "artifacts/source_data/formal_v2_reliability_deployment_features.csv",
+  "metrics_path": "artifacts/manifests/formal_v2_reliability_metrics.csv",
+  "status": "formal_v2_reliability_executed"
+}

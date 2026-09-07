@@ -37,6 +37,7 @@ def build_pert_data_from_adata(
     data_dir: str | Path,
     *,
     split: str = "simulation",
+    split_seed: int = 20260907,
     default_pert_graph: bool = True,
 ) -> Any:
     """Create Systema/GEARS ``PertData`` from a PTL-prepared AnnData.
@@ -44,7 +45,9 @@ def build_pert_data_from_adata(
     The caller owns preprocessing and must provide the already validated raw
     expression surface. This function only wires the missing dataset entry,
     creates a dataset-local cache directory, and asks the pinned API to build
-    its standard split.
+    its standard split. ``seed`` identifies model randomness/cache provenance;
+    ``split_seed`` is frozen across model seeds so ``Split_0 == Split_1 ==
+    Split_2`` remains an explicit protocol invariant.
     """
 
     systema_name = systema_dataset_name(dataset_id)
@@ -63,5 +66,5 @@ def build_pert_data_from_adata(
         adata=adata,
         skip_calc_de=False,
     )
-    pert_data.prepare_split(split=split, seed=int(seed))
+    pert_data.prepare_split(split=split, seed=int(split_seed))
     return pert_data

@@ -29,7 +29,7 @@ from src.ptl.uncertainty.uq import summarize_ensemble
 
 
 SPLIT_ID = "ptl_biological_instance_split_v1"
-PREDICTOR_VERSION = "formal_v2_pilot_20260907"
+PREDICTOR_VERSION = "formal_v2_exact_linear_20260907"
 COMPONENT_PATTERN = re.compile(r"[_+|;]+")
 METADATA_COLUMNS = {
     "biological_instance_id", "environment_id", "environment_key", "dataset_id",
@@ -84,10 +84,12 @@ def load_manifest(root: Path) -> pd.DataFrame:
     return manifest
 
 
-def read_ground_truth(root: Path, path: str, genes: list[str]) -> pd.DataFrame:
+def read_ground_truth(root: Path, path: str, genes: list[str] | None = None) -> pd.DataFrame:
     source = root / path
-    schema_columns = set(pq.read_schema(source).names)
+    schema_columns = pq.read_schema(source).names
     columns = [column for column in METADATA_COLUMNS if column in schema_columns]
+    if genes is None:
+        genes = [column for column in schema_columns if column not in METADATA_COLUMNS]
     columns.extend(gene for gene in genes if gene not in columns)
     frame = pd.read_parquet(source, columns=columns)
     missing = set(genes).difference(frame.columns)
@@ -140,68 +142,65 @@ def fit_matching_mean(
     return predictions
 
 
-def randomized_gene_basis(values: np.ndarray, n_components: int = 32, seed: int = 17) -> tuple[np.ndarray, np.ndarray]:
-    """Return a train-only low-rank gene basis for ``Y ~= latent @ P.T``."""
-
-    values = np.asarray(values, dtype=np.float64)
-    center = values.mean(axis=0)
-    centered = values - center
-    rank = min(n_components, max(1, centered.shape[0] - 1), centered.shape[1])
-    if rank == 1 and centered.shape[0] <= 1:
-        return center.astype(np.float32), np.ones((centered.shape[1], 1), dtype=np.float64)
-    rng = np.random.default_rng(seed)
-    oversample = min(8, max(0, centered.shape[1] - rank))
-    omega = rng.standard_normal((centered.shape[1], rank + oversample))
-    projected = centered @ omega
-    q, _ = np.linalg.qr(projected, mode="reduced")
-    small = q.T @ centered
-    _, _, vt = np.linalg.svd(small, full_matrices=False)
-    basis = vt[:rank].T
-    return center.astype(np.float32), basis
-
-
 def fit_ahlmann_eltze_bilinear_ridge(
     train_labels: np.ndarray,
     train_values: np.ndarray,
     query_labels: np.ndarray,
-    alpha: float = 10.0,
-    basis_seed: int = 17,
+    gene_names: list[str] | None = None,
+    alpha: float = 0.1,
+    n_components: int = 10,
 ) -> np.ndarray:
-    """Fit ``Yhat = G W P^T + b`` with a train-only gene basis ``P``.
+    """Fit the publication-style two-sided ridge predictor in native gene space.
 
-    ``G`` is a component/intervention design matrix and ``P`` is a randomized
-    truncated SVD basis learned from training responses only. The intercept is
-    the training response centroid. This is a compact bilinear ridge baseline,
-    not the legacy metadata-augmented ordinary Ridge implementation.
+    PCA is fit only on the training response matrix. ``G`` contains the first
+    ``n_components`` PCA loading coordinates for every native gene, while ``P``
+    is formed by averaging the rows of ``G`` for the genes in each perturbation
+    label. The fitted map is
+
+    ``W = (G'G + alpha I)^-1 G'(Y-b)P(P'P + alpha I)^-1``
+
+    and queries are reconstructed as ``G W P_query' + b``. Unknown query
+    components contribute no embedding, which yields the training centroid for
+    an entirely unsupported query rather than leaking evaluation information.
     """
 
-    all_labels = np.concatenate([train_labels.astype(str), query_labels.astype(str)])
-    vocabulary = sorted({component for label in all_labels for component in components(label)})
-    if not vocabulary:
-        return np.tile(train_values.mean(axis=0, dtype=np.float64), (len(query_labels), 1)).astype(np.float32)
-    index = {label: position for position, label in enumerate(vocabulary)}
+    train_values = np.asarray(train_values, dtype=np.float64)
+    if train_values.ndim != 2 or train_values.shape[0] == 0:
+        raise ValueError("train_values must be a non-empty 2D array")
+    if len(train_labels) != train_values.shape[0]:
+        raise ValueError("train_labels and train_values row counts differ")
+    if alpha <= 0 or n_components <= 0:
+        raise ValueError("alpha and n_components must be positive")
+    if gene_names is None:
+        gene_names = [str(index) for index in range(train_values.shape[1])]
+    gene_names = [str(gene) for gene in gene_names]
+    if len(gene_names) != train_values.shape[1] or len(set(gene_names)) != len(gene_names):
+        raise ValueError("gene_names must uniquely identify every native response column")
 
-    def design(labels: np.ndarray) -> np.ndarray:
-        matrix = np.zeros((len(labels), len(vocabulary)), dtype=np.float64)
-        for row, label in enumerate(labels.astype(str)):
-            parts = components(label)
-            for part in parts:
-                if part in index:
-                    matrix[row, index[part]] += 1.0 / len(parts)
-        return matrix
+    intercept = train_values.mean(axis=0)
+    centered = train_values - intercept
+    _, _, vt = np.linalg.svd(centered, full_matrices=False)
+    rank = min(int(n_components), vt.shape[0], vt.shape[1])
+    if rank == 0:
+        return np.tile(intercept, (len(query_labels), 1)).astype(np.float32)
+    gene_embedding = vt[:rank].T
+    gene_index = {gene: index for index, gene in enumerate(gene_names)}
 
-    intercept, basis = randomized_gene_basis(train_values, seed=basis_seed)
-    train_design = design(train_labels)
-    query_design = design(query_labels)
-    latent = (train_values.astype(np.float64) - intercept.astype(np.float64)) @ basis
-    gram = train_design.T @ train_design
-    gram.flat[:: gram.shape[0] + 1] += float(alpha)
-    rhs = train_design.T @ latent
+    def perturbation_embedding(label: object) -> np.ndarray:
+        known = [gene_embedding[gene_index[part]] for part in components(label) if part in gene_index]
+        return np.mean(known, axis=0) if known else np.zeros(rank, dtype=np.float64)
+
+    train_p = np.stack([perturbation_embedding(label) for label in train_labels])
+    query_p = np.stack([perturbation_embedding(label) for label in query_labels])
+    identity = np.eye(rank, dtype=np.float64)
+    left_gram = gene_embedding.T @ gene_embedding + float(alpha) * identity
+    right_gram = train_p.T @ train_p + float(alpha) * identity
+    left = np.linalg.solve(left_gram, gene_embedding.T @ centered.T @ train_p)
     try:
-        weights = np.linalg.solve(gram, rhs)
+        weights = np.linalg.solve(right_gram, left.T).T
     except np.linalg.LinAlgError:
-        weights = np.linalg.lstsq(gram, rhs, rcond=None)[0]
-    return (query_design @ weights @ basis.T + intercept).astype(np.float32)
+        weights = left @ np.linalg.pinv(right_gram)
+    return ((gene_embedding @ weights @ query_p.T).T + intercept).astype(np.float32)
 
 
 def split_frame(frame: pd.DataFrame, manifest: pd.DataFrame, environment_id: str) -> tuple[pd.DataFrame, dict[str, np.ndarray]]:
@@ -257,23 +256,33 @@ def metric_row(true_values: np.ndarray, predicted: np.ndarray, labels: np.ndarra
 
 
 def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -> dict[str, Any]:
-    genes = load_panel(root)
+    evaluation_genes = load_panel(root)
     registry = load_registry(root)
     manifest = load_manifest(root)
     commit = current_commit(root)
     output_dir.mkdir(parents=True, exist_ok=True)
     metric_rows: list[dict[str, Any]] = []
     contract_rows: list[dict[str, Any]] = []
+    training_gene_counts_by_dataset: dict[str, int] = {}
     predictor_names = ("mean_matching", "strong_linear")
 
     for dataset_id, registry_group in registry.groupby("dataset_id", sort=True):
         source = str(manifest.loc[manifest["environment_id"].isin(registry_group["environment_id"]), "ground_truth_path"].iloc[0])
-        ground_truth = read_ground_truth(root, source, genes)
+        ground_truth = read_ground_truth(root, source, genes=None)
+        native_genes = [column for column in ground_truth.columns if column not in METADATA_COLUMNS]
+        missing_evaluation_genes = set(evaluation_genes).difference(native_genes)
+        if missing_evaluation_genes:
+            raise ValueError(
+                f"{source} is missing frozen evaluation genes: {sorted(missing_evaluation_genes)[:5]}"
+            )
+        training_gene_counts_by_dataset[str(dataset_id)] = len(native_genes)
+        evaluation_indices = [native_genes.index(gene) for gene in evaluation_genes]
         for _, registry_row in registry_group.iterrows():
             environment_id = str(registry_row["environment_id"])
             environment_key = str(registry_row["environment_key"])
             joined, indices = split_frame(ground_truth[ground_truth["environment_id"].eq(environment_id)], manifest, environment_id)
-            y = joined[genes].to_numpy(dtype=np.float32, copy=True)
+            native_values = joined[native_genes].to_numpy(dtype=np.float32, copy=True)
+            y = native_values[:, evaluation_indices]
             labels = joined["perturbation_label"].astype(str).to_numpy()
             weights = pd.to_numeric(joined["total_cells"], errors="coerce").fillna(1).to_numpy(dtype=np.float64)
             seed_values = (0, 1, 2)
@@ -287,6 +296,7 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                     bootstrap_indices = rng.choice(train_indices, size=len(train_indices), replace=True)
                     train_labels = labels[bootstrap_indices]
                     train_values = y[bootstrap_indices]
+                    native_train_values = native_values[bootstrap_indices]
                     train_weights = weights[bootstrap_indices]
                     query_validation = labels[indices["validation"]]
                     query_test = labels[indices["test"]]
@@ -295,8 +305,22 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                         test_prediction = fit_matching_mean(train_labels, train_values, train_weights, query_test)
                         uq_source = "training_bootstrap_disagreement"
                     else:
-                        validation_prediction = fit_ahlmann_eltze_bilinear_ridge(train_labels, train_values, query_validation, basis_seed=seed + 17)
-                        test_prediction = fit_ahlmann_eltze_bilinear_ridge(train_labels, train_values, query_test, basis_seed=seed + 17)
+                        validation_prediction = fit_ahlmann_eltze_bilinear_ridge(
+                            train_labels,
+                            native_train_values,
+                            query_validation,
+                            gene_names=native_genes,
+                            alpha=0.1,
+                            n_components=10,
+                        )[:, evaluation_indices]
+                        test_prediction = fit_ahlmann_eltze_bilinear_ridge(
+                            train_labels,
+                            native_train_values,
+                            query_test,
+                            gene_names=native_genes,
+                            alpha=0.1,
+                            n_components=10,
+                        )[:, evaluation_indices]
                         uq_source = "training_bootstrap_disagreement"
                     validation_members.append(validation_prediction)
                     test_members.append(test_prediction)
@@ -310,6 +334,10 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                         "seed": str(seed),
                         "split_id": SPLIT_ID,
                         "uncertainty_source": uq_source,
+                        "training_gene_space_policy": "native_predictor_gene_space",
+                        "training_gene_count": len(native_genes),
+                        "evaluation_gene_space": "ptl_context_v2_intersection",
+                        "evaluation_gene_count": len(evaluation_genes),
                     })
                     metric_rows.append(metric)
                 validation_stack = np.stack(validation_members, axis=0)
@@ -324,7 +352,7 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                     validation_biological_instance_ids=joined.loc[indices["validation"], "biological_instance_id"].astype(str).to_numpy(),
                     test_biological_instance_ids=joined.loc[indices["test"], "biological_instance_id"].astype(str).to_numpy(),
                     model_seeds=np.asarray(seed_values, dtype=np.int64),
-                    genes=np.asarray(genes, dtype=str),
+                    genes=np.asarray(evaluation_genes, dtype=str),
                 )
                 saved[predictor] = {"array_path": array_path, "validation_uq": validation_uq, "test_uq": test_uq}
                 aggregate = metric_row(y[indices["test"]], test_stack.mean(axis=0), query_test, test_uq)
@@ -337,6 +365,10 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                     "seed": "ensemble_mean",
                     "split_id": SPLIT_ID,
                     "uncertainty_source": uq_source,
+                    "training_gene_space_policy": "native_predictor_gene_space",
+                    "training_gene_count": len(native_genes),
+                    "evaluation_gene_space": "ptl_context_v2_intersection",
+                    "evaluation_gene_count": len(evaluation_genes),
                 })
                 metric_rows.append(aggregate)
                 for split_name, split_indices, stack in (
@@ -360,6 +392,10 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                                 "prediction_array_path": prediction_array,
                                 "array_key": f"{split_name}_predictions[{member_index}]",
                                 "gene_list_path": "artifacts/manifests/evaluation_gene_space.csv",
+                                "training_gene_space_policy": "native_predictor_gene_space",
+                                "training_gene_count": len(native_genes),
+                                "evaluation_gene_space": "ptl_context_v2_intersection",
+                                "evaluation_gene_count": len(evaluation_genes),
                                 "uncertainty_source": uq_source,
                                 "ensemble_member_seeds": "0,1,2",
                             })
@@ -381,8 +417,13 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
         "model_seeds": list(seed_values),
         "metric_rows": int(len(metric_frame)),
         "contract_rows": int(len(contract_frame)),
+        "predictor_version": PREDICTOR_VERSION,
         "metrics_path": metrics_path.relative_to(root).as_posix(),
         "contract_path": contract_path.relative_to(root).as_posix(),
+        "evaluation_gene_space": "ptl_context_v2_intersection",
+        "evaluation_gene_count": len(evaluation_genes),
+        "training_gene_space_policy": "native_predictor_gene_space",
+        "training_gene_counts_by_dataset": training_gene_counts_by_dataset,
         "status": "formal_v2_simple_predictors_executed",
     }
     (metrics_path.parent / "formal_v2_predictor_summary.json").write_text(

@@ -4,9 +4,9 @@
   "split_id": "ptl_biological_instance_split_v1",
   "rows": 48,
   "status_counts": {
-    "unsupported": 24,
+    "dependency_missing": 24,
     "success": 16,
-    "pending": 8
+    "ready": 8
   },
   "result_claims": 16,
   "status": "formal_v2_roster_status_audited"
