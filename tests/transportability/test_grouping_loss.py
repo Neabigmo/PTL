@@ -5,6 +5,7 @@ from scripts.run_formal_v2_grouping_loss import (
     _hierarchical_bootstrap_sample,
     _replicate_wise_bootstrap_means,
     _summarize_conditional_grouped,
+    _summarize_arrays,
     assign_bins,
     summarize_split,
 )
@@ -80,12 +81,41 @@ def test_grouping_bootstrap_keeps_duplicate_environment_draws_as_clusters() -> N
         ),
     ]
 
-    _, environments, _ = _hierarchical_bootstrap_sample(group_arrays, _DeterministicRng())
+    _, clusters, originals, _ = _hierarchical_bootstrap_sample(group_arrays, _DeterministicRng())
 
-    assert set(environments.tolist()) == {
+    assert set(clusters.tolist()) == {
         "e1__bootstrap_cluster_0",
         "e1__bootstrap_cluster_1",
     }
+    assert set(originals.tolist()) == {"e1"}
+
+
+def test_grouping_bootstrap_duplicate_clusters_keep_same_original_pair_identity() -> None:
+    group_arrays = [
+        (
+            np.asarray([0.1, 0.2]),
+            np.asarray(["e1", "e1"], dtype=object),
+            np.asarray([0, 0]),
+            ["e1_a", "e1_b"],
+            {"e1_a": np.asarray([0]), "e1_b": np.asarray([1])},
+        ),
+        (
+            np.asarray([0.8, 0.9]),
+            np.asarray(["e2", "e2"], dtype=object),
+            np.asarray([0, 0]),
+            ["e2_a", "e2_b"],
+            {"e2_a": np.asarray([0]), "e2_b": np.asarray([1])},
+        ),
+    ]
+
+    risk, clusters, originals, bins = _hierarchical_bootstrap_sample(group_arrays, _DeterministicRng())
+    stats = _summarize_arrays(risk, clusters, bins, originals)
+
+    assert len(set(clusters.tolist())) == 2
+    assert set(originals.tolist()) == {"e1"}
+    assert np.isfinite(stats["matched_confidence_same_environment_risk_gap"])
+    assert np.isnan(stats["matched_confidence_cross_environment_risk_gap"])
+    assert np.isnan(stats["matched_confidence_cross_minus_same_risk_gap"])
 
 
 def test_summary_ci_uses_replicate_wise_split_means_not_pooled_replicates() -> None:

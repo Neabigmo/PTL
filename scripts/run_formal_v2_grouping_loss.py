@@ -182,11 +182,24 @@ def _summarize_conditional_grouped(frame: pd.DataFrame) -> dict[str, float]:
     return values
 
 
-def _summarize_arrays(risk: np.ndarray, environments: np.ndarray, confidence_bins: np.ndarray | None = None) -> dict[str, float]:
-    """Summarize a bootstrap draw while preserving confidence bins."""
+def _summarize_arrays(
+    risk: np.ndarray,
+    bootstrap_clusters: np.ndarray,
+    confidence_bins: np.ndarray | None = None,
+    original_environments: np.ndarray | None = None,
+) -> dict[str, float]:
+    """Summarize a bootstrap draw with separate cluster and pair identities.
+
+    ``bootstrap_clusters`` keeps duplicate outer environment draws independent
+    for cluster-level quantities.  ``original_environments`` preserves the
+    scientific environment identity used by same/cross-environment pairs.
+    """
 
     risk = np.asarray(risk, dtype=float)
-    environments = np.asarray(environments, dtype=str)
+    bootstrap_clusters = np.asarray(bootstrap_clusters, dtype=str)
+    if original_environments is None:
+        original_environments = bootstrap_clusters
+    original_environments = np.asarray(original_environments, dtype=str)
     if risk.size == 0:
         return _summarize_conditional_grouped(pd.DataFrame({"continuous_risk": [], "environment_id": [], "confidence_bin": []}))
     if confidence_bins is not None:
@@ -194,7 +207,8 @@ def _summarize_arrays(risk: np.ndarray, environments: np.ndarray, confidence_bin
         # same estimands as _summarize_conditional_grouped, but avoid creating
         # a DataFrame/groupby object for every draw.
         bins = np.asarray(confidence_bins, dtype=int)
-        environment_codes, environment_levels = pd.factorize(environments, sort=True)
+        cluster_codes, cluster_levels = pd.factorize(bootstrap_clusters, sort=True)
+        original_codes, original_levels = pd.factorize(original_environments, sort=True)
         bin_levels = np.unique(bins)
         metric_values: list[dict[str, float]] = []
         metric_weights: list[int] = []
@@ -206,11 +220,11 @@ def _summarize_arrays(risk: np.ndarray, environments: np.ndarray, confidence_bin
         for bin_value in bin_levels:
             mask = bins == bin_value
             values = risk[mask]
-            codes = environment_codes[mask]
+            codes = cluster_codes[mask]
             if not len(values):
                 continue
-            counts = np.bincount(codes, minlength=len(environment_levels)).astype(float)
-            sums = np.bincount(codes, weights=values, minlength=len(environment_levels))
+            counts = np.bincount(codes, minlength=len(cluster_levels)).astype(float)
+            sums = np.bincount(codes, weights=values, minlength=len(cluster_levels))
             present = counts > 0
             means = sums[present] / counts[present]
             weights = counts[present]
@@ -238,8 +252,10 @@ def _summarize_arrays(risk: np.ndarray, environments: np.ndarray, confidence_bin
             total_sum, total_count = sorted_pair_sum(values)
             same_sum = 0.0
             same_count = 0
-            for code in np.flatnonzero(present):
-                pair_sum, pair_count = sorted_pair_sum(values[codes == code])
+            pair_codes = original_codes[mask]
+            original_counts = np.bincount(pair_codes, minlength=len(original_levels))
+            for code in np.flatnonzero(original_counts > 0):
+                pair_sum, pair_count = sorted_pair_sum(values[pair_codes == code])
                 same_sum += pair_sum
                 same_count += pair_count
             cross_count = total_count - same_count
@@ -264,7 +280,7 @@ def _summarize_arrays(risk: np.ndarray, environments: np.ndarray, confidence_bin
             "confidence_bin_weighted_max_environment_risk_gap": _weighted_mean(max_values, metric_weights),
         })
         return values
-    _, inverse = np.unique(environments, return_inverse=True)
+    _, inverse = np.unique(bootstrap_clusters, return_inverse=True)
     counts = np.bincount(inverse).astype(float)
     sums = np.bincount(inverse, weights=risk)
     means = sums / counts
@@ -287,18 +303,24 @@ def _summarize_arrays(risk: np.ndarray, environments: np.ndarray, confidence_bin
 def _hierarchical_bootstrap_sample(
     group_arrays: list[tuple[np.ndarray, np.ndarray, np.ndarray, list[str], dict[str, np.ndarray]]],
     rng: np.random.Generator,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Resample environment clusters and nested biological instances.
 
-    The environment labels returned here intentionally include the outer draw
-    number.  Two draws of the same named environment are separate bootstrap
-    clusters and must not be merged by a downstream groupby operation.
+    The return values retain both identities: duplicate outer draws receive a
+    unique bootstrap cluster ID, while the original environment ID remains
+    unchanged for scientific same/cross pair semantics.
     """
 
     if not group_arrays:
-        return np.empty(0, dtype=float), np.empty(0, dtype=object), np.empty(0, dtype=int)
+        return (
+            np.empty(0, dtype=float),
+            np.empty(0, dtype=object),
+            np.empty(0, dtype=object),
+            np.empty(0, dtype=int),
+        )
     sampled_risk: list[np.ndarray] = []
-    sampled_environment: list[np.ndarray] = []
+    sampled_cluster: list[np.ndarray] = []
+    sampled_original_environment: list[np.ndarray] = []
     sampled_bins: list[np.ndarray] = []
     for draw_number, group_index in enumerate(rng.integers(0, len(group_arrays), size=len(group_arrays))):
         risk, env_labels, confidence_bins, instances, positions = group_arrays[int(group_index)]
@@ -306,11 +328,17 @@ def _hierarchical_bootstrap_sample(
         sampled_positions = np.concatenate([positions[str(instance)] for instance in sampled_ids])
         sampled_risk.append(risk[sampled_positions])
         environment = str(env_labels[0]) if len(env_labels) else "unknown"
-        sampled_environment.append(
+        sampled_cluster.append(
             np.full(len(sampled_positions), f"{environment}__bootstrap_cluster_{draw_number}", dtype=object)
         )
+        sampled_original_environment.append(np.full(len(sampled_positions), environment, dtype=object))
         sampled_bins.append(confidence_bins[sampled_positions])
-    return np.concatenate(sampled_risk), np.concatenate(sampled_environment), np.concatenate(sampled_bins)
+    return (
+        np.concatenate(sampled_risk),
+        np.concatenate(sampled_cluster),
+        np.concatenate(sampled_original_environment),
+        np.concatenate(sampled_bins),
+    )
 
 
 def _replicate_wise_bootstrap_means(
@@ -433,11 +461,12 @@ def hierarchical_bootstrap(test: pd.DataFrame, split_seed: int, *, n_bins: int, 
             confidence_bins = env["confidence_bin"].to_numpy(dtype=int)
             group_arrays.append((risk, np.full(len(risk), str(environment), dtype=object), confidence_bins, instance_order, positions))
         for replicate in range(replicates):
-            sampled_risk, sampled_environment, sampled_bins = _hierarchical_bootstrap_sample(group_arrays, rng)
+            sampled_risk, sampled_clusters, sampled_original_environments, sampled_bins = _hierarchical_bootstrap_sample(group_arrays, rng)
             stats = _summarize_arrays(
                 sampled_risk,
-                sampled_environment,
+                sampled_clusters,
                 sampled_bins,
+                sampled_original_environments,
             )
             rows.append({"split_seed": split_seed, "predictor": predictor, "method": method, "replicate": replicate, **stats})
     return pd.DataFrame(rows)
@@ -520,7 +549,7 @@ def run(root: Path, *, n_bins: int = 10, bootstrap_replicates: int = 1000, seeds
         "binning": "predictor-relative quantile bins fit on calibration-side scores; applied unchanged to test rows",
         "matching": "same confidence bin; risk is measured after matching and never used to construct the match",
         "conditional_summary": "all summary heterogeneity metrics are weighted averages over calibration-defined confidence bins; no summary call is made on the unconditioned test frame",
-        "bootstrap": "hierarchical environment-with-replacement then biological_instance_id-within-environment resampling; duplicate environment draws retain unique bootstrap cluster labels",
+        "bootstrap": "hierarchical environment-with-replacement then biological_instance_id-within-environment resampling; each sampled copy retains a unique bootstrap_cluster_id and its original_environment_id; cluster-level quantities use bootstrap_cluster_id while same/cross pairwise quantities use original_environment_id",
         "summary_bootstrap": "for each metric, split-level bootstrap replicates are explicitly re-numbered within split, aligned by replicate order, averaged across splits, then used for the CI; incomplete non-finite aligned draws are excluded",
         "summary": summary_with_ci,
         "grouped_path": grouped_path.relative_to(root).as_posix(),
