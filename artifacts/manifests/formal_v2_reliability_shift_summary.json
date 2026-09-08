@@ -18,7 +18,7 @@
   "semantic_null": "R = alpha_environment + h(confidence_bin)",
   "semantic_alternative": "R = alpha_environment + h_environment(confidence_bin)",
   "semantic_evaluation": "Ridge models evaluated by biological-instance/group cross-fitting; risk is evaluation-only",
-  "bootstrap": "hierarchical environment then biological-instance resampling of paired out-of-fold errors",
+  "bootstrap": "hierarchical environment-with-replacement then biological-instance-within-environment resampling of paired out-of-fold errors; global OOF positions and unique duplicate-cluster labels are retained",
   "permutation": "confidence bins permuted within environment to break environment-by-confidence interaction",
   "controlled_comparisons": "Frangieh condition pairs and Tian CRISPRa/CRISPRi, restricted to shared perturbation labels",
   "difficulty_path": "artifacts/manifests/formal_v2_reliability_shift_decomposition.csv",

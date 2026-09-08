@@ -1,7 +1,12 @@
 import numpy as np
 import pandas as pd
 
-from scripts.run_formal_v2_grouping_loss import assign_bins, summarize_split, _summarize_conditional_grouped
+from scripts.run_formal_v2_grouping_loss import (
+    _hierarchical_bootstrap_sample,
+    _summarize_conditional_grouped,
+    assign_bins,
+    summarize_split,
+)
 
 
 def test_confidence_bins_are_fit_from_calibration_only() -> None:
@@ -44,3 +49,39 @@ def test_conditional_grouping_loss_changes_when_confidence_partition_changes() -
     assert conditional["contextual_grouping_loss"] > pooled["contextual_grouping_loss"]
     assert conditional["matched_confidence_cross_environment_risk_gap"] == 0.8
     assert conditional["confidence_bin_weighted_max_environment_risk_gap"] == 0.8
+
+
+class _DeterministicRng:
+    def integers(self, low: int, high: int, size: int) -> np.ndarray:
+        assert (low, high) == (0, 2)
+        return np.zeros(size, dtype=int)
+
+    def choice(self, values: list[str], size: int, replace: bool) -> np.ndarray:
+        assert replace is True
+        return np.asarray(values[:size], dtype=object)
+
+
+def test_grouping_bootstrap_keeps_duplicate_environment_draws_as_clusters() -> None:
+    group_arrays = [
+        (
+            np.asarray([0.1, 0.2]),
+            np.asarray(["e1", "e1"], dtype=object),
+            np.asarray([0, 1]),
+            ["e1_a", "e1_b"],
+            {"e1_a": np.asarray([0]), "e1_b": np.asarray([1])},
+        ),
+        (
+            np.asarray([0.8, 0.9]),
+            np.asarray(["e2", "e2"], dtype=object),
+            np.asarray([0, 1]),
+            ["e2_a", "e2_b"],
+            {"e2_a": np.asarray([0]), "e2_b": np.asarray([1])},
+        ),
+    ]
+
+    _, environments, _ = _hierarchical_bootstrap_sample(group_arrays, _DeterministicRng())
+
+    assert set(environments.tolist()) == {
+        "e1__bootstrap_cluster_0",
+        "e1__bootstrap_cluster_1",
+    }

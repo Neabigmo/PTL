@@ -153,23 +153,55 @@ def _hierarchical_ci(oof: pd.DataFrame, *, replicates: int, random_state: int) -
     if replicates <= 0:
         return float("nan"), float("nan"), float("nan")
     rng = np.random.default_rng(random_state)
-    grouped: list[tuple[str, list[str], dict[str, np.ndarray]]] = []
-    for environment, env_frame in oof.groupby("environment_id", sort=True):
-        instance_ids = env_frame["crossfit_group"].astype(str).to_numpy()
-        unique_instances = list(pd.unique(instance_ids))
-        positions = {instance: np.flatnonzero(instance_ids == instance) for instance in unique_instances}
-        grouped.append((str(environment), unique_instances, positions))
     values = np.empty(replicates, dtype=float)
     for replicate in range(replicates):
-        draws: list[np.ndarray] = []
-        for _, instances, positions in grouped:
-            sampled_instances = rng.choice(instances, size=len(instances), replace=True)
-            draws.extend([positions[str(instance)] for instance in sampled_instances])
-        indices = np.concatenate(draws) if draws else np.empty(0, dtype=int)
+        indices, _ = _hierarchical_bootstrap_draw(oof, rng)
         sampled = oof.iloc[indices]
         values[replicate] = float(sampled["interaction_improvement"].mean()) if len(sampled) else float("nan")
     finite = values[np.isfinite(values)]
+    if not len(finite):
+        return float("nan"), float("nan"), float("nan")
     return float(np.mean(finite)), float(np.quantile(finite, 0.025)), float(np.quantile(finite, 0.975))
+
+
+def _hierarchical_bootstrap_draw(
+    oof: pd.DataFrame,
+    rng: np.random.Generator,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Draw global OOF positions with environment-then-instance resampling.
+
+    The returned positions are relative to ``oof.iloc``.  The second return
+    value gives a unique bootstrap-cluster label per outer environment draw;
+    duplicate draws of the same named environment therefore remain distinct
+    clusters for downstream heterogeneity summaries.
+    """
+
+    work = oof.reset_index(drop=True)
+    grouped: list[tuple[str, list[str], dict[str, np.ndarray]]] = []
+    for environment, env_frame in work.groupby("environment_id", sort=True):
+        instance_ids = env_frame["crossfit_group"].astype(str).to_numpy()
+        unique_instances = list(pd.unique(instance_ids))
+        global_positions = env_frame.index.to_numpy(dtype=int)
+        positions = {
+            instance: global_positions[np.flatnonzero(instance_ids == instance)]
+            for instance in unique_instances
+        }
+        grouped.append((str(environment), unique_instances, positions))
+    if not grouped:
+        return np.empty(0, dtype=int), np.empty(0, dtype=object)
+
+    selected_environment_indices = rng.integers(0, len(grouped), size=len(grouped))
+    sampled_positions: list[np.ndarray] = []
+    sampled_clusters: list[np.ndarray] = []
+    for draw_number, group_index in enumerate(selected_environment_indices):
+        environment, instances, positions = grouped[int(group_index)]
+        sampled_instances = rng.choice(instances, size=len(instances), replace=True)
+        draw_positions = np.concatenate([positions[str(instance)] for instance in sampled_instances])
+        sampled_positions.append(draw_positions)
+        sampled_clusters.append(
+            np.full(len(draw_positions), f"{environment}__bootstrap_cluster_{draw_number}", dtype=object)
+        )
+    return np.concatenate(sampled_positions), np.concatenate(sampled_clusters)
 
 
 def _permutation_p_value(frame: pd.DataFrame, observed: float, *, repeats: int, random_state: int, group_column: str) -> float:
@@ -408,7 +440,7 @@ def run(root: Path, *, n_bins: int = 10, bootstrap_replicates: int = 1000, permu
         "semantic_null": "R = alpha_environment + h(confidence_bin)",
         "semantic_alternative": "R = alpha_environment + h_environment(confidence_bin)",
         "semantic_evaluation": "Ridge models evaluated by biological-instance/group cross-fitting; risk is evaluation-only",
-        "bootstrap": "hierarchical environment then biological-instance resampling of paired out-of-fold errors",
+        "bootstrap": "hierarchical environment-with-replacement then biological-instance-within-environment resampling of paired out-of-fold errors; global OOF positions and unique duplicate-cluster labels are retained",
         "permutation": "confidence bins permuted within environment to break environment-by-confidence interaction",
         "controlled_comparisons": "Frangieh condition pairs and Tian CRISPRa/CRISPRi, restricted to shared perturbation labels",
         "difficulty_path": difficulty_path.relative_to(root).as_posix(),

@@ -7,7 +7,7 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 
-\title{Reliability Shift: Difficulty, Ranking and Semantic Change in Single-Cell Perturbation Prediction}
+\title{Reliability Shift in Single-Cell Perturbation Prediction}
 \author{Anonymous Authors}
 
 \newcommand{\ptl}{\textsc{PTL}}
@@ -22,8 +22,9 @@
 Confidence scores from single-cell perturbation predictors are often treated
 as if they were portable across biological settings. We show that reliability
 itself can shift under biological domain change: the same calibration-defined
-confidence coordinate can have different difficulty, ranking quality and
-confidence--risk shape across environments. The formal benchmark contains
+confidence coordinate can correspond to different difficulty and ranking
+quality across environments, while an environment-specific confidence--risk
+shape is not consistently identified. The formal benchmark contains
 1,603 condition-level biological instances from eight semantically verified
 environments, three completed predictor families, an 8,229-gene shared
 evaluation panel, and a frozen 60/20/20 biological-instance split.
@@ -70,8 +71,9 @@ We make four contributions. First, we define an eight-environment benchmark with
 canonical environment and biological-instance identities. Second, we quantify
 Reliability Shift through calibration-defined confidence bins, within-environment
 ranking, an additive difficulty null and an environment-by-confidence
-interaction test. Third, we use naturally matched Frangieh and Tian surfaces as
-a controlled microscope for condition and modality changes. Fourth, we compare
+interaction test. Third, we use Frangieh as a controlled condition-shift
+microscope and audit the Tian modality contrast as coverage-limited because its
+frozen surface lacks sufficient shared perturbations. Fourth, we compare
 PTL with an equal-capacity U-only probe, audit prospective source selection and
 modern-model validity, and retain negative transport evidence rather than
 tuning it away.
@@ -82,7 +84,7 @@ tuning it away.
   \caption{\textbf{Reliability Shift proof chain.} (a) Environment-level
   difficulty shift in realized risk. (b) Ranking shift measured by the
   within-environment confidence--risk concordance. (c) Held-out error for the
-  additive difficulty null and the environment-dependent confidence mapping.
+  additive difficulty null and the tested environment-dependent confidence mapping.
   (d) Interaction improvement with hierarchical uncertainty; a crossing-zero
   interval is retained rather than converted into a semantic-shift claim.}
   \label{fig:hero}
@@ -112,10 +114,12 @@ environment-first averages, paired hierarchical bootstrap intervals, risk at
   \caption{\textbf{The controlled microscope complements the broad surface.}
   (a) The same confidence quantile has different realized risk across
   environments. (b) Matched Frangieh perturbations expose condition differences
-  after centering environment difficulty; the Tian modality comparison is
-  reported as coverage-limited. (c) Raw-UQ
-  ranking varies across the formal environments. (d) Conditional grouping loss
-  remains an explicit residual-heterogeneity diagnostic.}
+  after centering environment difficulty; its three shared-perturbation
+  comparisons contain 9--12 labels, while the Tian modality comparison is
+  reported as coverage-limited. (c) Raw-UQ ranking varies across the formal
+  environments. (d) Conditional grouping loss remains an explicit
+  residual-heterogeneity diagnostic; degenerate ranking or mapping cells are
+  shown as missing rather than treated as support.}
   \label{fig:confidence}
 \end{figure*}
 
@@ -142,17 +146,22 @@ The decomposition makes the base-risk alternative explicit. Difficulty shift is
 the variation of $\mu_e=\mathbb{E}[R\mid E=e]$ across environments. Ranking
 shift is measured within each environment by Spearman and Kendall concordance
 between confidence and $-R$, together with environment-normalized selective
-AURC. Semantic/calibration shift is tested by comparing the held-out error of
+AURC. Semantic/calibration shift is tested, but not presumed, by comparing the held-out error of
 $R=\alpha_e+h(c)$ with $R=\alpha_e+h_e(c)$, where confidence bins are defined
 on calibration rows and biological instances are the held-out units. We report
 the interaction improvement, hierarchical interval and an environment-wise
-permutation null. If that interaction does not survive uncertainty, the claim
-is explicitly limited to difficulty and ranking shift.
+permutation null. In the present data, difficulty shift and ranking
+heterogeneity are established, whereas the semantic interaction is not
+consistently supported; the claim is therefore limited to the identifiable
+difficulty and ranking components.
 
 The controlled Frangieh comparison uses shared perturbations across control,
 co-culture and IFN$\gamma$. Tian has only one shared perturbation label between
 CRISPRa and CRISPRi in the frozen surface, so that modality contrast is
 reported as coverage-limited rather than fit as a controlled interaction. The
+primary mean-matching surface has degenerate confidence for all three
+Frangieh method panels, so its ranking and centered-mapping entries are NaN and
+are not counted as support. The
 matched Frangieh surfaces provide a microscope for condition changes within
 study, complementing the eight-environment telescope. Results and the explicit
 coverage status are reported in the controlled-shift manifest and are not
@@ -362,9 +371,9 @@ PRESCRIBE represents predictor-native uncertainty; both are complementary to
 our reliability-layer audit. Systema and scPertEval provide perturbation
 evaluation protocols, and experimental perturbation-reliability studies assess
 the reproducibility of measured responses. PTL's contribution here is narrower:
-biological environment changes the semantics and transportability of prediction
-reliability, and this limitation remains after target-outcome-free feature
-construction.
+biological environment changes the distribution and ranking behavior of
+prediction reliability, while environment-specific calibration semantics
+require stronger evidence; the transport audit remains target-outcome-free.
 
 \section{Limitations and reproducibility}
 The present claim is bounded by the eight-environment headline surface and the

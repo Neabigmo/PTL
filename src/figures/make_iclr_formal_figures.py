@@ -408,7 +408,7 @@ def figure1(pred: pd.DataFrame, metrics: pd.DataFrame, atlas: pd.DataFrame, out_
     ax.set_ylim(-1.0, 1.0)
 
     ax = fig.add_subplot(gs[1, 0])
-    panel(ax, "c", "Semantic shift after additive difficulty control")
+    panel(ax, "c", "Testing semantic shift after difficulty control")
     if not primary_semantic.empty:
         display = primary_semantic.sort_values("predictor")
         labels = [PREDICTOR_LABELS.get(value, value) for value in display["predictor"]]
@@ -432,7 +432,7 @@ def figure1(pred: pd.DataFrame, metrics: pd.DataFrame, atlas: pd.DataFrame, out_
         ax.axhline(0, color=NAVY, lw=0.8)
         ax.set_xticks(x, [PREDICTOR_LABELS.get(value, value) for value in display["predictor"]], rotation=25, ha="right", fontsize=5.3)
         ax.set_ylabel("interaction improvement\n(additive MSE − interaction MSE)")
-    fig.suptitle("Reliability Shift: difficulty, ranking and semantic change", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
+    fig.suptitle("Reliability Shift: difficulty and ranking are established; semantic interaction is tested", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
     return save_publication(fig, out_dir / "formal_fig1_same_confidence_different_risk")
 
 

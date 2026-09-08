@@ -284,6 +284,35 @@ def _summarize_arrays(risk: np.ndarray, environments: np.ndarray, confidence_bin
     }
 
 
+def _hierarchical_bootstrap_sample(
+    group_arrays: list[tuple[np.ndarray, np.ndarray, np.ndarray, list[str], dict[str, np.ndarray]]],
+    rng: np.random.Generator,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Resample environment clusters and nested biological instances.
+
+    The environment labels returned here intentionally include the outer draw
+    number.  Two draws of the same named environment are separate bootstrap
+    clusters and must not be merged by a downstream groupby operation.
+    """
+
+    if not group_arrays:
+        return np.empty(0, dtype=float), np.empty(0, dtype=object), np.empty(0, dtype=int)
+    sampled_risk: list[np.ndarray] = []
+    sampled_environment: list[np.ndarray] = []
+    sampled_bins: list[np.ndarray] = []
+    for draw_number, group_index in enumerate(rng.integers(0, len(group_arrays), size=len(group_arrays))):
+        risk, env_labels, confidence_bins, instances, positions = group_arrays[int(group_index)]
+        sampled_ids = rng.choice(instances, size=len(instances), replace=True)
+        sampled_positions = np.concatenate([positions[str(instance)] for instance in sampled_ids])
+        sampled_risk.append(risk[sampled_positions])
+        environment = str(env_labels[0]) if len(env_labels) else "unknown"
+        sampled_environment.append(
+            np.full(len(sampled_positions), f"{environment}__bootstrap_cluster_{draw_number}", dtype=object)
+        )
+        sampled_bins.append(confidence_bins[sampled_positions])
+    return np.concatenate(sampled_risk), np.concatenate(sampled_environment), np.concatenate(sampled_bins)
+
+
 def summarize_split(test: pd.DataFrame, calibration: pd.DataFrame, seed: int, n_bins: int) -> tuple[pd.DataFrame, dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     summary: list[dict[str, Any]] = []
@@ -370,20 +399,11 @@ def hierarchical_bootstrap(test: pd.DataFrame, split_seed: int, *, n_bins: int, 
             confidence_bins = env["confidence_bin"].to_numpy(dtype=int)
             group_arrays.append((risk, np.full(len(risk), str(environment), dtype=object), confidence_bins, instance_order, positions))
         for replicate in range(replicates):
-            sampled_risk: list[np.ndarray] = []
-            sampled_environment: list[np.ndarray] = []
-            sampled_bins: list[np.ndarray] = []
-            for group_index in rng.integers(0, len(group_arrays), size=len(group_arrays)):
-                risk, env_labels, confidence_bins, instances, positions = group_arrays[int(group_index)]
-                sampled_ids = rng.choice(instances, size=len(instances), replace=True)
-                sampled_positions = np.concatenate([positions[str(instance)] for instance in sampled_ids])
-                sampled_risk.append(risk[sampled_positions])
-                sampled_environment.append(env_labels[sampled_positions])
-                sampled_bins.append(confidence_bins[sampled_positions])
+            sampled_risk, sampled_environment, sampled_bins = _hierarchical_bootstrap_sample(group_arrays, rng)
             stats = _summarize_arrays(
-                np.concatenate(sampled_risk) if sampled_risk else np.empty(0, dtype=float),
-                np.concatenate(sampled_environment) if sampled_environment else np.empty(0, dtype=str),
-                np.concatenate(sampled_bins) if sampled_bins else np.empty(0, dtype=int),
+                sampled_risk,
+                sampled_environment,
+                sampled_bins,
             )
             rows.append({"split_seed": split_seed, "predictor": predictor, "method": method, "replicate": replicate, **stats})
     return pd.DataFrame(rows)
@@ -460,7 +480,7 @@ def run(root: Path, *, n_bins: int = 10, bootstrap_replicates: int = 1000, seeds
         "binning": "predictor-relative quantile bins fit on calibration-side scores; applied unchanged to test rows",
         "matching": "same confidence bin; risk is measured after matching and never used to construct the match",
         "conditional_summary": "all summary heterogeneity metrics are weighted averages over calibration-defined confidence bins; no summary call is made on the unconditioned test frame",
-        "bootstrap": "hierarchical environment then biological_instance_id resampling",
+        "bootstrap": "hierarchical environment-with-replacement then biological_instance_id-within-environment resampling; duplicate environment draws retain unique bootstrap cluster labels",
         "summary": summary_with_ci,
         "grouped_path": grouped_path.relative_to(root).as_posix(),
         "bootstrap_path": bootstrap_path.relative_to(root).as_posix(),
