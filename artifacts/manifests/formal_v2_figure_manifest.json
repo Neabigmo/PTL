@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "backend": "python_matplotlib",
-  "core_conclusion": "Reliability Shift changes difficulty and ranking across biology; the semantic interaction is tested with a null rather than assumed, while source-specific transfer remains heterogeneous",
+  "core_conclusion": "Biological context can reorder perturbation reliability; response-program displacement is a descriptive correlate, monotonic recalibration cannot repair the ordering, and prospective transfer remains heterogeneous",
   "source_data": [
     "artifacts/source_data/formal_v2_reliability_predictions.csv",
     "artifacts/manifests/formal_v2_reliability_metrics.csv",
@@ -31,7 +31,13 @@
     "artifacts/manifests/formal_v2_feature_transform_manifest.json",
     "artifacts/manifests/formal_v2_reliability_reordering.csv",
     "artifacts/manifests/formal_v2_reliability_reordering_perturbations.csv",
-    "artifacts/manifests/formal_v2_recalibration_counterfactual.csv"
+    "artifacts/manifests/formal_v2_recalibration_counterfactual.csv",
+    "artifacts/manifests/formal_v2_controlled_shift_oof_predictions.csv",
+    "artifacts/manifests/formal_v2_controlled_shift_oof_summary.csv",
+    "artifacts/manifests/formal_v2_controlled_shift_oof_perturbations.csv",
+    "artifacts/manifests/head_to_head_controlled_shift_ladder.csv",
+    "artifacts/manifests/head_to_head_controlled_shift_ladder_summary.csv",
+    "artifacts/manifests/head_to_head_controlled_shift_ladder_summary.json"
   ],
   "statistics": {
     "split": "formal validation calibration -> untouched test evaluation",
@@ -47,22 +53,22 @@
       "results/figures/iclr_formal/formal_fig1_reliability_reordering.tiff"
     ],
     "figure_2": [
-      "results/figures/iclr_formal/formal_fig2_confidence_semantics.svg",
-      "results/figures/iclr_formal/formal_fig2_confidence_semantics.pdf",
-      "results/figures/iclr_formal/formal_fig2_confidence_semantics.png",
-      "results/figures/iclr_formal/formal_fig2_confidence_semantics.tiff"
+      "results/figures/iclr_formal/formal_fig2_response_reprogramming.svg",
+      "results/figures/iclr_formal/formal_fig2_response_reprogramming.pdf",
+      "results/figures/iclr_formal/formal_fig2_response_reprogramming.png",
+      "results/figures/iclr_formal/formal_fig2_response_reprogramming.tiff"
     ],
     "figure_3": [
-      "results/figures/iclr_formal/formal_fig3_reliability_transfer_atlas.svg",
-      "results/figures/iclr_formal/formal_fig3_reliability_transfer_atlas.pdf",
-      "results/figures/iclr_formal/formal_fig3_reliability_transfer_atlas.png",
-      "results/figures/iclr_formal/formal_fig3_reliability_transfer_atlas.tiff"
+      "results/figures/iclr_formal/formal_fig3_recalibration_counterfactual.svg",
+      "results/figures/iclr_formal/formal_fig3_recalibration_counterfactual.pdf",
+      "results/figures/iclr_formal/formal_fig3_recalibration_counterfactual.png",
+      "results/figures/iclr_formal/formal_fig3_recalibration_counterfactual.tiff"
     ],
     "figure_4": [
-      "results/figures/iclr_formal/formal_fig4_information_and_robustness.svg",
-      "results/figures/iclr_formal/formal_fig4_information_and_robustness.pdf",
-      "results/figures/iclr_formal/formal_fig4_information_and_robustness.png",
-      "results/figures/iclr_formal/formal_fig4_information_and_robustness.tiff"
+      "results/figures/iclr_formal/formal_fig4_deployment_consequences.svg",
+      "results/figures/iclr_formal/formal_fig4_deployment_consequences.pdf",
+      "results/figures/iclr_formal/formal_fig4_deployment_consequences.png",
+      "results/figures/iclr_formal/formal_fig4_deployment_consequences.tiff"
     ]
   }
 }

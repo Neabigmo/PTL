@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "figure": "formal_fig2_response_reprogramming",
+  "claim": "matched contexts show descriptive response-program displacement alongside risk reordering; no causal mechanism is inferred",
+  "source_data": [
+    "artifacts/manifests/formal_v2_controlled_shift_oof_perturbations.csv",
+    "artifacts/manifests/head_to_head_controlled_shift_ladder.csv",
+    "artifacts/manifests/head_to_head_controlled_shift_ladder_summary.csv"
+  ],
+  "outputs": [
+    "results/figures/iclr_formal/formal_fig2_response_reprogramming.svg",
+    "results/figures/iclr_formal/formal_fig2_response_reprogramming.pdf",
+    "results/figures/iclr_formal/formal_fig2_response_reprogramming.png",
+    "results/figures/iclr_formal/formal_fig2_response_reprogramming.tiff"
+  ]
+}

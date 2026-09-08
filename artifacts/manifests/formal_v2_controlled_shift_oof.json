@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2_frangieh_controlled_shift_oof_v1",
+  "estimand": "full-surface matched-condition reliability reordering under perturbation-label OOF cross-fitting",
+  "predictor": "strong_linear",
+  "prediction_protocol": "five_fold_perturbation_label_OOF",
+  "folds": 5,
+  "model_seeds": [
+    0,
+    1,
+    2
+  ],
+  "n_prediction_rows": 734,
+  "n_unique_labels_by_environment": {
+    "frangieh_melanoma_control": 244,
+    "frangieh_melanoma_coculture": 244,
+    "frangieh_melanoma_ifng": 246
+  },
+  "summary_path": "artifacts/manifests/formal_v2_controlled_shift_oof_summary.csv",
+  "detail_path": "artifacts/manifests/formal_v2_controlled_shift_oof_perturbations.csv",
+  "predictions_path": "artifacts/manifests/formal_v2_controlled_shift_oof_predictions.csv",
+  "outcome_policy": "outcomes are used only after each fold's prediction and confidence are materialized; no target outcome enters a deployment feature",
+  "canonical_artifacts_untouched": true,
+  "response_program_policy": "descriptive response distance, not causal mechanism evidence",
+  "status": "executed"
+}

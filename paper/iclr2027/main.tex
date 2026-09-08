@@ -24,7 +24,7 @@ as if they preserve the same ordering of easy and hard perturbations across
 biological settings. We show, in a controlled Frangieh condition ladder, that
 matched perturbations undergo 25--43\% risk-order inversions across control,
 IFN$\gamma$ and TIL co-culture conditions across five split seeds. Their
-response programs also shift strongly (mean $1-\cos$ine $=0.79$--$0.85$),
+response programs also shift strongly (mean $1-\cos$ distance $=0.79$--$0.85$),
 but that response displacement is descriptive and does not imply a causal
 mechanism. A train-only monotonic Platt recalibration changes probability
 calibration while producing zero AURC change and zero strict-order
@@ -92,7 +92,7 @@ negative transport evidence rather than tuning it away.
   \label{fig:hero}
 \end{figure*}
 
-\section{Reliability Shift}
+\section{Biological context reorders prediction reliability}
 For biological instance $i$, let $\hat y_i$ be a predictor output and $y_i$
 the observed delta-expression response. Fidelity $F_i$ is computed from the
 prediction and response, and continuous risk is $R_i=1-F_i$. A binary label is
@@ -112,17 +112,15 @@ environment-first averages, paired hierarchical bootstrap intervals, risk at
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig2_confidence_semantics.pdf}
-  \caption{\textbf{The controlled microscope complements the broad surface.}
-  (a) The same confidence quantile has different realized risk across
-  environments. (b) Matched Frangieh perturbations expose condition differences
-  after centering environment difficulty; its three shared-perturbation
-  comparisons contain 9--12 labels, while the Tian modality comparison is
-  reported as coverage-limited. (c) Raw-UQ ranking varies across the formal
-  environments. (d) Conditional grouping loss remains an explicit
-  residual-heterogeneity diagnostic; degenerate ranking or mapping cells are
-  shown as missing rather than treated as support.}
-  \label{fig:confidence}
+  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig2_response_reprogramming.pdf}
+  \caption{\textbf{Controlled Shift Ladder: response programs move with
+  context.} (a) Full-surface Frangieh OOF response-program shifts across exact
+  condition matches. (b) The external matched CRISPRko/CRISPRi resource
+  extends the ladder across modality, time and cell context. (c) Response
+  displacement and risk change are plotted as descriptive quantities, not a
+  causal mechanism. (d) Guide-level reproducibility is retained as a measured
+  covariate rather than silently folded into the response shift.}
+  \label{fig:response}
 \end{figure*}
 
 \subsection{Same confidence, different realized risk}
@@ -143,7 +141,7 @@ formed from the bin assignment alone; their outcome differences are measured
   heterogeneity after confidence conditioning without treating the statistic as
   a new generic calibration concept.
 
-\subsection{Difficulty, ranking and semantic components}
+\subsection{Controlled Shift Ladder: difficulty and ranking components}
 The controlled Frangieh ladder provides the paper's primary diagnostic. For
 each condition pair we retain only shared perturbation labels and count strict
 pairwise reversals of continuous risk. On the strong-linear/PTL surface, the
@@ -151,20 +149,24 @@ five-seed mean inversion rates are $0.34$ for control $\rightarrow$ co-culture,
 $0.28$ for control $\rightarrow$ IFN$\gamma$ and $0.31$ for co-culture
 $\rightarrow$ IFN$\gamma$; across all completed predictor families the observed
 range is $0.25$--$0.43$. The same matched labels have response-program shifts
-of $0.79$--$0.85$ in mean $1-\cos$ine distance, while the split-level
+of $0.79$--$0.85$ in mean $1-\cos$ distance, while the split-level
 response-shift/risk-change association changes sign across pairs and predictors.
 We therefore use response displacement to diagnose that the biological object
 has moved, not to claim that it causes a particular reliability reversal.
-
-The recalibration counterfactual makes a sharper separation. The existing
-calibration-side scalar score is mapped by a train-only monotonic Platt model
-and evaluated on the untouched test rows. The mapping changes Brier score in
-some groups, but it preserves every comparable pairwise order: all 45 groups
-have zero order disagreements and zero AURC change. Isotonic regression is
-reported separately because its monotonic ties can alter tie handling. This
-rules out probability-scale recalibration as an explanation for the observed
-strict ordering change; it does not establish that a richer non-monotonic
-predictor would solve transport.
+For a pair of environments, the primary rank estimand is
+\begin{equation}
+ D_{\mathrm{rank}} = \frac{\#\{(p,q):\operatorname{sign}(R_{p,e_1}-R_{q,e_1})
+ \ne \operatorname{sign}(R_{p,e_2}-R_{q,e_2})\}}
+ {\#\{(p,q):\text{both risk differences are strict}\}},
+ \end{equation}
+and we also report the normalized perturbation rank displacement
+$d_p=|\operatorname{rank}_{e_1}(R_p)-\operatorname{rank}_{e_2}(R_p)|/(n-1)$.
+Ties are excluded from the strict denominator rather than assigned an
+arbitrary direction.
+The independent five-fold OOF surface expands the matched condition sets to
+243--244 labels and gives 28.3--33.0\% inversions, with mean response shifts
+of $0.81$--$0.87$. These estimates are reported as a separate cross-fit
+surface, not pooled with the formal test split.
 
 The decomposition makes the base-risk alternative explicit. Difficulty shift is
 the variation of $\mu_e=\mathbb{E}[R\mid E=e]$ across environments. Ranking
@@ -180,18 +182,59 @@ consistently supported; the claim is therefore limited to the identifiable
 difficulty and ranking components.
 
 The controlled Frangieh comparison uses shared perturbations across control,
-co-culture and IFN$\gamma$. Tian has only one shared perturbation label between
-CRISPRa and CRISPRi in the frozen surface, so that modality contrast is
-reported as coverage-limited rather than fit as a controlled interaction. The
-primary mean-matching surface has degenerate confidence for all three
-Frangieh method panels, so its ranking and centered-mapping entries are NaN and
-are not counted as support. The
-matched Frangieh surfaces provide a microscope for condition changes within
-study, complementing the eight-environment telescope. Results and the explicit
-coverage status are reported in the controlled-shift manifest and are not
-pooled into a stronger claim than the shared perturbation coverage supports.
+co-culture and IFN$\gamma$. The primary mean-matching surface has degenerate
+confidence for the Frangieh method panels, so its ranking entries are not
+counted as support. The matched Frangieh surfaces provide a microscope for
+condition changes within study, complementing the eight-environment telescope;
+coverage-limited axes remain explicitly marked in the machine-readable audit.
 
-\section{Prospective reliability transport is difficult}
+\subsection{Response reprogramming across modality, time and cell context}
+The Frangieh OOF surface supplies a dense within-study condition ladder, while
+the matched head-to-head resource~\citep{headtohead2026crispr} supplies orthogonal axes with exact target
+intersections. We ingest guide-level SCEPTRE effects as response-program
+coordinates and keep the predictor contract explicit: a source target mean is
+persisted to destination guide outcomes, so the resulting risk is an
+evaluation-only persistence baseline rather than a newly trained perturbation
+model. Guide modality is taken from the released reference table; ambiguous
+``either'' guides and negative controls are excluded. Day-14 K562 is compared
+separately for CRISPR knockout and CRISPR interference, while Day 7/10 and
+K562/A549 comparisons are stratified by the same modality. This design keeps
+the perturbation intersection fixed within every comparison and treats the
+response-program distance $G_p=1-\cos(\Delta y_{p,e_1},\Delta y_{p,e_2})$ as
+descriptive. In particular, a large $G_p$ is evidence that the measured
+response object changed, not evidence that it caused a reliability reversal.
+Across the six modality-stratified external comparisons, exact target
+intersections contain 22--25 targets, risk-order inversions are 12.0--36.4\%,
+and mean response-program shifts are $0.66$--$0.97$. The persistence baseline
+has zero confidence-tracking rate for these inverted pairs, which is a
+diagnostic failure of this source-only confidence signal rather than evidence
+that every perturbation model is uncalibratable.
+
+\section{Recalibration cannot repair reordered reliability}
+The recalibration counterfactual makes the distinction operational. The
+calibration-side scalar score is mapped by a train-only monotonic Platt model
+and evaluated on untouched test rows. The map changes Brier score in some
+groups, but it preserves every comparable pairwise order: all 45 groups have
+zero order disagreements and zero AURC change. Isotonic regression is reported
+separately because its monotonic ties can alter tie handling. Formally, for a
+monotone map $g$, $\operatorname{rank}(g(C))=\operatorname{rank}(C)$ up to ties;
+therefore it cannot change which perturbations occupy the high-confidence
+part of a ranking. This rules out probability-scale recalibration as an
+explanation for the observed strict ordering change, while leaving open richer
+non-monotonic predictors.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig3_recalibration_counterfactual.pdf}
+  \caption{\textbf{Recalibration changes scale, not ranking.} (a) Train-only
+  Platt maps can improve or worsen Brier score. (b) They produce zero AURC
+  change across all 45 environment--predictor groups. (c) No strict pairwise
+  order disagreements occur. (d) The rank-preservation proposition explains
+  why calibration cannot repair a context-reordered reliability surface.}
+  \label{fig:recalibration}
+\end{figure*}
+
+\section{Deployment consequence: prospective reliability transport is difficult}
 Let $d_{st}$ denote outcome-free descriptors between source environment $s$
 and target environment $t$. The evaluated descriptor vector contains exactly
 the frozen fields: same cell context, modality, platform, condition, dataset
@@ -226,16 +269,17 @@ validation-only acceptance criterion is not met.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig3_reliability_transfer_atlas.pdf}
-  \caption{\textbf{Reliability transfer is heterogeneous and difficult to predict prospectively.} (a) The 8$\times$8
-  source-validation to target-test atlas. (b) Target environments differ in
-  mean off-diagonal gain. (c) Context similarity is a descriptive transfer
-  covariate. (d) Predictor-family holdout evaluates transport on held-out
-  families. Positive and negative cells are both retained.}
-  \label{fig:atlas}
+  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig4_deployment_consequences.pdf}
+  \caption{\textbf{Deployment consequence: reliability transport needs an
+  auditable fallback.} (a) Source--target gains are heterogeneous. (b) PTL's
+  selective gain is scenario-dependent. (c) Prospective source selection is
+  near chance in the within-target audit. (d) Budget curves show how the
+  confidence surface can be used prospectively while retaining an explicit
+  U-only fallback.}
+  \label{fig:deployment}
 \end{figure*}
 
-\section{PTL}
+\section{Deployment-safe PTL probe}
 \subsection{Deployment-safe feature surface}
 The benchmark keeps predictions, deployment features, observed outcomes and
 split assignments separate. The headline feature vector contains five blocks:
@@ -256,7 +300,7 @@ U+P+S+N+C$. Prospective source selection is evaluated separately from the
 row-level reliability score and falls back exactly to U-only when its fixed
 validation-only rule is not met.
 
-\section{Experiments}
+\section{Generality and robustness}
 \subsection{Benchmark and protocol}
 The benchmark registry contains 1,603 condition-level biological instances
 across Norman K562, Replogle RPE1, Tian iPSC-derived-neuron CRISPRa and CRISPRi,
@@ -357,18 +401,6 @@ used only for this evaluation/audit stratification and is not entered into
 PTL.  These are stability summaries, not additional tuning or a new
 superiority claim.
 
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig4_information_and_robustness.pdf}
-  \caption{\textbf{Generality and robustness surface.} The information ladder
-  and paired selective outcomes are evaluated under the same
-  validation-to-test protocol. The final panel reports the validation-backed
-  official \gears{} audit on Norman and RPE1; alternate metrics, fixed-budget
-  utility and split-half reproducibility are retained in the machine-readable
-  bundle.}
-  \label{fig:robustness}
-\end{figure*}
-
 \section{Discussion}
 The experiments support a limitation-centered view of reliability. Reliability
 Shift is visible as changes in environment difficulty and within-environment
@@ -380,24 +412,20 @@ The prospective gating baseline makes fallback behavior explicit, but its
 selected-source harm rate is not lower than the ungated candidate-pair rate; it
 is therefore not a protective safeguard.
 
-The identity probe gives an important qualification. With explicit context
-features, a grouped probe can recover environment identity very accurately;
-the appropriate statement is therefore ``explicit-ID-free and
-target-outcome-free,'' not unconditional identity-free prediction. Context is
-allowed deployment information, but it changes what transportability means.
+Context is allowed deployment information, but it changes what transportability
+means; all headline PTL features remain target-outcome-free and explicit-ID-free.
 
 \section{Related work and positioning}
-Generic calibration and grouping-loss analyses study whether confidence has a
-consistent relationship to error, whereas our grouping-loss analysis asks
-whether that relationship changes across biological environments at matched
-confidence. PertEMA is a post-hoc prediction-reliability approach, while
-PRESCRIBE represents predictor-native uncertainty; both are complementary to
-our reliability-layer audit. Systema and scPertEval provide perturbation
-evaluation protocols, and experimental perturbation-reliability studies assess
-the reproducibility of measured responses. PTL's contribution here is narrower:
-biological environment changes the distribution and ranking behavior of
-prediction reliability, while environment-specific calibration semantics
-require stronger evidence; the transport audit remains target-outcome-free.
+Existing perturbation-model work primarily asks whether a predictor is
+accurate, evaluation frameworks ask whether scores are valid, experimental
+studies ask whether measured responses are reproducible, and uncertainty work
+usually asks whether a score tracks error within one setting. Our boundary
+question is different: does the identity of easy and hard perturbations survive
+a biological context shift? We therefore treat response reprogramming as a
+descriptive diagnostic, test rank preservation under monotonic calibration, and
+place PTL after—not inside—the controlled biological argument. This distinction
+also explains why the transport audit remains target-outcome-free and why
+negative transfer is retained rather than tuned away.
 
 \section{Limitations and reproducibility}
 The present claim is bounded by the eight-environment headline surface and the

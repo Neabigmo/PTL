@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "figure": "formal_fig4_deployment_consequences",
+  "claim": "PTL is a deployment-side probe with heterogeneous transfer and a non-protective source-selection baseline",
+  "source_data": [
+    "artifacts/source_data/formal_v2_reliability_predictions.csv",
+    "artifacts/manifests/formal_v2_environment_transfer_matrix.csv",
+    "artifacts/manifests/formal_v2_reliability_metrics.csv",
+    "artifacts/manifests/formal_v2_transport_source_selection_metrics.csv",
+    "artifacts/manifests/formal_v2_deployment_utility.csv"
+  ],
+  "outputs": [
+    "results/figures/iclr_formal/formal_fig4_deployment_consequences.svg",
+    "results/figures/iclr_formal/formal_fig4_deployment_consequences.pdf",
+    "results/figures/iclr_formal/formal_fig4_deployment_consequences.png",
+    "results/figures/iclr_formal/formal_fig4_deployment_consequences.tiff"
+  ]
+}

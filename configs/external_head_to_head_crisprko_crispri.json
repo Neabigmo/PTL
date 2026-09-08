@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "head_to_head_crisprko_crispri_controlled_shift_v1",
+  "source": {
+    "repository": "https://github.com/broadinstitute/head-to-head-CRISPRko-CRISPRi-Perturbseq",
+    "preprint_doi": "10.64898/2026.07.04.736492",
+    "zenodo_record": "10.5281/zenodo.21136747",
+    "accessed": "2026-09-08"
+  },
+  "data_dir": "data/external/head_to_head_crisprko_crispri/sceptre",
+  "reference_guides": "tmp/head-to-head-CRISPRko-CRISPRi-Perturbseq/reference/CRISPRko-CRISPRi-perturbseq-benchmark-guides.csv",
+  "samples": {
+    "d7_k562": {"file": "d7_K562_SCEPTRE_results.csv", "timepoint": "day7", "cell_context": "K562"},
+    "d10_k562": {"file": "d10_K562_SCEPTRE_results.csv", "timepoint": "day10", "cell_context": "K562"},
+    "d14_k562_crisprko": {"file": "d14_K562_CRISPRko_SCEPTRE_results.csv", "timepoint": "day14", "cell_context": "K562", "modality": "CRISPRko"},
+    "d14_k562_crispri": {"file": "d14_K562_CRISPRi_SCEPTRE_results.csv", "timepoint": "day14", "cell_context": "K562", "modality": "CRISPRi"},
+    "d7_a549": {"file": "d7_A549_SCEPTRE_results.csv", "timepoint": "day7", "cell_context": "A549"}
+  },
+  "comparisons": [
+    {"comparison_id": "d14_k562_modality", "axis": "modality", "left": "d14_k562_crisprko", "right": "d14_k562_crispri"},
+    {"comparison_id": "d7_to_d10_time", "axis": "time", "left": "d7_k562", "right": "d10_k562"},
+    {"comparison_id": "d10_to_d14_time", "axis": "time", "left": "d10_k562", "right": "d14_k562_crisprko"},
+    {"comparison_id": "d10_to_d14_time", "axis": "time", "left": "d10_k562", "right": "d14_k562_crispri"},
+    {"comparison_id": "d7_k562_to_a549_context", "axis": "cell_context", "left": "d7_k562", "right": "d7_a549"}
+  ],
+  "analysis": {
+    "effect_column": "log_2_fold_change",
+    "response_program": "all_shared_response_ids_after_qc",
+    "guide_policy": "reference-mapped_CRISPRko_or_CRISPRi_only; exclude_either_and_negative_control",
+    "target_policy": "exact_intersection_of_target_labels_within_each_modality",
+    "minimum_targets": 20,
+    "minimum_shared_response_ids": 100,
+    "confidence_definition": "negative_log1p_source_within_target_guide_MSE",
+    "predictor_definition": "source_target_mean_persisted_to_destination_guide_outcomes",
+    "bootstrap_replicates": 1000,
+    "permutation_replicates": 2000,
+    "random_seed": 20260908
+  }
+}
