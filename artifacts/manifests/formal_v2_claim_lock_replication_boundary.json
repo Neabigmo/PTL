@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2_frangieh_claim_lock_v1",
+  "status": "no_valid_independent_matched_context_replication_available",
+  "boundary": "Tian provides only one shared label and the existing head-to-head CRISPRko/CRISPRi artifact is a persistence baseline, not a same-source-predictor matched outcome surface",
+  "policy": "do not force a replication claim; report the boundary explicitly and do not claim universality",
+  "optional_candidate": "GEARS remains optional only if a legal same-predictor/source-outcome contract is established; no new model training was introduced"
+}

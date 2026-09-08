@@ -94,6 +94,7 @@ def make_response_figure() -> tuple[list[str], dict[str, object]]:
     oof = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_controlled_shift_oof_perturbations.csv")
     external = pd.read_csv(ROOT / "artifacts/manifests/head_to_head_controlled_shift_ladder.csv")
     external_summary = pd.read_csv(ROOT / "artifacts/manifests/head_to_head_controlled_shift_ladder_summary.csv")
+    inference = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_controlled_shift_oof_inference.csv")
     fig = plt.figure(figsize=(7.25, 6.25))
     grid = fig.add_gridspec(2, 2, width_ratios=[1.0, 1.05], height_ratios=[1.0, 1.05], hspace=0.52, wspace=0.40)
 
@@ -131,18 +132,17 @@ def make_response_figure() -> tuple[list[str], dict[str, object]]:
     ax.text(0.02, 0.035, "evaluation-only · exact target intersection · SCEPTRE effects", transform=ax.transAxes, va="bottom", fontsize=5.3, color=SLATE)
 
     ax = fig.add_subplot(grid[1, 0])
-    panel(ax, "c", "Response shift and risk change")
-    ax.scatter(oof["response_program_shift"], oof["absolute_risk_change"], s=9, alpha=0.28, color=TEAL, label="Frangieh OOF", edgecolor="white", linewidth=0.2)
-    ax.scatter(external["response_program_shift"], external["absolute_risk_change"], s=15, alpha=0.28, color=CORAL, label="external persistence", edgecolor="white", linewidth=0.2)
-    rho_oof = _safe_corr(oof["response_program_shift"], oof["absolute_risk_change"])
-    rho_ext = _safe_corr(external["response_program_shift"], external["absolute_risk_change"])
+    panel(ax, "c", "Response shift is not a stable rank proxy")
+    ax.scatter(oof["response_program_shift"], oof["normalized_risk_rank_displacement"], s=9, alpha=0.28, color=TEAL, label="Frangieh OOF", edgecolor="white", linewidth=0.2)
+    rho_oof = _safe_corr(oof["response_program_shift"], oof["normalized_risk_rank_displacement"])
     ax.set_xlabel("response-program shift (1 − cosine)")
-    ax.set_ylabel("absolute risk change")
+    ax.set_ylabel("normalized risk-rank displacement")
     ax.set_xlim(left=0)
     ax.set_ylim(bottom=0)
     ax.legend(fontsize=5.6, loc="upper left")
-    ax.text(0.03, 0.88, f"Frangieh ρ={rho_oof:+.2f}\nexternal ρ={rho_ext:+.2f}", transform=ax.transAxes, fontsize=5.7, color=NAVY, va="top")
-    ax.text(0.03, 0.03, "descriptive response vectors; no causal claim", transform=ax.transAxes, fontsize=5.7, color=SLATE)
+    association_range = (inference["response_shift_rank_displacement_spearman"].min(), inference["response_shift_rank_displacement_spearman"].max())
+    ax.text(0.03, 0.88, f"pooled ρ={rho_oof:+.2f}\npairwise ρ={association_range[0]:+.2f} to {association_range[1]:+.2f}", transform=ax.transAxes, fontsize=5.7, color=NAVY, va="top")
+    ax.text(0.03, 0.03, "label-bootstrap CIs cross 0 in 2/3 pairs; descriptive only", transform=ax.transAxes, fontsize=5.5, color=SLATE)
 
     ax = fig.add_subplot(grid[1, 1])
     panel(ax, "d", "Guide reproducibility and shift")
@@ -155,16 +155,17 @@ def make_response_figure() -> tuple[list[str], dict[str, object]]:
     ax.set_ylabel("response-program shift")
     ax.legend(fontsize=5.7, loc="best")
     ax.text(0.03, 0.03, "measurement reproducibility is recorded as a covariate", transform=ax.transAxes, fontsize=5.5, color=SLATE)
-    fig.suptitle("Controlled shifts reveal response reprogramming and rank instability", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
+    fig.suptitle("Controlled shifts reveal response reprogramming, not a stable rank proxy", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
     outputs = save_figure(fig, ROOT / "results/figures/iclr_formal/formal_fig2_response_reprogramming")
     manifest = {
         "schema_version": 1,
         "figure": "formal_fig2_response_reprogramming",
-        "claim": "matched contexts show descriptive response-program displacement alongside risk reordering; no causal mechanism is inferred",
+        "claim": "matched contexts show descriptive response-program displacement, while coarse response shift is not a stable proxy for reliability rank displacement; no causal mechanism is inferred",
         "evidence_tier": "orthogonal biological extension",
         "predictor_contract": "evaluation-only source-response persistence baseline; not a trained perturbation model",
         "source_data": [
             "artifacts/manifests/formal_v2_controlled_shift_oof_perturbations.csv",
+            "artifacts/manifests/formal_v2_controlled_shift_oof_inference.csv",
             "artifacts/manifests/head_to_head_controlled_shift_ladder.csv",
             "artifacts/manifests/head_to_head_controlled_shift_ladder_summary.csv",
         ],

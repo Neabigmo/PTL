@@ -7,7 +7,7 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 
-\title{Biological Context Rewrites the Reliability Ordering in Single-Cell Perturbation Prediction}
+\title{Biological Context Can Rewrite the Reliability Ordering in Single-Cell Perturbation Prediction}
 \author{Anonymous Authors}
 
 \newcommand{\ptl}{\textsc{PTL}}
@@ -21,15 +21,25 @@
 \begin{abstract}
 Confidence scores from single-cell perturbation predictors are often treated
 as if they preserve the same ordering of easy and hard perturbations across
-biological settings. We show, in a controlled Frangieh condition ladder, that
-matched perturbations undergo 25--43\% risk-order inversions across control,
-IFN$\gamma$ and TIL co-culture conditions across five split seeds. Their
-response programs also shift strongly (mean $1-\cos$ distance $=0.79$--$0.85$),
-but that response displacement is descriptive and does not imply a causal
-mechanism. A train-only monotonic Platt recalibration changes probability
-calibration while producing zero AURC change and zero strict-order
-disagreements across 45 environment--predictor groups. Thus the central
-failure is an ordering problem, not merely a probability-scale problem.
+biological settings. We separate this question from a confounding source:
+whether each target condition was refit. In a controlled Frangieh ladder, a
+source-context predictor is fit once per shared perturbation-label fold and
+scored unchanged against three target outcomes. Across three fidelity
+definitions, matched perturbations show source-frozen rank displacement, with
+pairwise inversion rates ranging from $0.10$ to $0.32$ across source contexts.
+Their response programs also shift strongly (mean $1-\cos$ distance
+$=0.79$--$0.85$), but that response displacement is descriptive and does not
+imply a causal mechanism. A matched raw-cell audit uses 30 independent
+half-splits and pair-specific cell budgets. The resulting cross-context rank
+displacement is not consistently above the joint measurement-plus-model noise
+floor: the macro mean $\Delta_{\mathrm{joint}}$ is $-0.009$ for delta cosine,
+$+0.006$ for Systema centroid accuracy and $-0.036$ for absolute-effect rank
+agreement, with bootstrap intervals generally crossing zero. The previously
+reported context-adapted OOF inversion is therefore retained as secondary
+deployment evidence, not as a frozen-predictor causal diagnostic. A train-only
+monotonic Platt recalibration changes probability calibration while producing
+zero AURC change and zero strict-order disagreements across 45
+environment--predictor groups.
 The broad formal benchmark contains 1,603 condition-level biological instances
 from eight semantically verified environments, three completed predictor
 families, an 8,229-gene shared evaluation panel, and a frozen 60/20/20
@@ -69,17 +79,22 @@ that the identity of easy and hard perturbations survives a biological change
 question of whether reliability ordering can be transported to a new setting
 without observing target outcomes.
 
-Our central object is Reliability Shift:
+Our central object is reliability reordering:
 \begin{quote}
 \emph{Biological context can rewrite which matched perturbations are easy or
-hard. We diagnose this as reliability reordering, separate response-program
-displacement from outcome-derived risk, and test whether monotonic
-recalibration can repair the ordering.}
+hard, but a valid claim must separate source-frozen prediction from
+context-adapted refitting and must exceed a matched measurement-plus-model
+noise floor. We diagnose this as reliability reordering, separate
+response-program displacement from outcome-derived risk, and test whether
+monotonic recalibration can repair the ordering.}
 \end{quote}
+We use \emph{Reliability Shift} only as an umbrella term for the broader
+difficulty, ranking and calibration audits.
 
-We make four contributions. First, we turn Frangieh into the primary
-condition-shift ladder with a matched-perturbation inversion estimand and a
-response-program displacement audit. Second, we add an orthogonal
+We make four contributions. First, we turn Frangieh into a Claim Lock ladder
+with a source-frozen primary estimand, a separately labelled context-adapted
+OOF secondary estimand, and a matched raw-cell measurement/joint noise audit.
+Second, we add an orthogonal
 CRISPRko/CRISPRi extension as an evaluation-only source-response persistence
 baseline, explicitly separating it from trained Frangieh predictors. Third,
 we show with a monotonic recalibration counterfactual that probability
@@ -91,17 +106,17 @@ tuning it away.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig1_reliability_reordering.pdf}
-  \caption{\textbf{Biological context rewrites the reliability ordering.}
-  (a) Across five split seeds, 28--34\% of strict matched-perturbation risk
-  pairs invert between Frangieh conditions for the strong-linear/PTL surface;
-  the all-predictor range is 25--43\%.
-  (b) Each line is a matched perturbation's held-out risk rank in control and
-  IFN$\gamma$; crossings expose the ordering change. (c) Response-program
-  displacement is large but its association with absolute risk change is
-  condition-dependent; response vectors are descriptive evaluation artifacts.
-  (d) Train-only Platt recalibration can change Brier score while preserving
-  strict ranking: across 45 groups, $\Delta$AURC$=0$ and order disagreements
-  are zero.}
+  \caption{\textbf{Claim Lock for biological reliability reordering.}
+  (a) A source-context predictor is fit once and scored unchanged against two
+  target outcomes; delta-cosine normalized rank displacement is shown for all
+  three source contexts and condition pairs. (b) Each line is a matched
+  perturbation's rank under the same control-source predictor in control and
+  IFN$\gamma$; crossings expose source-frozen reordering. (c) With pair-specific
+  matched raw-cell budgets, cross-context displacement minus the joint
+  measurement-plus-model floor is not stably positive across the three metrics.
+  (d) Context-adapted OOF confidence tracking is shown against a
+  label-preserving permutation null; this surface is secondary to the frozen
+  predictor diagnostic.}
   \label{fig:hero}
 \end{figure*}
 
@@ -126,13 +141,14 @@ environment-first averages, paired hierarchical bootstrap intervals, risk at
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig2_response_reprogramming.pdf}
-  \caption{\textbf{Controlled Shift Ladder: response programs move with
-  context.} (a) Full-surface Frangieh OOF response-program shifts across exact
+  \caption{\textbf{Controlled Shift Ladder: response programs move, but coarse
+  rank displacement is not a stable proxy.} (a) Full-surface Frangieh OOF response-program shifts across exact
   condition matches. (b) The external matched CRISPRko/CRISPRi resource is an
   orthogonal biological extension evaluated with a source-response persistence
   baseline, not a trained perturbation predictor; it probes modality, time and
-  cell context. (c) Response displacement and risk change are plotted as
-  descriptive quantities, not a causal mechanism. (d) Guide-level
+  cell context. (c) Response displacement and normalized risk-rank displacement
+  are plotted directly; the association is weak and not consistent across
+  pairs. (d) Guide-level
   reproducibility is retained as a measured covariate rather than silently
   folded into the response shift.}
   \label{fig:response}
@@ -157,17 +173,21 @@ formed from the bin assignment alone; their outcome differences are measured
   a new generic calibration concept.
 
 \subsection{Controlled Shift Ladder: difficulty and ranking components}
-The controlled Frangieh ladder provides the paper's primary diagnostic. For
-each condition pair we retain only shared perturbation labels and count strict
-pairwise reversals of continuous risk. On the strong-linear/PTL surface, the
-five-seed mean inversion rates are $0.34$ for control $\rightarrow$ co-culture,
-$0.28$ for control $\rightarrow$ IFN$\gamma$ and $0.31$ for co-culture
-$\rightarrow$ IFN$\gamma$; across all completed predictor families the observed
-range is $0.25$--$0.43$. The same matched labels have response-program shifts
-of $0.79$--$0.85$ in mean $1-\cos$ distance, while the split-level
-response-shift/risk-change association changes sign across pairs and predictors.
-We therefore use response displacement to diagnose that the biological object
-has moved, not to claim that it causes a particular reliability reversal.
+The controlled Frangieh ladder provides the paper's Claim Lock diagnostic. For
+each condition pair we retain only the common perturbation labels and keep the
+source predictor fixed while changing the target outcome. The shared five-fold
+assignment contains 243 labels. Across the three source contexts and three
+fidelity definitions, source-frozen pairwise risk inversions range from
+$0.10$ to $0.32$ and normalized rank displacement ranges from $0.073$ to
+$0.229$. These are direct evidence that a reliability ordering can change
+under a biological condition change, but they are not by themselves evidence
+that the change exceeds measurement noise. The same matched labels have
+response-program shifts of $0.79$--$0.85$ in mean $1-\cos$ distance. The
+direct, label-level response-shift/rank-displacement association is weak
+($\rho=0.04$--$0.17$), with perturbation-bootstrap intervals crossing zero in
+two of the three condition pairs. We therefore use response displacement to
+diagnose that the biological object has moved, not to claim that it explains a
+particular reliability reversal.
 For a pair of environments, the primary rank estimand is
 \begin{equation}
  D_{\mathrm{rank}} = \frac{\#\{(p,q):\operatorname{sign}(R_{p,e_1}-R_{q,e_1})
@@ -178,10 +198,23 @@ and we also report the normalized perturbation rank displacement
 $d_p=|\operatorname{rank}_{e_1}(R_p)-\operatorname{rank}_{e_2}(R_p)|/(n-1)$.
 Ties are excluded from the strict denominator rather than assigned an
 arbitrary direction.
-The independent five-fold OOF surface expands the matched condition sets to
-243--244 labels and gives 28.3--33.0\% inversions, with mean response shifts
-of $0.81$--$0.87$. These estimates are reported as a separate cross-fit
-surface, not pooled with the formal test split.
+The context-adapted five-fold OOF surface expands the matched condition sets to
+243--246 labels and gives $0.248$--$0.368$ strict pairwise inversion rates;
+these are retained as secondary deployment evidence because each condition has
+its own fitted predictor. The source-frozen primary is accompanied by a raw-cell
+measurement lock: QC-passed cells are independently split 30 times, controls
+are split independently, and each condition pair uses
+$\lfloor\min(n_{p,e_1},n_{p,e_2})/2\rfloor$ cells per half. Across the three
+source contexts and three metrics, matched-budget cross-context displacement
+does not clear the joint measurement-plus-model floor. The macro mean
+$\Delta_{\mathrm{joint}}$ is $-0.009$ for delta cosine, $+0.006$ for Systema
+centroid accuracy and $-0.036$ for absolute-effect rank agreement; the
+2,000-draw paired intervals generally cross zero. Thus the data support
+context-dependent reordering as an observed phenomenon, while not supporting a
+stable excess beyond the measured noise floor. Confidence tracking on the
+context-adapted surface is $0.122$--$0.152$, below the independent
+confidence-permutation null of $0.249$--$0.251$. The two surfaces are reported
+separately and are not pooled.
 
 The decomposition makes the base-risk alternative explicit. Difficulty shift is
 the variation of $\mu_e=\mathbb{E}[R\mid E=e]$ across environments. Ranking
@@ -400,6 +433,21 @@ entrypoint, PTL is $0.44381$ versus $0.44279$ for U-only, with the same mean
 risk ($0.471253$); this near-tie is reported as robustness evidence, not a
 method win.
 
+The Claim Lock separates this broad robustness bundle from the controlled
+Frangieh diagnostic. The source-frozen artifact stores the complete prediction
+vectors for the three source contexts, the shared five-fold assignment, the
+three model members and the 8,229-gene checksum. The raw-cell lock then uses
+the same vectors with independent half-A/B outcomes, matched cell budgets and
+30 split seeds. The primary confirmatory deltas compare cross-context rank
+displacement with the larger of the two target-context floors. None of the
+three metrics has a consistently positive macro delta over the joint floor.
+This is the appropriate boundary for the present evidence: context-dependent
+reordering is observable, but its excess over measurement plus model noise is
+not established. No valid independent same-predictor matched-context source
+was available; Tian has only one shared label and the head-to-head resource is
+an evaluation-only persistence baseline, so we do not convert either into a
+replication claim.
+
 The five-seed stability atlas is used to characterize, rather than tune,
 transport. Across the same 56 off-diagonal pairs per baseline, the mean
 transfer gain was $+0.0003$ for raw scalar UQ and $+0.0055$ for the equal-capacity
@@ -423,8 +471,9 @@ superiority claim.
 \section{Discussion}
 The experiments support a limitation-centered view of reliability. Reliability
 Shift is visible as changes in environment difficulty and within-environment
-ranking; the environment-dependent semantic component is reported only to the
-extent supported by its null test. PTL's additional deployment-side descriptors
+ranking, while the Claim Lock shows that the observed controlled reordering is
+not yet a noise-excess result; the environment-dependent semantic component is
+reported only to the extent supported by its null test. PTL's additional deployment-side descriptors
 improve ranking in familiar settings and under predictor-family holdout, yet
 environment holdout does not produce a statistically established improvement.
 The prospective gating baseline makes fallback behavior explicit, but its
@@ -476,13 +525,16 @@ negative transfer instead of presenting PTL as a new uncertainty estimator.
 \section{Limitations and reproducibility}
 The present claim is bounded by the eight-environment headline surface and the
 predictor families for which a common validation/test contract is available.
+The source-frozen Frangieh Claim Lock is a primary within-study diagnostic,
+not an independent replication: no legal matched source-predictor outcome
+surface was available beyond the stated Tian and head-to-head boundaries.
 The official \gears{} execution is separately audited with a condition-disjoint
 split, a dataset-native gene panel and persisted validation predictions for
 Norman and RPE1; GWPS remains test-only. The audit is not used to manufacture a
 cross-model superiority claim.
-CPA and scGPT remain pending their pinned projects, weights
-and memory-feasible execution; a 24~GB RTX 3090 is insufficient for the planned
-48--80~GB modern-model surface. The GWPS local surface is
+We evaluate three canonical predictor families and conduct an independent
+official \gears{} audit; broader modern-model coverage remains future work.
+The GWPS local surface is
 coverage-limited, and its audit explicitly prevents it from being mistaken
 for a genome-wide surface. The reference-group audit is supplemented, but not
 replaced, by the two-dataset raw-cell split-half audit, so it cannot support a
@@ -493,10 +545,11 @@ selected negative transfers, and the atlas is descriptive rather than causal.
 All primary outputs are regenerated from the fixed split, native predictor
 spaces and shared panel. The released bundle contains prediction contracts,
 deployment features, paired bootstrap intervals, transfer matrices,
-metric-robustness and fixed-budget tables, split-half audit summaries, and
-editable vector figures with source-data manifests. Claims are downgraded
-whenever confidence intervals, stability or metric robustness do not support
-them.
+metric-robustness and fixed-budget tables, source-frozen prediction vectors,
+matched-budget measurement/joint floors, guide-coverage and replication-boundary
+manifests, split-half audit summaries, and editable vector figures with
+source-data manifests. Claims are downgraded whenever confidence intervals,
+stability or metric robustness do not support them.
 
 \bibliographystyle{../../third_party/iclr2027/iclr2027_conference}
 \bibliography{../../manuscript/references}

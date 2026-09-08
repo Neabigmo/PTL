@@ -37,6 +37,9 @@ from scripts.run_formal_v2_reliability_reordering import (  # noqa: E402
     _response_ground_truth,
 )
 from src.evaluation.metrics import safe_rowwise_cosine  # noqa: E402
+from src.evaluation.reordering_inference import (  # noqa: E402
+    normalized_rank_displacement,
+)
 from src.ptl.uncertainty.uq import summarize_ensemble  # noqa: E402
 
 
@@ -132,10 +135,14 @@ def _score_environment(root: Path, environment_key: str, panel: list[str], *, fo
         stack = np.stack(members, axis=0)
         mean_prediction = stack.mean(axis=0)
         uq = summarize_ensemble(stack)
+        member_risks = [
+            1.0 - safe_rowwise_cosine(native_values[test_indices][:, eval_indices], member_prediction)
+            for member_prediction in stack
+        ]
         risk = 1.0 - safe_rowwise_cosine(native_values[test_indices][:, eval_indices], mean_prediction)
         confidence = 1.0 - uq.cosine_disagreement
         for row_index, biological_index in enumerate(test_indices):
-            rows.append({
+            row = {
                 **metadata,
                 "perturbation_label": str(labels[biological_index]),
                 "oof_fold": int(fold_id),
@@ -149,7 +156,10 @@ def _score_environment(root: Path, environment_key: str, panel: list[str], *, fo
                 "prediction_protocol": "five_fold_perturbation_label_OOF",
                 "outcomes_used_for_training": 0,
                 "outcomes_used_for_confidence": 0,
-            })
+            }
+            for model_seed, member_risk in zip(MODEL_SEEDS, member_risks):
+                row[f"member_{model_seed}_continuous_risk"] = float(member_risk[row_index])
+            rows.append(row)
     result = pd.DataFrame(rows)
     if result["perturbation_label"].duplicated().any():
         raise ValueError(f"OOF surface contains duplicate labels for {environment_key}")
@@ -165,8 +175,13 @@ def _build_pair_summary(root: Path, oof: pd.DataFrame) -> tuple[pd.DataFrame, pd
         right = oof.loc[oof["environment_key"].eq(right_environment)].rename(columns={"confidence": "confidence_right", "continuous_risk": "risk_right"})
         merged = left.merge(right, on="perturbation_label", how="inner", validate="one_to_one", suffixes=("_left", "_right"))
         stats = _pairwise_reordering(merged.rename(columns={"risk_left": "risk_left", "risk_right": "risk_right"}), "confidence")
+        rank_displacement = normalized_rank_displacement(
+            merged["risk_left"].to_numpy(dtype=float),
+            merged["risk_right"].to_numpy(dtype=float),
+        )
         shifts: list[float] = []
         changes: list[float] = []
+        rank_displacements: list[float] = []
         for _, row in merged.iterrows():
             label = str(row["perturbation_label"])
             left_vector = response.loc[(left_environment, label), genes].to_numpy(dtype=float)
@@ -175,6 +190,7 @@ def _build_pair_summary(root: Path, oof: pd.DataFrame) -> tuple[pd.DataFrame, pd
             change = abs(float(row["risk_left"]) - float(row["risk_right"]))
             shifts.append(shift)
             changes.append(change)
+            rank_displacements.append(float(rank_displacement[len(rank_displacements)]))
             detail_rows.append({
                 "comparison": "frangieh_condition_oof",
                 "left_environment_id": left_environment,
@@ -185,6 +201,7 @@ def _build_pair_summary(root: Path, oof: pd.DataFrame) -> tuple[pd.DataFrame, pd
                 "confidence_left": float(row["confidence_left"]),
                 "confidence_right": float(row["confidence_right"]),
                 "absolute_risk_change": change,
+                "normalized_risk_rank_displacement": rank_displacements[-1],
                 "response_program_shift": shift,
                 "response_program_is_descriptive": 1,
                 "risk_and_confidence_outcomes_used_for_evaluation_only": 1,
@@ -195,7 +212,10 @@ def _build_pair_summary(root: Path, oof: pd.DataFrame) -> tuple[pd.DataFrame, pd
             "left_environment_id": left_environment,
             "right_environment_id": right_environment,
             "response_program_shift_mean": float(np.nanmean(shifts)),
+            "normalized_rank_displacement_mean": float(np.nanmean(rank_displacements)),
+            "normalized_rank_displacement_median": float(np.nanmedian(rank_displacements)),
             "response_shift_risk_change_spearman": float(pd.Series(shifts).corr(pd.Series(changes), method="spearman")),
+            "response_shift_rank_displacement_spearman": float(pd.Series(shifts).corr(pd.Series(rank_displacements), method="spearman")),
             "response_genes": int(len(genes)),
             "prediction_protocol": "five_fold_perturbation_label_OOF",
             "response_program_is_descriptive": 1,
@@ -219,13 +239,14 @@ def run(root: Path, *, folds: int = 5) -> dict[str, Any]:
     summary.to_csv(summary_path, index=False)
     detail.to_csv(detail_path, index=False)
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "benchmark_id": "ptl_context_v2_frangieh_controlled_shift_oof_v1",
         "estimand": "full-surface matched-condition reliability reordering under perturbation-label OOF cross-fitting",
         "predictor": "strong_linear",
         "prediction_protocol": "five_fold_perturbation_label_OOF",
         "folds": int(folds),
         "model_seeds": list(MODEL_SEEDS),
+        "member_risk_columns": [f"member_{seed}_continuous_risk" for seed in MODEL_SEEDS],
         "n_prediction_rows": int(len(oof)),
         "n_unique_labels_by_environment": {env: int(oof.loc[oof["environment_key"].eq(env), "perturbation_label"].nunique()) for env in ENVIRONMENTS},
         "summary_path": summary_path.relative_to(root).as_posix(),
@@ -234,6 +255,7 @@ def run(root: Path, *, folds: int = 5) -> dict[str, Any]:
         "outcome_policy": "outcomes are used only after each fold's prediction and confidence are materialized; no target outcome enters a deployment feature",
         "canonical_artifacts_untouched": True,
         "response_program_policy": "descriptive response distance, not causal mechanism evidence",
+        "member_noise_floor_policy": "member-level OOF risks are retained for a within-context stochastic instability audit; this is not a complete measurement-noise ceiling",
         "status": "executed",
     }
     report_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False, allow_nan=True) + "\n", encoding="utf-8")

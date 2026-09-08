@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "benchmark_id": "ptl_context_v2_frangieh_controlled_shift_oof_v1",
   "estimand": "full-surface matched-condition reliability reordering under perturbation-label OOF cross-fitting",
   "predictor": "strong_linear",
@@ -9,6 +9,11 @@
     0,
     1,
     2
+  ],
+  "member_risk_columns": [
+    "member_0_continuous_risk",
+    "member_1_continuous_risk",
+    "member_2_continuous_risk"
   ],
   "n_prediction_rows": 734,
   "n_unique_labels_by_environment": {
@@ -22,5 +27,6 @@
   "outcome_policy": "outcomes are used only after each fold's prediction and confidence are materialized; no target outcome enters a deployment feature",
   "canonical_artifacts_untouched": true,
   "response_program_policy": "descriptive response distance, not causal mechanism evidence",
+  "member_noise_floor_policy": "member-level OOF risks are retained for a within-context stochastic instability audit; this is not a complete measurement-noise ceiling",
   "status": "executed"
 }

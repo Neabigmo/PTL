@@ -1,9 +1,9 @@
 """Create the controlled reliability-reordering diagnostic figure.
 
-The figure is deliberately tied to the materialized Frangieh first-stage
-artifacts.  It shows condition-level rank crossings, descriptive response
-program displacement, and the monotonic recalibration counterfactual without
-turning any of those evaluation outcomes into deployment features.
+The figure is tied to the full-surface Frangieh OOF audit and its
+perturbation-level Scientific Lock.  Figure 3 owns recalibration; this figure
+therefore uses its final panel to show confidence tracking against a
+label-preserving permutation null.
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import sys
+import warnings
 
 import matplotlib
 matplotlib.use("Agg")
@@ -18,14 +19,14 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.stats import rankdata, spearmanr
+from scipy.stats import rankdata
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.run_formal_v2_grouping_loss import artifact_paths  # noqa: E402
-
+from src.evaluation.metrics import safe_rowwise_cosine  # noqa: E402
+from scripts.run_formal_v2_predictors import read_ground_truth  # noqa: E402
 
 NAVY = "#12263A"
 BLUE = "#1F6F8B"
@@ -46,14 +47,6 @@ PAIR_COLORS = {
     "control → IFNγ": CORAL,
     "co-culture → IFNγ": PURPLE,
 }
-PREDICTOR_LABELS = {
-    "mean_matching": "matching mean",
-    "strong_linear": "Ahlmann–Eltze",
-    "slim_string": "SLIM",
-}
-PREDICTOR_COLORS = {"mean_matching": BLUE, "strong_linear": PURPLE, "slim_string": GOLD}
-
-
 def style() -> None:
     mpl.rcParams.update({
         "font.size": 7.5,
@@ -85,7 +78,9 @@ def panel(ax: plt.Axes, label: str, title: str) -> None:
 
 def save_figure(fig: plt.Figure, path: Path) -> list[str]:
     path.parent.mkdir(parents=True, exist_ok=True)
-    fig.tight_layout(pad=1.0)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="This figure includes Axes that are not compatible with tight_layout")
+        fig.tight_layout(pad=1.0)
     outputs: list[str] = []
     for suffix, kwargs in (("svg", {}), ("pdf", {}), ("png", {"dpi": 600}), ("tiff", {"dpi": 600})):
         output = path.with_suffix(f".{suffix}")
@@ -96,48 +91,65 @@ def save_figure(fig: plt.Figure, path: Path) -> list[str]:
 
 
 def _primary_pair_predictions(left: str, right: str) -> pd.DataFrame:
-    predictions = pd.read_csv(artifact_paths(ROOT, 20260907)[0])
-    selected = predictions.loc[
-        predictions["scenario"].eq("in_domain")
-        & predictions["split_seed"].eq(20260907)
-        & predictions["predictor"].eq("strong_linear")
-        & predictions["environment_key"].isin([left, right]),
-        ["environment_key", "perturbation_label", "continuous_risk"],
-    ].copy()
-    left_frame = selected.loc[selected["environment_key"].eq(left)].rename(columns={"continuous_risk": "risk_left"})
-    right_frame = selected.loc[selected["environment_key"].eq(right)].rename(columns={"continuous_risk": "risk_right"})
-    merged = left_frame.merge(right_frame, on="perturbation_label", how="inner", validate="one_to_one")
+    payload = np.load(ROOT / "artifacts/source_data/frangieh_source_frozen_predictions.npz", allow_pickle=False)
+    labels = payload["perturbation_label"].astype(str).tolist()
+    panel = payload["evaluation_gene_symbols"].astype(str).tolist()
+    environments = payload["source_environment"].astype(str).tolist()
+    source_index = environments.index("frangieh_melanoma_control")
+    prediction = payload["prediction"][source_index].mean(axis=1)
+    truth = {}
+    for environment in (left, right):
+        manifest = pd.read_csv(ROOT / "artifacts/manifests/environment_registry.csv")
+        row = manifest.loc[manifest["environment_key"].eq(environment)].iloc[0]
+        source = str(pd.read_csv(ROOT / "artifacts/manifests/biological_instance_registry.csv", dtype=str)
+                     .loc[lambda frame: frame["environment_key"].eq(environment), "ground_truth_path"].iloc[0])
+        frame = read_ground_truth(ROOT, source, genes=panel)
+        frame = frame.loc[frame["environment_key"].eq(environment)].set_index("perturbation_label")
+        truth[environment] = frame.loc[labels, panel].to_numpy(dtype=float)
+    left_risk = 1.0 - safe_rowwise_cosine(truth[left], prediction)
+    right_risk = 1.0 - safe_rowwise_cosine(truth[right], prediction)
+    merged = pd.DataFrame({"perturbation_label": labels, "risk_left": left_risk, "risk_right": right_risk})
     merged["rank_left"] = rankdata(merged["risk_left"].to_numpy(dtype=float), method="average")
     merged["rank_right"] = rankdata(merged["risk_right"].to_numpy(dtype=float), method="average")
     return merged.sort_values("perturbation_label", kind="stable").reset_index(drop=True)
 
 
 def make_figure() -> tuple[list[str], dict[str, object]]:
-    reordering = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_reliability_reordering.csv")
-    perturbations = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_reliability_reordering_perturbations.csv")
-    recalibration = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_recalibration_counterfactual.csv")
-    reordering = reordering.loc[reordering["method"].eq("ptl_rf") & reordering["predictor"].eq("strong_linear")].copy()
-    perturbations = perturbations.loc[perturbations["method"].eq("ptl_rf") & perturbations["predictor"].eq("strong_linear")].copy()
+    inference = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_controlled_shift_oof_inference.csv")
+    noise_floor = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_controlled_shift_noise_floor.csv")
+    source_frozen = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_claim_lock_source_frozen_reordering.csv")
+    measurement = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_claim_lock_measurement_summary.csv")
 
     fig = plt.figure(figsize=(7.25, 6.35))
     grid = fig.add_gridspec(2, 2, width_ratios=[1.0, 1.05], height_ratios=[1.0, 1.05], hspace=0.55, wspace=0.40)
 
     ax = fig.add_subplot(grid[0, 0])
-    panel(ax, "a", "Biology changes which perturbations are risky")
+    panel(ax, "a", "Frozen predictors still reorder risk")
     pairs = list(PAIR_LABELS.values())
     x = np.arange(len(pairs))
+    source_markers = {"frangieh_melanoma_control": "o", "frangieh_melanoma_coculture": "s", "frangieh_melanoma_ifng": "^"}
+    source_offsets = {"frangieh_melanoma_control": -0.12, "frangieh_melanoma_coculture": 0.0, "frangieh_melanoma_ifng": 0.12}
     for index, pair_label in enumerate(pairs):
-        pair_rows = reordering.loc[
-            reordering.apply(lambda row: PAIR_LABELS.get((row["left_environment_id"], row["right_environment_id"])) == pair_label, axis=1)
+        left, right = next(pair for pair, label in PAIR_LABELS.items() if label == pair_label)
+        pair_rows = source_frozen.loc[
+            source_frozen["left_target_environment_id"].eq(left)
+            & source_frozen["right_target_environment_id"].eq(right)
+            & source_frozen["metric"].eq("delta_cosine")
         ]
-        values = pair_rows["risk_inversion_rate"].to_numpy(dtype=float)
-        ax.scatter(np.full(len(values), index), values, s=18, color=PAIR_COLORS[pair_label], alpha=0.65, edgecolor="white", linewidth=0.35, zorder=3)
-        ax.plot([index - 0.16, index + 0.16], [np.mean(values), np.mean(values)], color=NAVY, lw=2.2, solid_capstyle="round", zorder=4)
-        ax.text(index, np.mean(values) + 0.035, f"{np.mean(values):.2f}", ha="center", va="bottom", fontsize=6.5, color=NAVY)
+        for _, row in pair_rows.iterrows():
+            value = float(row["normalized_rank_displacement_mean"])
+            low = value - float(row["normalized_rank_displacement_ci_low"])
+            high = float(row["normalized_rank_displacement_ci_high"]) - value
+            source = str(row["source_environment_id"])
+            ax.errorbar(index + source_offsets[source], value, yerr=[[low], [high]], fmt=source_markers[source], ms=4.5,
+                        color=PAIR_COLORS[pair_label], ecolor=PAIR_COLORS[pair_label], elinewidth=0.85, capsize=1.8,
+                        markeredgecolor="white", markeredgewidth=0.4, zorder=4)
     ax.set_xticks(x, pairs, rotation=22, ha="right", fontsize=5.7)
-    ax.set_ylabel("risk-order inversion rate")
-    ax.set_ylim(0, 0.55)
-    ax.text(0.02, 0.96, "PTL · 5 split seeds · 10–11 shared labels", transform=ax.transAxes, va="top", fontsize=5.8, color=SLATE)
+    ax.set_ylabel("normalized rank displacement")
+    ax.set_ylim(0, 0.35)
+    ax.text(0.02, 0.06, "source-frozen · delta cosine · 95% label bootstrap CI", transform=ax.transAxes, va="bottom", fontsize=5.8, color=SLATE)
+    ax.legend(handles=[mpl.lines.Line2D([], [], marker=marker, color=NAVY, lw=0, markersize=4, label=label.replace("frangieh_melanoma_", ""))
+                         for label, marker in source_markers.items()], fontsize=5.2, loc="upper right")
 
     ax = fig.add_subplot(grid[0, 1])
     panel(ax, "b", "Matched perturbations cross risk ranks")
@@ -152,54 +164,75 @@ def make_figure() -> tuple[list[str], dict[str, object]]:
     ax.set_ylabel("within-condition risk rank")
     ax.invert_yaxis()
     ax.set_ylim(len(matched) + 1, 0)
-    ax.text(0.02, 0.96, f"Ahlmann–Eltze · n={len(matched)} · held-out risk", transform=ax.transAxes, va="top", fontsize=5.8, color=SLATE)
+    ax.text(0.02, 0.96, f"same control-source predictor · n={len(matched)} · held-out target truth", transform=ax.transAxes, va="top", fontsize=5.8, color=SLATE)
     ax.legend(handles=[
         mpl.lines.Line2D([], [], color=CORAL, lw=1.5, label="higher risk rank"),
         mpl.lines.Line2D([], [], color=BLUE, lw=1.5, label="lower risk rank"),
     ], fontsize=5.5, loc="lower right")
 
     ax = fig.add_subplot(grid[1, 0])
-    panel(ax, "c", "Response programs shift")
-    for pair_label, pair_frame in perturbations.groupby(
-        perturbations.apply(lambda row: PAIR_LABELS.get((row["left_environment_id"], row["right_environment_id"])), axis=1),
-        sort=False,
-    ):
-        pair_frame = pair_frame.dropna(subset=["response_program_shift", "absolute_risk_change"])
-        ax.scatter(pair_frame["response_program_shift"], pair_frame["absolute_risk_change"], s=13, alpha=0.45, color=PAIR_COLORS[pair_label], label=pair_label, edgecolor="white", linewidth=0.25)
-        rho = spearmanr(pair_frame["response_program_shift"], pair_frame["absolute_risk_change"]).statistic
-        ax.text(0.03, 0.96 - 0.10 * list(PAIR_LABELS.values()).index(pair_label), f"{pair_label}: ρ={rho:+.2f}", transform=ax.transAxes, fontsize=5.6, color=PAIR_COLORS[pair_label], va="top")
-    ax.set_xlabel("response-program shift (1 − cosine)")
-    ax.set_ylabel("absolute risk change")
-    ax.set_xlim(left=0)
-    ax.set_ylim(bottom=0)
-    ax.text(0.03, 0.02, "descriptive response vectors; no causal claim", transform=ax.transAxes, fontsize=5.7, color=SLATE)
+    panel(ax, "c", "Joint-noise floor blurs excess")
+    metric_labels = {"delta_cosine": "delta\ncosine", "systema_centroid_accuracy": "Systema\ncentroid", "absolute_effect_rank_agreement": "absolute\neffect rank"}
+    metric_order = list(metric_labels)
+    for metric_index, metric in enumerate(metric_order):
+        rows = measurement.loc[measurement["metric"].eq(metric)]
+        for _, row in rows.iterrows():
+            value = float(row["delta_joint"])
+            low = value - float(row["delta_joint_ci_low"])
+            high = float(row["delta_joint_ci_high"]) - value
+            ax.errorbar(metric_index + np.random.default_rng(int(row["bootstrap_seed"])) .uniform(-0.18, 0.18), value,
+                        yerr=[[low], [high]], fmt="o", ms=2.8, color=SLATE, ecolor=SLATE, elinewidth=0.65,
+                        capsize=1.1, alpha=0.55, zorder=3)
+    ax.axhline(0, color=NAVY, lw=1.0)
+    ax.set_xticks(np.arange(len(metric_order)), list(metric_labels.values()), fontsize=5.7)
+    ax.set_ylabel("cross $D$ − joint-floor $D$")
+    ax.set_ylim(-0.12, 0.06)
+    ax.text(0.02, 0.96, "30 raw-cell split seeds · 2,000 paired label bootstrap draws", transform=ax.transAxes, va="top", fontsize=5.5, color=SLATE)
+    ax.text(0.02, 0.04, "positive values would support excess cross-context signal; intervals mostly cross 0", transform=ax.transAxes, fontsize=5.2, color=SLATE)
 
     ax = fig.add_subplot(grid[1, 1])
-    panel(ax, "d", "Calibration cannot fix rank")
-    predictors = ["mean_matching", "strong_linear", "slim_string"]
-    positions = np.arange(len(predictors))
-    for position, predictor in zip(positions, predictors):
-        values = recalibration.loc[recalibration["predictor"].eq(predictor), "platt_delta_brier"].dropna().to_numpy(dtype=float)
-        jitter = np.linspace(-0.13, 0.13, len(values)) if len(values) else np.array([])
-        ax.scatter(np.full(len(values), position) + jitter, values, s=16, alpha=0.65, color=PREDICTOR_COLORS[predictor], edgecolor="white", linewidth=0.3)
-        ax.plot([position - 0.17, position + 0.17], [np.mean(values), np.mean(values)], color=NAVY, lw=2.0, solid_capstyle="round")
-    ax.axhline(0, color=NAVY, lw=0.75)
-    ax.set_xticks(positions, [PREDICTOR_LABELS[p] for p in predictors], rotation=18, ha="right", fontsize=5.8)
-    ax.set_ylabel("Platt Δ Brier vs base score")
-    ax.text(0.02, 0.96, "45 groups · ΔAURC = 0 · order disagreements = 0", transform=ax.transAxes, va="top", fontsize=5.8, color=SLATE)
-    ax.text(0.02, 0.04, "negative = better probability calibration", transform=ax.transAxes, fontsize=5.7, color=SLATE)
+    panel(ax, "d", "Confidence tracks less than the null")
+    positions = np.arange(len(pairs))
+    for position, pair_label in zip(positions, pairs):
+        row = inference.loc[
+            inference.apply(lambda item: PAIR_LABELS.get((item["left_environment_id"], item["right_environment_id"])) == pair_label, axis=1)
+        ].iloc[0]
+        observed = float(row["confidence_tracking_rate"])
+        observed_low = float(row["confidence_tracking_rate_ci_low"])
+        observed_high = float(row["confidence_tracking_rate_ci_high"])
+        null = float(row["permutation_null_mean"])
+        null_low = float(row["permutation_null_ci_low"])
+        null_high = float(row["permutation_null_ci_high"])
+        ax.errorbar(position - 0.075, observed, yerr=[[observed - observed_low], [observed_high - observed]],
+                    fmt="o", ms=5.0, color=PAIR_COLORS[pair_label], ecolor=PAIR_COLORS[pair_label],
+                    elinewidth=1.1, capsize=2.0, markeredgecolor="white", markeredgewidth=0.45, zorder=4)
+        ax.errorbar(position + 0.075, null, yerr=[[null - null_low], [null_high - null]],
+                    fmt="s", ms=4.0, color=SLATE, ecolor=SLATE, elinewidth=1.0, capsize=2.0,
+                    markeredgecolor="white", markeredgewidth=0.4, zorder=3)
+    ax.set_xticks(positions, pairs, rotation=22, ha="right", fontsize=5.7)
+    ax.set_ylabel("confidence tracking rate")
+    ax.set_ylim(0, 0.5)
+    ax.legend(handles=[
+        mpl.lines.Line2D([], [], color=BLUE, marker="o", lw=0, markersize=4.5, label="observed"),
+        mpl.lines.Line2D([], [], color=SLATE, marker="s", lw=0, markersize=4.0, label="permutation null"),
+    ], fontsize=5.4, loc="upper right")
+    ax.text(0.02, 0.96, "95% label bootstrap / permutation intervals", transform=ax.transAxes, va="top", fontsize=5.5, color=SLATE)
+    ax.text(0.02, 0.04, "null shuffles confidence within each environment", transform=ax.transAxes, fontsize=5.5, color=SLATE)
 
-    fig.suptitle("Biological context rewrites the reliability ordering", x=0.03, y=1.015, ha="left", fontsize=12, fontweight="bold", color=NAVY)
+    fig.suptitle("Biological context can reorder reliability, but the excess signal is not noise-locked", x=0.03, y=1.015, ha="left", fontsize=11.2, fontweight="bold", color=NAVY)
     outputs = save_figure(fig, ROOT / "results/figures/iclr_formal/formal_fig1_reliability_reordering")
     manifest = {
         "schema_version": 1,
         "figure": "formal_fig1_reliability_reordering",
-        "claim": "matched biological conditions can reorder perturbation reliability; monotonic calibration cannot repair strict ranking",
-        "status": "first_stage_frangieh_diagnostic",
+        "claim": "source-frozen predictors show cross-context rank displacement, while matched raw-cell joint-noise deltas do not support a stable excess beyond measurement plus model noise",
+        "status": "claim_lock_frangieh_source_frozen_and_noise_audit",
         "source_data": [
-            "artifacts/manifests/formal_v2_reliability_reordering.csv",
-            "artifacts/manifests/formal_v2_reliability_reordering_perturbations.csv",
-            "artifacts/manifests/formal_v2_recalibration_counterfactual.csv",
+            "artifacts/source_data/frangieh_source_frozen_predictions.npz",
+            "artifacts/manifests/formal_v2_claim_lock_source_frozen_reordering.csv",
+            "artifacts/manifests/formal_v2_claim_lock_measurement_summary.csv",
+            "artifacts/manifests/formal_v2_controlled_shift_oof_predictions.csv",
+            "artifacts/manifests/formal_v2_controlled_shift_oof_inference.csv",
+            "artifacts/manifests/formal_v2_controlled_shift_noise_floor.csv",
         ],
         "outputs": outputs,
     }

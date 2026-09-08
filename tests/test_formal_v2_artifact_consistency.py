@@ -122,3 +122,52 @@ def test_reliability_reordering_and_recalibration_audits_are_materialized() -> N
     assert len(recalibration_detail) == 45
     assert int(recalibration_detail["n_order_disagreements"].sum()) == 0
     assert set(recalibration_detail["calibration_fit_on"]) == {"calibration_rows_only"}
+
+
+def test_controlled_shift_scientific_lock_is_materialized() -> None:
+    inference = json.loads((MANIFESTS / "formal_v2_controlled_shift_inference.json").read_text(encoding="utf-8"))
+    assert inference["status"] == "formal_v2_controlled_shift_scientific_lock_executed"
+    assert inference["bootstrap"]["unit"] == "matched perturbation label"
+    assert inference["bootstrap"]["pairwise_reconstruction"] is True
+    assert inference["confidence_permutation_null"]["draws"] == 2000
+    assert inference["noise_floor"]["type"] == "within_context_stochastic_model_member"
+    cross = pd.read_csv(MANIFESTS / "formal_v2_controlled_shift_oof_inference.csv")
+    noise = pd.read_csv(MANIFESTS / "formal_v2_controlled_shift_noise_floor.csv")
+    assert len(cross) == 3
+    assert len(noise) == 9
+    assert set(cross["comparison"]) == {"frangieh_condition_oof"}
+    assert set(noise["measurement_noise_included"]) == {False}
+    assert set(cross["risk_inversion_rate_ci_low"] < cross["risk_inversion_rate"]) == {True}
+    assert set(cross["risk_inversion_rate"] < cross["risk_inversion_rate_ci_high"]) == {True}
+    assert set(cross["normalized_rank_displacement_mean"] > 0) == {True}
+    assert set(noise["risk_inversion_rate"] > 0) == {True}
+
+
+def test_claim_lock_source_frozen_and_measurement_artifacts_are_materialized() -> None:
+    source = json.loads((MANIFESTS / "formal_v2_claim_lock_source_frozen.json").read_text(encoding="utf-8"))
+    assert source["status"] == "source_frozen_primary_executed"
+    assert int(source["common_perturbation_count"]) == 243
+    assert int(source["folds"]) == 5
+    assert int(source["evaluation_gene_count"]) == 8229
+    npz_path = ROOT / source["prediction_npz"]
+    assert npz_path.is_file()
+    import numpy as np
+    with np.load(npz_path, allow_pickle=False) as payload:
+        assert payload["prediction"].shape == (3, 243, 3, 8229)
+        assert payload["fold_id"].shape == (243,)
+        assert payload["confidence"].shape == (3, 243)
+    reordering = pd.read_csv(MANIFESTS / "formal_v2_claim_lock_source_frozen_reordering.csv")
+    assert len(reordering) == 27
+    assert set(reordering["estimand"]) == {"source_frozen_primary"}
+    assert set(reordering["metric"]) == {"delta_cosine", "systema_centroid_accuracy", "absolute_effect_rank_agreement"}
+    measurement = json.loads((MANIFESTS / "formal_v2_claim_lock_measurement.json").read_text(encoding="utf-8"))
+    assert measurement["status"] == "matched_budget_measurement_and_joint_floors_executed"
+    assert len(measurement["split_seeds"]) == 30
+    floors = pd.read_csv(MANIFESTS / "formal_v2_claim_lock_measurement_floors.csv")
+    summary = pd.read_csv(MANIFESTS / "formal_v2_claim_lock_measurement_summary.csv")
+    assert len(floors) == 2430
+    assert len(summary) == 27
+    assert set(summary["n_split_seeds"]) == {30}
+    assert summary[["cross_d", "measurement_floor_d", "joint_floor_d", "delta_joint"]].notna().all().all()
+    boundary = json.loads((MANIFESTS / "formal_v2_claim_lock_replication_boundary.json").read_text(encoding="utf-8"))
+    assert boundary["status"] == "no_valid_independent_matched_context_replication_available"

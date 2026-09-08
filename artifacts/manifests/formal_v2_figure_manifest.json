@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "backend": "python_matplotlib",
-  "core_conclusion": "Biological context can reorder perturbation reliability; response-program displacement is a descriptive correlate, monotonic recalibration cannot repair the ordering, and prospective transfer remains heterogeneous",
+  "core_conclusion": "Source-frozen biological conditions can reorder perturbation reliability, but matched raw-cell measurement-plus-model noise does not provide a stable excess signal; coarse response-program displacement is not a stable rank proxy, confidence tracking is below a label-preserving permutation null, monotonic recalibration cannot repair the ordering, and prospective transfer remains heterogeneous",
   "source_provenance": {
     "primary_trained_predictor_evidence": "Frangieh condition ladder with formal out-of-fold predictor evaluation",
     "orthogonal_external_extension": "matched CRISPRko/CRISPRi guide-level SCEPTRE effects evaluated with a source-response persistence baseline; not pooled with the formal predictor benchmark"
@@ -39,6 +39,18 @@
     "artifacts/manifests/formal_v2_controlled_shift_oof_predictions.csv",
     "artifacts/manifests/formal_v2_controlled_shift_oof_summary.csv",
     "artifacts/manifests/formal_v2_controlled_shift_oof_perturbations.csv",
+    "artifacts/manifests/formal_v2_controlled_shift_oof_inference.csv",
+    "artifacts/manifests/formal_v2_controlled_shift_noise_floor.csv",
+    "artifacts/manifests/formal_v2_controlled_shift_inference.json",
+    "artifacts/source_data/frangieh_source_frozen_predictions.npz",
+    "artifacts/manifests/formal_v2_claim_lock_source_frozen.json",
+    "artifacts/manifests/formal_v2_claim_lock_source_frozen_reordering.csv",
+    "artifacts/manifests/formal_v2_claim_lock_metric_robustness.csv",
+    "artifacts/manifests/formal_v2_claim_lock_measurement.json",
+    "artifacts/manifests/formal_v2_claim_lock_measurement_floors.csv",
+    "artifacts/manifests/formal_v2_claim_lock_measurement_summary.csv",
+    "artifacts/manifests/formal_v2_claim_lock_guide_composition_coverage.csv",
+    "artifacts/manifests/formal_v2_claim_lock_replication_boundary.json",
     "artifacts/manifests/head_to_head_controlled_shift_ladder.csv",
     "artifacts/manifests/head_to_head_controlled_shift_ladder_summary.csv",
     "artifacts/manifests/head_to_head_controlled_shift_ladder_summary.json"

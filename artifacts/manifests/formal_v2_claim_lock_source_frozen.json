@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2_frangieh_claim_lock_v1",
+  "status": "source_frozen_primary_executed",
+  "estimands": {
+    "primary": "source-context predictor fit once per global perturbation-label fold and scored unchanged against all target contexts",
+    "secondary": "context-adapted OOF reordering remains in formal_v2_controlled_shift_oof_* and is not pooled with primary"
+  },
+  "environments": [
+    "frangieh_melanoma_control",
+    "frangieh_melanoma_coculture",
+    "frangieh_melanoma_ifng"
+  ],
+  "common_perturbation_count": 243,
+  "folds": 5,
+  "split_seed": 20260908,
+  "model_seeds": [
+    0,
+    1,
+    2
+  ],
+  "evaluation_gene_count": 8229,
+  "evaluation_gene_checksum_sha256": "69767b169a814407a35f113f030303096d0e8d52e48b969a847251b02f93d62f",
+  "prediction_npz": "artifacts/source_data/frangieh_source_frozen_predictions.npz",
+  "reordering_summary": "artifacts/manifests/formal_v2_claim_lock_source_frozen_reordering.csv",
+  "metric_robustness_summary": "artifacts/manifests/formal_v2_claim_lock_metric_robustness.csv",
+  "metrics": [
+    "delta_cosine",
+    "systema_centroid_accuracy",
+    "absolute_effect_rank_agreement"
+  ],
+  "metric_policy": "same frozen prediction vectors, target labels, target truth, and gene panel; no per-metric refit",
+  "response_and_rank_policy": "rank displacement is the causal-diagnostic estimand; response shifts remain descriptive",
+  "source_frozen_contract": "target outcomes are read only after source prediction vectors are materialized"
+}
