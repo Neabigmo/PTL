@@ -80,3 +80,24 @@ def test_reliability_shift_and_transport_claims_are_bounded() -> None:
     contrast = multisplit["paired_asymmetry_contrast"]
     assert contrast["contrast"] == "delta_leave_environment_out_minus_delta_leave_predictor_out"
     assert int(contrast["n_splits"]) == 5
+
+
+def test_reliability_reordering_and_recalibration_audits_are_materialized() -> None:
+    reordering = json.loads((MANIFESTS / "formal_v2_reliability_reordering_summary.json").read_text(encoding="utf-8"))
+    assert reordering["status"] == "formal_v2_reliability_reordering_executed_frangieh_first_stage"
+    reordering_detail = pd.read_csv(MANIFESTS / "formal_v2_reliability_reordering.csv")
+    reordering_perturbations = pd.read_csv(MANIFESTS / "formal_v2_reliability_reordering_perturbations.csv")
+    assert len(reordering_detail) == 135
+    assert len(reordering_perturbations) > 1000
+    assert set(reordering_perturbations["response_program_is_descriptive"]) == {1}
+    assert set(reordering_perturbations["risk_and_confidence_outcomes_used_for_evaluation_only"]) == {1}
+    assert {"frangieh_condition", "tian_modality", "head_to_head_crisprko_crispri"} == {
+        item["comparison"] for item in reordering["ladder"]
+    }
+
+    recalibration = json.loads((MANIFESTS / "formal_v2_recalibration_counterfactual_summary.json").read_text(encoding="utf-8"))
+    assert recalibration["status"] == "formal_v2_recalibration_counterfactual_executed"
+    recalibration_detail = pd.read_csv(MANIFESTS / "formal_v2_recalibration_counterfactual.csv")
+    assert len(recalibration_detail) == 45
+    assert int(recalibration_detail["n_order_disagreements"].sum()) == 0
+    assert set(recalibration_detail["calibration_fit_on"]) == {"calibration_rows_only"}

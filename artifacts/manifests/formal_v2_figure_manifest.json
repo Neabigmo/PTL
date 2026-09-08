@@ -28,7 +28,10 @@
     "artifacts/manifests/formal_v2_reproducibility_stratified_reliability.csv",
     "artifacts/manifests/formal_v2_reproducibility_reliability_shift.csv",
     "artifacts/manifests/formal_v2_predictor_metrics.csv",
-    "artifacts/manifests/formal_v2_feature_transform_manifest.json"
+    "artifacts/manifests/formal_v2_feature_transform_manifest.json",
+    "artifacts/manifests/formal_v2_reliability_reordering.csv",
+    "artifacts/manifests/formal_v2_reliability_reordering_perturbations.csv",
+    "artifacts/manifests/formal_v2_recalibration_counterfactual.csv"
   ],
   "statistics": {
     "split": "formal validation calibration -> untouched test evaluation",
@@ -38,10 +41,10 @@
   },
   "outputs": {
     "figure_1": [
-      "results/figures/iclr_formal/formal_fig1_same_confidence_different_risk.svg",
-      "results/figures/iclr_formal/formal_fig1_same_confidence_different_risk.pdf",
-      "results/figures/iclr_formal/formal_fig1_same_confidence_different_risk.png",
-      "results/figures/iclr_formal/formal_fig1_same_confidence_different_risk.tiff"
+      "results/figures/iclr_formal/formal_fig1_reliability_reordering.svg",
+      "results/figures/iclr_formal/formal_fig1_reliability_reordering.pdf",
+      "results/figures/iclr_formal/formal_fig1_reliability_reordering.png",
+      "results/figures/iclr_formal/formal_fig1_reliability_reordering.tiff"
     ],
     "figure_2": [
       "results/figures/iclr_formal/formal_fig2_confidence_semantics.svg",

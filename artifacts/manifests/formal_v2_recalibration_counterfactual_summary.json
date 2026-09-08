@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2",
+  "counterfactual": "train-only Platt recalibration of the selected scalar confidence score",
+  "interpretation": {
+    "calibration": "Brier/log loss may change after a monotonic mapping",
+    "ranking": "a strictly monotonic mapping preserves the base order and therefore cannot repair AURC or rank ordering",
+    "isotonic_caveat": "isotonic regression is monotone but may introduce ties; its ranking changes are reported separately"
+  },
+  "detail_path": "artifacts/manifests/formal_v2_recalibration_counterfactual.csv",
+  "summary": [
+    {
+      "predictor": "mean_matching",
+      "n_groups": 15,
+      "mean_platt_delta_aurc": 0.0,
+      "mean_platt_delta_brier": -0.044730443551247626,
+      "mean_platt_delta_log_loss": -0.10648988304805213,
+      "mean_platt_delta_rank_spearman": NaN,
+      "mean_isotonic_delta_aurc": 0.0,
+      "mean_isotonic_delta_brier": -0.04624505560249544,
+      "mean_isotonic_delta_log_loss": -0.10959584761773199,
+      "mean_isotonic_delta_rank_spearman": NaN,
+      "max_abs_platt_delta_aurc": 0.0,
+      "max_abs_platt_delta_rank_spearman": NaN,
+      "n_platt_order_disagreements": 0,
+      "n_platt_rank_order_preserved": 15,
+      "n_groups_brier_improved": 13
+    },
+    {
+      "predictor": "slim_string",
+      "n_groups": 15,
+      "mean_platt_delta_aurc": 0.0,
+      "mean_platt_delta_brier": 0.06630306146905085,
+      "mean_platt_delta_log_loss": 0.15819429527870266,
+      "mean_platt_delta_rank_spearman": 0.0,
+      "mean_isotonic_delta_aurc": 0.0009079117615741575,
+      "mean_isotonic_delta_brier": 0.05728984599880971,
+      "mean_isotonic_delta_log_loss": 0.14219181261172784,
+      "mean_isotonic_delta_rank_spearman": 0.00017481308431667846,
+      "max_abs_platt_delta_aurc": 0.0,
+      "max_abs_platt_delta_rank_spearman": 0.0,
+      "n_platt_order_disagreements": 0,
+      "n_platt_rank_order_preserved": 15,
+      "n_groups_brier_improved": 0
+    },
+    {
+      "predictor": "strong_linear",
+      "n_groups": 15,
+      "mean_platt_delta_aurc": 0.0,
+      "mean_platt_delta_brier": 0.002399277721826996,
+      "mean_platt_delta_log_loss": 0.0008256431687467999,
+      "mean_platt_delta_rank_spearman": 0.0,
+      "mean_isotonic_delta_aurc": -0.003428474879031492,
+      "mean_isotonic_delta_brier": -0.001050576259666669,
+      "mean_isotonic_delta_log_loss": -0.008091658397896244,
+      "mean_isotonic_delta_rank_spearman": 0.005851968863801978,
+      "max_abs_platt_delta_aurc": 0.0,
+      "max_abs_platt_delta_rank_spearman": 0.0,
+      "n_platt_order_disagreements": 0,
+      "n_platt_rank_order_preserved": 15,
+      "n_groups_brier_improved": 8
+    }
+  ],
+  "status": "formal_v2_recalibration_counterfactual_executed"
+}

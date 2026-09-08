@@ -7,7 +7,7 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 
-\title{Reliability Shift in Single-Cell Perturbation Prediction}
+\title{Biological Context Rewrites the Reliability Ordering in Single-Cell Perturbation Prediction}
 \author{Anonymous Authors}
 
 \newcommand{\ptl}{\textsc{PTL}}
@@ -20,24 +20,22 @@
 
 \begin{abstract}
 Confidence scores from single-cell perturbation predictors are often treated
-as if they were portable across biological settings. We show that reliability
-changes across biological environments through shifts in overall difficulty
-and within-environment ranking quality, while an additional environment-specific
-confidence--risk interaction is not consistently identified. The formal benchmark contains
-1,603 condition-level biological instances from eight semantically verified
-environments, three completed predictor families, an 8,229-gene shared
-evaluation panel, and a frozen 60/20/20 biological-instance split.
-We introduce a Reliability Shift decomposition and test an additive
-environment-difficulty null against an environment-dependent confidence--risk
-mapping using held-out biological instances, hierarchical bootstrap and a
-permutation null. The dominant evidence is environment difficulty and ranking
-change; the semantic interaction is reported with its uncertainty rather than
-assumed. PTL is used as a deployment-safe diagnostic probe: it improves
-reliability ranking in-domain and under predictor-family holdout, whereas the
-held-out-biological-environment improvement is not statistically established.
-A validation-backed GEARS audit on Norman and RPE1 provides an independent
-modern-model check. Strict target-unseen source selection remains near chance,
-and a natural gating baseline does not reliably remove harmful transfers.
+as if they preserve the same ordering of easy and hard perturbations across
+biological settings. We show, in a controlled Frangieh condition ladder, that
+matched perturbations undergo 25--43\% risk-order inversions across control,
+IFN$\gamma$ and TIL co-culture conditions across five split seeds. Their
+response programs also shift strongly (mean $1-\cos$ine $=0.79$--$0.85$),
+but that response displacement is descriptive and does not imply a causal
+mechanism. A train-only monotonic Platt recalibration changes probability
+calibration while producing zero AURC change and zero strict-order
+disagreements across 45 environment--predictor groups. Thus the central
+failure is an ordering problem, not merely a probability-scale problem.
+The broad formal benchmark contains 1,603 condition-level biological instances
+from eight semantically verified environments, three completed predictor
+families, an 8,229-gene shared evaluation panel, and a frozen 60/20/20
+biological-instance split. PTL is evaluated later as a deployment-safe probe;
+its transport evidence remains heterogeneous rather than being used to
+overstate portability.
 \end{abstract}
 
 \section{Introduction}
@@ -50,8 +48,9 @@ Each model may expose an uncertainty score, but a score learned in a K562
 screen need not have the same meaning in RPE1, iPSC-derived neurons or
 patient-derived melanoma.
 
-We study a narrower operational question: when can reliability itself be
-transported to a new biological setting without observing target outcomes?
+We study a narrower operational question: when can the ordering of reliability
+itself be transported to a new biological setting without observing target
+outcomes?
 The answer must separate deployment evidence from outcome evidence. Target
 fidelity, ground truth, QC and reproducibility are appropriate for evaluation;
 they are not available when a new perturbation is deployed. Conversely,
@@ -60,32 +59,36 @@ be available before the target response is known.
 
 Our central object is Reliability Shift:
 \begin{quote}
-\emph{Prediction reliability changes under biological domain shift. We
-decompose that change into difficulty shift, ranking shift and a tested
-confidence--risk interaction, while treating PTL as a diagnostic probe rather
-than as the paper's endpoint.}
+\emph{Biological context can rewrite which matched perturbations are easy or
+hard. We diagnose this as reliability reordering, separate response-program
+displacement from outcome-derived risk, and test whether monotonic
+recalibration can repair the ordering.}
 \end{quote}
 
-We make four contributions. First, we define an eight-environment benchmark with
-canonical environment and biological-instance identities. Second, we quantify
-Reliability Shift through calibration-defined confidence bins, within-environment
-ranking, an additive difficulty null and an environment-by-confidence
-interaction test. Third, we use Frangieh as a controlled condition-shift
-microscope and audit the Tian modality contrast as coverage-limited because its
-frozen surface lacks sufficient shared perturbations. Fourth, we compare
-PTL with an equal-capacity U-only probe, audit prospective source selection and
-modern-model validity, and retain negative transport evidence rather than
-tuning it away.
+We make four contributions. First, we turn Frangieh into a controlled
+condition-shift ladder with a matched-perturbation inversion estimand and a
+response-program displacement audit. Second, we show with a monotonic
+recalibration counterfactual that probability calibration cannot repair a
+strict reliability ordering. Third, we retain the eight-environment telescope,
+its canonical identities, difficulty/ranking decomposition and coverage-limited
+Tian modality contrast. Fourth, we compare PTL with an equal-capacity U-only
+probe, audit prospective source selection and modern-model validity, and retain
+negative transport evidence rather than tuning it away.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig1_same_confidence_different_risk.pdf}
-  \caption{\textbf{Reliability Shift proof chain.} (a) Environment-level
-  difficulty shift in realized risk. (b) Ranking shift measured by the
-  within-environment confidence--risk concordance. (c) Held-out error for the
-  additive difficulty null and the tested environment-dependent confidence mapping.
-  (d) Interaction improvement with hierarchical uncertainty; a crossing-zero
-  interval is retained rather than converted into a semantic-shift claim.}
+  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig1_reliability_reordering.pdf}
+  \caption{\textbf{Biological context rewrites the reliability ordering.}
+  (a) Across five split seeds, 28--34\% of strict matched-perturbation risk
+  pairs invert between Frangieh conditions for the strong-linear/PTL surface;
+  the all-predictor range is 25--43\%.
+  (b) Each line is a matched perturbation's held-out risk rank in control and
+  IFN$\gamma$; crossings expose the ordering change. (c) Response-program
+  displacement is large but its association with absolute risk change is
+  condition-dependent; response vectors are descriptive evaluation artifacts.
+  (d) Train-only Platt recalibration can change Brier score while preserving
+  strict ranking: across 45 groups, $\Delta$AURC$=0$ and order disagreements
+  are zero.}
   \label{fig:hero}
 \end{figure*}
 
@@ -141,6 +144,28 @@ formed from the bin assignment alone; their outcome differences are measured
   a new generic calibration concept.
 
 \subsection{Difficulty, ranking and semantic components}
+The controlled Frangieh ladder provides the paper's primary diagnostic. For
+each condition pair we retain only shared perturbation labels and count strict
+pairwise reversals of continuous risk. On the strong-linear/PTL surface, the
+five-seed mean inversion rates are $0.34$ for control $\rightarrow$ co-culture,
+$0.28$ for control $\rightarrow$ IFN$\gamma$ and $0.31$ for co-culture
+$\rightarrow$ IFN$\gamma$; across all completed predictor families the observed
+range is $0.25$--$0.43$. The same matched labels have response-program shifts
+of $0.79$--$0.85$ in mean $1-\cos$ine distance, while the split-level
+response-shift/risk-change association changes sign across pairs and predictors.
+We therefore use response displacement to diagnose that the biological object
+has moved, not to claim that it causes a particular reliability reversal.
+
+The recalibration counterfactual makes a sharper separation. The existing
+calibration-side scalar score is mapped by a train-only monotonic Platt model
+and evaluated on the untouched test rows. The mapping changes Brier score in
+some groups, but it preserves every comparable pairwise order: all 45 groups
+have zero order disagreements and zero AURC change. Isotonic regression is
+reported separately because its monotonic ties can alter tie handling. This
+rules out probability-scale recalibration as an explanation for the observed
+strict ordering change; it does not establish that a richer non-monotonic
+predictor would solve transport.
+
 The decomposition makes the base-risk alternative explicit. Difficulty shift is
 the variation of $\mu_e=\mathbb{E}[R\mid E=e]$ across environments. Ranking
 shift is measured within each environment by Spearman and Kendall concordance
