@@ -313,6 +313,40 @@ def _hierarchical_bootstrap_sample(
     return np.concatenate(sampled_risk), np.concatenate(sampled_environment), np.concatenate(sampled_bins)
 
 
+def _replicate_wise_bootstrap_means(
+    bootstrap: pd.DataFrame,
+    metric: str,
+    split_seeds: list[int],
+) -> np.ndarray:
+    """Return the bootstrap distribution for the across-split mean estimand.
+
+    Each split keeps its own bootstrap replicates.  Replicates are explicitly
+    re-numbered by sorted within-split order so that a different number or
+    offset of replicate labels cannot silently turn a split-level bootstrap
+    distribution into a pooled one.  Only the first ``min(n_split_reps)``
+    aligned replicates are used, and rows with a non-finite value in any
+    requested split are excluded from the complete five-split estimand.
+    """
+
+    if not split_seeds:
+        return np.empty(0, dtype=float)
+    split_values: list[np.ndarray] = []
+    for split_seed in split_seeds:
+        subset = bootstrap.loc[bootstrap["split_seed"].eq(split_seed), ["replicate", metric]].copy()
+        if subset.empty:
+            return np.empty(0, dtype=float)
+        if subset["replicate"].duplicated().any():
+            raise ValueError(f"duplicate bootstrap replicate for split {split_seed}")
+        subset = subset.sort_values("replicate", kind="stable")
+        split_values.append(subset[metric].to_numpy(dtype=float))
+    n_replicates = min(len(values) for values in split_values)
+    if n_replicates == 0:
+        return np.empty(0, dtype=float)
+    aligned = np.vstack([values[:n_replicates] for values in split_values])
+    complete = np.isfinite(aligned).all(axis=0)
+    return aligned[:, complete].mean(axis=0)
+
+
 def summarize_split(test: pd.DataFrame, calibration: pd.DataFrame, seed: int, n_bins: int) -> tuple[pd.DataFrame, dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     summary: list[dict[str, Any]] = []
@@ -447,7 +481,8 @@ def run(root: Path, *, n_bins: int = 10, bootstrap_replicates: int = 1000, seeds
     summary_with_ci: list[dict[str, Any]] = []
     for (predictor, method), group in summary_frame.groupby(["predictor", "method"], sort=True):
         boot = bootstrap_frame.loc[(bootstrap_frame["predictor"].eq(predictor)) & (bootstrap_frame["method"].eq(method))]
-        row = {"predictor": predictor, "method": method, "method_label": METHOD_LABELS[method], "n_splits": int(group["split_seed"].nunique())}
+        split_seeds = sorted(group["split_seed"].astype(int).unique().tolist())
+        row = {"predictor": predictor, "method": method, "method_label": METHOD_LABELS[method], "n_splits": int(len(split_seeds))}
         for metric in (
             "contextual_grouping_loss",
             "between_environment_risk_variance",
@@ -457,11 +492,16 @@ def run(root: Path, *, n_bins: int = 10, bootstrap_replicates: int = 1000, seeds
             "matched_confidence_cross_minus_same_risk_gap",
             "confidence_bin_weighted_max_environment_risk_gap",
         ):
-            row[f"mean_{metric}"] = float(group[metric].mean())
-            values = boot[metric].to_numpy(dtype=float)
-            finite_values = values[np.isfinite(values)]
-            row[f"{metric}_ci_lower"] = float(np.quantile(finite_values, 0.025)) if len(finite_values) else float("nan")
-            row[f"{metric}_ci_upper"] = float(np.quantile(finite_values, 0.975)) if len(finite_values) else float("nan")
+            point_values = group[metric].to_numpy(dtype=float)
+            if np.isfinite(point_values).all():
+                row[f"mean_{metric}"] = float(point_values.mean())
+                replicate_means = _replicate_wise_bootstrap_means(boot, metric, split_seeds)
+            else:
+                row[f"mean_{metric}"] = float("nan")
+                replicate_means = np.empty(0, dtype=float)
+            row[f"{metric}_ci_lower"] = float(np.quantile(replicate_means, 0.025)) if len(replicate_means) else float("nan")
+            row[f"{metric}_ci_upper"] = float(np.quantile(replicate_means, 0.975)) if len(replicate_means) else float("nan")
+        row["summary_bootstrap_estimand"] = "replicate-wise mean across split-level bootstrap estimates"
         summary_with_ci.append(row)
 
     manifest_dir = root / "artifacts/manifests"
@@ -481,6 +521,7 @@ def run(root: Path, *, n_bins: int = 10, bootstrap_replicates: int = 1000, seeds
         "matching": "same confidence bin; risk is measured after matching and never used to construct the match",
         "conditional_summary": "all summary heterogeneity metrics are weighted averages over calibration-defined confidence bins; no summary call is made on the unconditioned test frame",
         "bootstrap": "hierarchical environment-with-replacement then biological_instance_id-within-environment resampling; duplicate environment draws retain unique bootstrap cluster labels",
+        "summary_bootstrap": "for each metric, split-level bootstrap replicates are explicitly re-numbered within split, aligned by replicate order, averaged across splits, then used for the CI; incomplete non-finite aligned draws are excluded",
         "summary": summary_with_ci,
         "grouped_path": grouped_path.relative_to(root).as_posix(),
         "bootstrap_path": bootstrap_path.relative_to(root).as_posix(),

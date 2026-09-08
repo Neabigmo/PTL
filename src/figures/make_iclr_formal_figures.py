@@ -3,7 +3,8 @@
 Figure contract
 ---------------
 Core conclusion: reliability shifts under biological domain change and can be
-decomposed into difficulty, ranking and tested semantic components.
+decomposed into difficulty and ranking components, with the semantic
+interaction tested as a null rather than treated as established.
 Archetype: asymmetric mixed-modality quantitative composite.
 Backend: Python/matplotlib only; double-column vector exports plus 600-dpi
 previews. All panels read formal-v2 artifacts and never the historical pilot.

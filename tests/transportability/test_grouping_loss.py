@@ -3,6 +3,7 @@ import pandas as pd
 
 from scripts.run_formal_v2_grouping_loss import (
     _hierarchical_bootstrap_sample,
+    _replicate_wise_bootstrap_means,
     _summarize_conditional_grouped,
     assign_bins,
     summarize_split,
@@ -85,3 +86,18 @@ def test_grouping_bootstrap_keeps_duplicate_environment_draws_as_clusters() -> N
         "e1__bootstrap_cluster_0",
         "e1__bootstrap_cluster_1",
     }
+
+
+def test_summary_ci_uses_replicate_wise_split_means_not_pooled_replicates() -> None:
+    bootstrap = pd.DataFrame({
+        "split_seed": [11] * 4 + [22] * 4,
+        "replicate": [0, 1, 2, 3] * 2,
+        "metric": [0.0, 0.0, 10.0, 10.0, 100.0, 100.0, 110.0, 110.0],
+    })
+
+    aligned_means = _replicate_wise_bootstrap_means(bootstrap, "metric", [11, 22])
+    pooled = bootstrap["metric"].to_numpy(dtype=float)
+
+    np.testing.assert_array_equal(aligned_means, np.asarray([50.0, 50.0, 60.0, 60.0]))
+    assert np.quantile(aligned_means, 0.025) > np.quantile(pooled, 0.025)
+    assert np.quantile(aligned_means, 0.975) < np.quantile(pooled, 0.975)
