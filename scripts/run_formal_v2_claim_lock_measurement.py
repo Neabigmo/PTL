@@ -21,7 +21,6 @@ import h5py
 import numpy as np
 import pandas as pd
 from scipy import sparse
-from scipy.stats import rankdata
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -29,7 +28,11 @@ if str(ROOT) not in sys.path:
 
 from scripts.build_formal_v2_controlled_shift_oof import ENVIRONMENTS  # noqa: E402
 from scripts.run_formal_v2_claim_lock_source_frozen import PAIR_ORDER  # noqa: E402
-from src.evaluation.metrics import safe_rowwise_cosine  # noqa: E402
+from src.evaluation.metrics import (  # noqa: E402
+    _rowwise_centered_pearson,
+    _rowwise_rankdata_average,
+    safe_rowwise_cosine,
+)
 from src.evaluation.reordering_inference import normalized_rank_displacement  # noqa: E402
 from src.ptl.evaluation.fidelity import absolute_effect_rank_agreement  # noqa: E402
 
@@ -361,18 +364,129 @@ def _metric_risks_batch(prediction_members: np.ndarray, truths: np.ndarray) -> t
     systema = _systema_risk_batch(mean_versions, truths)
     mean_risk["systema_centroid_accuracy"] = systema[:, 0]
     member_risks["systema_centroid_accuracy"] = np.transpose(systema[:, 1:], (0, 1, 2))
-    for seed_index in range(n_seeds):
-        mean_risk["delta_cosine"][seed_index] = 1.0 - safe_rowwise_cosine(truths[seed_index], mean_prediction)
-        mean_risk["absolute_effect_rank_agreement"][seed_index] = 1.0 - absolute_effect_rank_agreement(truths[seed_index], mean_prediction)
+    # Rank each full seed chunk at once.  This is algebraically identical to
+    # the per-seed/member calls but avoids thousands of repeated 8,229-gene
+    # Python-level dispatches during the sensitivity audit.
+    rank_seed_chunk = 1 if _cuda_rank_available() else 5
+    for seed_start in range(0, n_seeds, rank_seed_chunk):
+        seed_end = min(seed_start + rank_seed_chunk, n_seeds)
+        truth_chunk = truths[seed_start:seed_end]
+        truth_flat = truth_chunk.reshape(-1, truth_chunk.shape[-1])
+        mean_flat = np.broadcast_to(mean_prediction, truth_chunk.shape).reshape(-1, truth_chunk.shape[-1])
+        mean_risk["delta_cosine"][seed_start:seed_end] = (1.0 - safe_rowwise_cosine(truth_flat, mean_flat)).reshape(seed_end - seed_start, n_labels)
+        true_abs = np.abs(truth_flat)
+        true_constant = np.max(np.abs(true_abs - true_abs[:, :1]), axis=1) <= 1e-8
+        rank_fn = _gpu_rank_rows_average if rank_seed_chunk == 1 else _rowwise_rankdata_average
+        true_rank = rank_fn(true_abs)
         for member_index in range(prediction_members.shape[1]):
             member = prediction_members[:, member_index, :]
-            member_risks["delta_cosine"][seed_index, member_index] = 1.0 - safe_rowwise_cosine(truths[seed_index], member)
-            member_risks["absolute_effect_rank_agreement"][seed_index, member_index] = 1.0 - absolute_effect_rank_agreement(truths[seed_index], member)
+            member_flat = np.broadcast_to(member, truth_chunk.shape).reshape(-1, truth_chunk.shape[-1])
+            member_risks["delta_cosine"][seed_start:seed_end, member_index] = (1.0 - safe_rowwise_cosine(truth_flat, member_flat)).reshape(seed_end - seed_start, n_labels)
+            pred_abs = np.abs(member_flat)
+            pred_constant = np.max(np.abs(pred_abs - pred_abs[:, :1]), axis=1) <= 1e-8
+            rank_agreement = _rowwise_centered_pearson(true_rank, rank_fn(pred_abs))
+            both_constant = true_constant & pred_constant
+            one_constant = true_constant ^ pred_constant
+            rank_agreement[one_constant] = 0.0
+            rank_agreement[both_constant] = 0.0
+            same_constant = both_constant & (np.max(np.abs(true_abs - pred_abs), axis=1) <= 1e-8)
+            rank_agreement[same_constant] = 1.0
+            member_risks["absolute_effect_rank_agreement"][seed_start:seed_end, member_index] = (1.0 - np.clip(rank_agreement, -1.0, 1.0)).reshape(seed_end - seed_start, n_labels)
+        pred_abs = np.abs(mean_flat)
+        pred_constant = np.max(np.abs(pred_abs - pred_abs[:, :1]), axis=1) <= 1e-8
+        rank_agreement = _rowwise_centered_pearson(true_rank, rank_fn(pred_abs))
+        both_constant = true_constant & pred_constant
+        one_constant = true_constant ^ pred_constant
+        rank_agreement[one_constant] = 0.0
+        rank_agreement[both_constant] = 0.0
+        same_constant = both_constant & (np.max(np.abs(true_abs - pred_abs), axis=1) <= 1e-8)
+        rank_agreement[same_constant] = 1.0
+        mean_risk["absolute_effect_rank_agreement"][seed_start:seed_end] = (1.0 - np.clip(rank_agreement, -1.0, 1.0)).reshape(seed_end - seed_start, n_labels)
     return mean_risk, member_risks
 
 
 def _d(left: np.ndarray, right: np.ndarray) -> float:
     return float(np.nanmean(normalized_rank_displacement(left, right)))
+
+
+def _rank_rows_average(values: np.ndarray) -> np.ndarray:
+    """Tie-aware row ranks equivalent to scipy.stats.rankdata(axis=1)."""
+
+    values = np.asarray(values)
+    if values.ndim != 2:
+        raise ValueError("row ranking expects a two-dimensional array")
+    n_rows, n_columns = values.shape
+    if n_columns == 0:
+        return np.empty(values.shape, dtype=np.float64)
+    # The rank value of an equal-valued group does not depend on the order
+    # within that group, so quicksort is an exact faster replacement here.
+    order = np.argsort(values, axis=1, kind="quicksort")
+    sorted_values = np.take_along_axis(values, order, axis=1)
+    positions = np.broadcast_to(np.arange(n_columns), (n_rows, n_columns))
+    starts = np.ones((n_rows, n_columns), dtype=bool)
+    if n_columns > 1:
+        starts[:, 1:] = sorted_values[:, 1:] != sorted_values[:, :-1]
+    group_starts = np.maximum.accumulate(np.where(starts, positions, 0), axis=1)
+    ends = np.empty_like(starts)
+    if n_columns > 1:
+        ends[:, :-1] = starts[:, 1:]
+    ends[:, -1] = True
+    group_ends = np.minimum.accumulate(
+        np.where(ends, positions, n_columns - 1)[:, ::-1], axis=1
+    )[:, ::-1]
+    sizes = group_ends - group_starts + 1.0
+    sorted_ranks = group_starts + 1.0 + (sizes - 1.0) / 2.0
+    ranks = np.empty((n_rows, n_columns), dtype=np.float64)
+    np.put_along_axis(ranks, order, sorted_ranks, axis=1)
+    return ranks
+
+
+def _gpu_rank_rows_average(values: np.ndarray) -> np.ndarray:
+    """Exact tie-aware ranks on CUDA for the float32 audit tensors."""
+    values = np.asarray(values)
+    if values.ndim != 2 or values.dtype != np.float32 or not np.isfinite(values).all():
+        return _rank_rows_average(values)
+    try:
+        import cupy as cp
+        if cp.cuda.runtime.getDeviceCount() < 1:
+            return _rank_rows_average(values)
+        n_rows, n_columns = values.shape
+        if n_columns == 0:
+            return np.empty(values.shape, dtype=np.float64)
+        gpu_values = cp.asarray(values, dtype=cp.float32)
+        # CuPy's default sort is exact for this purpose; ordering inside an
+        # equal-valued tie group does not change its average rank.
+        order = cp.argsort(gpu_values, axis=1)
+        sorted_values = cp.take_along_axis(gpu_values, order, axis=1)
+        positions = cp.broadcast_to(cp.arange(n_columns, dtype=cp.int32), (n_rows, n_columns))
+        starts = cp.ones((n_rows, n_columns), dtype=cp.bool_)
+        if n_columns > 1:
+            starts[:, 1:] = sorted_values[:, 1:] != sorted_values[:, :-1]
+        group_starts = cp.maximum.accumulate(cp.where(starts, positions, 0), axis=1)
+        ends = cp.empty_like(starts)
+        if n_columns > 1:
+            ends[:, :-1] = starts[:, 1:]
+        ends[:, -1] = True
+        group_ends = cp.minimum.accumulate(
+            cp.where(ends, positions, n_columns - 1)[:, ::-1], axis=1
+        )[:, ::-1]
+        sizes = group_ends - group_starts + 1.0
+        sorted_ranks = group_starts + 1.0 + (sizes - 1.0) / 2.0
+        ranks = cp.empty((n_rows, n_columns), dtype=cp.float64)
+        cp.put_along_axis(ranks, order, sorted_ranks, axis=1)
+        result = cp.asnumpy(ranks)
+        cp.get_default_memory_pool().free_all_blocks()
+        return result
+    except (ImportError, RuntimeError, MemoryError):
+        return _rank_rows_average(values)
+
+
+def _cuda_rank_available() -> bool:
+    try:
+        import cupy as cp
+        return cp.cuda.runtime.getDeviceCount() > 0
+    except (ImportError, RuntimeError):
+        return False
 
 
 def _bootstrap_floor(
@@ -390,47 +504,39 @@ def _bootstrap_floor(
     n = inputs[0]["cross_left_a"].shape[0]
     selected_labels = rng.integers(0, n, size=(n_draws, n))
 
-    def batch_d(left: np.ndarray, right: np.ndarray, indices: np.ndarray) -> np.ndarray:
-        sampled_left = left[indices]
-        sampled_right = right[indices]
-        left_rank = rankdata(sampled_left, axis=1, method="average")
-        right_rank = rankdata(sampled_right, axis=1, method="average")
+    def sampled_values(field: str, member: int | None = None) -> np.ndarray:
+        result = np.empty((n_draws, n), dtype=np.float64)
+        for item_index, item in enumerate(inputs):
+            mask = selected_items == item_index
+            values = item[field] if member is None else item[field][member]
+            result[mask] = np.asarray(values, dtype=np.float64)[selected_labels[mask]]
+        return result
+
+    def batch_d(left: np.ndarray, right: np.ndarray) -> np.ndarray:
+        left_rank = _rank_rows_average(left)
+        right_rank = _rank_rows_average(right)
         return np.mean(np.abs(left_rank - right_rank), axis=1) / float(n - 1)
 
-    point_cross = np.empty(n_draws, dtype=float)
-    point_meas = np.empty(n_draws, dtype=float)
+    point_cross = 0.5 * (
+        batch_d(sampled_values("cross_left_a"), sampled_values("cross_right_a"))
+        + batch_d(sampled_values("cross_left_b"), sampled_values("cross_right_b"))
+    )
+    point_meas = np.maximum(
+        batch_d(sampled_values("meas_left_a"), sampled_values("meas_left_b")),
+        batch_d(sampled_values("meas_right_a"), sampled_values("meas_right_b")),
+    )
     point_joint = np.empty(n_draws, dtype=float)
-    for item_index, item in enumerate(inputs):
-        draw_indices = np.flatnonzero(selected_items == item_index)
-        if len(draw_indices) == 0:
-            continue
-        label_indices = selected_labels[draw_indices]
-        cross = 0.5 * (
-            batch_d(item["cross_left_a"], item["cross_right_a"], label_indices)
-            + batch_d(item["cross_left_b"], item["cross_right_b"], label_indices)
+    for model_choice, (member_a, member_b) in enumerate(MODEL_PAIRS):
+        draw_mask = member_choices == model_choice
+        joint_left = 0.5 * (
+            batch_d(sampled_values("joint_left_a", member_a)[draw_mask], sampled_values("joint_left_b", member_b)[draw_mask])
+            + batch_d(sampled_values("joint_left_a", member_b)[draw_mask], sampled_values("joint_left_b", member_a)[draw_mask])
         )
-        meas = np.maximum(
-            batch_d(item["meas_left_a"], item["meas_left_b"], label_indices),
-            batch_d(item["meas_right_a"], item["meas_right_b"], label_indices),
+        joint_right = 0.5 * (
+            batch_d(sampled_values("joint_right_a", member_a)[draw_mask], sampled_values("joint_right_b", member_b)[draw_mask])
+            + batch_d(sampled_values("joint_right_a", member_b)[draw_mask], sampled_values("joint_right_b", member_a)[draw_mask])
         )
-        joint = np.empty(len(draw_indices), dtype=float)
-        for model_choice, (member_a, member_b) in enumerate(MODEL_PAIRS):
-            member_draws = np.flatnonzero(member_choices[draw_indices] == model_choice)
-            if len(member_draws) == 0:
-                continue
-            member_labels = label_indices[member_draws]
-            joint_left = 0.5 * (
-                batch_d(item["joint_left_a"][member_a], item["joint_left_b"][member_b], member_labels)
-                + batch_d(item["joint_left_a"][member_b], item["joint_left_b"][member_a], member_labels)
-            )
-            joint_right = 0.5 * (
-                batch_d(item["joint_right_a"][member_a], item["joint_right_b"][member_b], member_labels)
-                + batch_d(item["joint_right_a"][member_b], item["joint_right_b"][member_a], member_labels)
-            )
-            joint[member_draws] = np.maximum(joint_left, joint_right)
-        point_cross[draw_indices] = cross
-        point_meas[draw_indices] = meas
-        point_joint[draw_indices] = joint
+        point_joint[draw_mask] = np.maximum(joint_left, joint_right)
     delta_meas = point_cross - point_meas
     delta_joint = point_cross - point_joint
 
@@ -484,8 +590,19 @@ def _guide_coverage(metadata: pd.DataFrame, labels: list[str]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def run(root: Path, *, seed_chunk: int = 3, draws: int = 2000) -> dict[str, Any]:
+def run(
+    root: Path,
+    *,
+    seed_chunk: int = 3,
+    draws: int = 2000,
+    minimum_cells: int = MIN_CELLS_PRIMARY,
+    output_stem: str = "formal_v2_claim_lock_measurement",
+) -> dict[str, Any]:
     root = root.resolve()
+    if int(minimum_cells) < 1:
+        raise ValueError("minimum_cells must be positive")
+    if not output_stem or Path(output_stem).name != output_stem:
+        raise ValueError("output_stem must be a simple file stem")
     payload = np.load(root / PREDICTION_PATH.relative_to(ROOT), allow_pickle=False)
     labels = payload["perturbation_label"].astype(str).tolist()
     predictions = payload["prediction"].astype(np.float32, copy=False)
@@ -493,14 +610,15 @@ def run(root: Path, *, seed_chunk: int = 3, draws: int = 2000) -> dict[str, Any]
     metadata = _load_metadata(root, labels)
     metadata_by_row = metadata.set_index("row_index")
     groups = _groups(metadata, labels)
-    budgets = _cell_budgets(groups, labels)
+    budgets = _cell_budgets(groups, labels, minimum=int(minimum_cells))
     if not budgets:
         raise ValueError("no primary matched-budget perturbation rows passed the minimum cell threshold")
     panel_positions = _load_panel_positions(root, panel)
     guide_frame = _guide_coverage(metadata, labels)
     output_dir = root / "artifacts/manifests"
     output_dir.mkdir(parents=True, exist_ok=True)
-    guide_path = output_dir / "formal_v2_claim_lock_guide_composition_coverage.csv"
+    guide_suffix = "" if output_stem == "formal_v2_claim_lock_measurement" else output_stem.removeprefix("formal_v2_claim_lock_measurement")
+    guide_path = output_dir / f"formal_v2_claim_lock_guide_composition_coverage{guide_suffix}.csv"
     guide_frame.to_csv(guide_path, index=False)
 
     seed_outputs: dict[int, dict[tuple[str, str, int, int], np.ndarray]] = {}
@@ -599,6 +717,7 @@ def run(root: Path, *, seed_chunk: int = 3, draws: int = 2000) -> dict[str, Any]
                             "member_pair": f"{member_a},{member_b}",
                             "n_perturbations": int(len(indices)),
                             "min_cells_primary": MIN_CELLS_PRIMARY,
+                            "eligibility_min_cells": int(minimum_cells),
                             "sensitivity_min_cells": MIN_CELLS_SENSITIVITY,
                             "cross_d": cross_d,
                             "measurement_left_d": meas_left,
@@ -617,7 +736,7 @@ def run(root: Path, *, seed_chunk: int = 3, draws: int = 2000) -> dict[str, Any]
                 key = (source, left, right, metric)
                 bootstrap_inputs[key] = inputs_by_metric[metric]
 
-    floor_path = output_dir / "formal_v2_claim_lock_measurement_floors.csv"
+    floor_path = output_dir / f"{output_stem}_floors.csv"
     pd.DataFrame(floor_rows).to_csv(floor_path, index=False)
     summary_rows: list[dict[str, Any]] = []
     for key, inputs in bootstrap_inputs.items():
@@ -636,6 +755,7 @@ def run(root: Path, *, seed_chunk: int = 3, draws: int = 2000) -> dict[str, Any]
             "n_split_seeds": len(inputs),
             "n_perturbations_primary_min": int(min(item["cross_left_a"].shape[0] for item in inputs)),
             "min_cells_primary": MIN_CELLS_PRIMARY,
+            "eligibility_min_cells": int(minimum_cells),
             "sensitivity_min_cells": MIN_CELLS_SENSITIVITY,
             **stats,
             "bootstrap_unit": "matched perturbation label; each draw also selects one of 30 measurement seeds and one unordered model-member pair",
@@ -644,19 +764,30 @@ def run(root: Path, *, seed_chunk: int = 3, draws: int = 2000) -> dict[str, Any]
             "metric_entrypoint": "delta_cosine; third_party/systema/evaluation/centroid_accuracy.py-equivalent chunked distance; absolute_effect_rank_agreement",
             "refit_per_metric": 0,
         })
-    summary_path = output_dir / "formal_v2_claim_lock_measurement_summary.csv"
+    summary_path = (
+        output_dir / f"{output_stem}.csv"
+        if output_stem.endswith("sensitivity40")
+        else output_dir / f"{output_stem}_summary.csv"
+    )
     pd.DataFrame(summary_rows).to_csv(summary_path, index=False)
-    report_path = output_dir / "formal_v2_claim_lock_measurement.json"
+    report_path = output_dir / f"{output_stem}.json"
     report = {
         "schema_version": 1,
         "benchmark_id": "ptl_context_v2_frangieh_claim_lock_measurement_v1",
-        "status": "matched_budget_measurement_and_joint_floors_executed",
+        "status": (
+            "matched_budget_measurement_and_joint_floors_sensitivity40_executed"
+            if int(minimum_cells) == MIN_CELLS_SENSITIVITY
+            else "matched_budget_measurement_and_joint_floors_executed"
+        ),
+        "analysis_label": "sensitivity_min40" if int(minimum_cells) == MIN_CELLS_SENSITIVITY else "primary_min20",
         "raw_source": "data/raw/scperturb_v1.4/FrangiehIzar2021_RNA.h5ad",
         "raw_shape": [218331, 23712],
         "qc_contract": "existing Frangieh preprocessing contract: target_sum=10000, log1p, min_genes=700, min_counts=1500, percent_mito<=25, perturbation_2 conditions, fixed 8229-gene panel",
         "split_seeds": list(SPLIT_SEEDS),
         "min_cells_primary": MIN_CELLS_PRIMARY,
+        "eligibility_min_cells": int(minimum_cells),
         "sensitivity_min_cells": MIN_CELLS_SENSITIVITY,
+        "sensitivity_executed": bool(int(minimum_cells) == MIN_CELLS_SENSITIVITY),
         "common_perturbation_count": len(labels),
         "primary_budget_definition": "floor(min(n_p_e1,n_p_e2)/2) per half and per ordered target pair; controls matched analogously",
         "measurement_floor_definition": "fixed prediction versus truth half A/B",
@@ -666,18 +797,13 @@ def run(root: Path, *, seed_chunk: int = 3, draws: int = 2000) -> dict[str, Any]
         "summary_rows": summary_path.relative_to(root).as_posix(),
         "guide_coverage": guide_path.relative_to(root).as_posix(),
         "metric_policy": "three metrics only; same source-frozen prediction vectors, matched labels, truth halves, panel and bootstrap unit; no metric-specific refit",
-        "status_note": "full-size optional sensitivity was not used as a headline and does not block the matched-budget primary lock",
+        "status_note": (
+            "n>=40 matched-budget sensitivity uses the same source-frozen predictions, split seeds, metrics and paired bootstrap; it is secondary."
+            if int(minimum_cells) == MIN_CELLS_SENSITIVITY
+            else "full-size optional sensitivity was not used as a headline and does not block the matched-budget primary lock"
+        ),
     }
     report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    replication_path = output_dir / "formal_v2_claim_lock_replication_boundary.json"
-    replication_path.write_text(json.dumps({
-        "schema_version": 1,
-        "benchmark_id": "ptl_context_v2_frangieh_claim_lock_v1",
-        "status": "no_valid_independent_matched_context_replication_available",
-        "boundary": "Tian provides only one shared label and the existing head-to-head CRISPRko/CRISPRi artifact is a persistence baseline, not a same-source-predictor matched outcome surface",
-        "policy": "do not force a replication claim; report the boundary explicitly and do not claim universality",
-        "optional_candidate": "GEARS remains optional only if a legal same-predictor/source-outcome contract is established; no new model training was introduced",
-    }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return report
 
 
@@ -686,8 +812,16 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--seed-chunk", type=int, default=3)
     parser.add_argument("--draws", type=int, default=2000)
+    parser.add_argument("--min-cells", type=int, default=MIN_CELLS_PRIMARY)
+    parser.add_argument("--output-stem", default="formal_v2_claim_lock_measurement")
     args = parser.parse_args()
-    result = run(args.root.resolve(), seed_chunk=args.seed_chunk, draws=args.draws)
+    result = run(
+        args.root.resolve(),
+        seed_chunk=args.seed_chunk,
+        draws=args.draws,
+        minimum_cells=args.min_cells,
+        output_stem=args.output_stem,
+    )
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
 

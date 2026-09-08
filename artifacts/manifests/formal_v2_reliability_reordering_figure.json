@@ -7,9 +7,10 @@
     "artifacts/source_data/frangieh_source_frozen_predictions.npz",
     "artifacts/manifests/formal_v2_claim_lock_source_frozen_reordering.csv",
     "artifacts/manifests/formal_v2_claim_lock_measurement_summary.csv",
-    "artifacts/manifests/formal_v2_controlled_shift_oof_predictions.csv",
-    "artifacts/manifests/formal_v2_controlled_shift_oof_inference.csv",
-    "artifacts/manifests/formal_v2_controlled_shift_noise_floor.csv"
+    "artifacts/manifests/formal_v2_claim_lock_measurement_sensitivity40.csv",
+    "artifacts/manifests/formal_v2_controlled_shift_noise_floor.csv",
+    "artifacts/manifests/reordering_replication_candidate_registry.json",
+    "artifacts/manifests/formal_v2_claim_lock_guide_id_semantics.json"
   ],
   "outputs": [
     "results/figures/iclr_formal/formal_fig1_reliability_reordering.svg",

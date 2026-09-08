@@ -115,17 +115,16 @@ def _primary_pair_predictions(left: str, right: str) -> pd.DataFrame:
 
 
 def make_figure() -> tuple[list[str], dict[str, object]]:
-    inference = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_controlled_shift_oof_inference.csv")
     noise_floor = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_controlled_shift_noise_floor.csv")
     source_frozen = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_claim_lock_source_frozen_reordering.csv")
     measurement = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_claim_lock_measurement_summary.csv")
 
     fig = plt.figure(figsize=(7.25, 6.35))
     grid = fig.add_gridspec(2, 2, width_ratios=[1.0, 1.05], height_ratios=[1.0, 1.05], hspace=0.55, wspace=0.40)
+    pairs = list(PAIR_LABELS.values())
 
     ax = fig.add_subplot(grid[0, 0])
-    panel(ax, "a", "Frozen predictors still reorder risk")
-    pairs = list(PAIR_LABELS.values())
+    panel(ax, "a", "Frozen predictors displace risk ranks")
     x = np.arange(len(pairs))
     source_markers = {"frangieh_melanoma_control": "o", "frangieh_melanoma_coculture": "s", "frangieh_melanoma_ifng": "^"}
     source_offsets = {"frangieh_melanoma_control": -0.12, "frangieh_melanoma_coculture": 0.0, "frangieh_melanoma_ifng": 0.12}
@@ -153,8 +152,7 @@ def make_figure() -> tuple[list[str], dict[str, object]]:
 
     ax = fig.add_subplot(grid[0, 1])
     panel(ax, "b", "Matched perturbations cross risk ranks")
-    left, right = "frangieh_melanoma_control", "frangieh_melanoma_ifng"
-    matched = _primary_pair_predictions(left, right)
+    matched = _primary_pair_predictions("frangieh_melanoma_control", "frangieh_melanoma_ifng")
     for _, row in matched.iterrows():
         displacement = row["rank_right"] - row["rank_left"]
         color = CORAL if displacement > 0 else BLUE if displacement < 0 else "#B7C5CB"
@@ -171,55 +169,55 @@ def make_figure() -> tuple[list[str], dict[str, object]]:
     ], fontsize=5.5, loc="lower right")
 
     ax = fig.add_subplot(grid[1, 0])
-    panel(ax, "c", "Joint-noise floor blurs excess")
+    panel(ax, "c", "Cross-context shift meets noise components")
     metric_labels = {"delta_cosine": "delta\ncosine", "systema_centroid_accuracy": "Systema\ncentroid", "absolute_effect_rank_agreement": "absolute\neffect rank"}
     metric_order = list(metric_labels)
+    component_specs = [("cross_d", "cross", CORAL, -0.24), ("measurement_floor_d", "measurement", BLUE, -0.08), ("joint_floor_d", "joint", PURPLE, 0.08)]
     for metric_index, metric in enumerate(metric_order):
-        rows = measurement.loc[measurement["metric"].eq(metric)]
-        for _, row in rows.iterrows():
-            value = float(row["delta_joint"])
-            low = value - float(row["delta_joint_ci_low"])
-            high = float(row["delta_joint_ci_high"]) - value
-            ax.errorbar(metric_index + np.random.default_rng(int(row["bootstrap_seed"])) .uniform(-0.18, 0.18), value,
-                        yerr=[[low], [high]], fmt="o", ms=2.8, color=SLATE, ecolor=SLATE, elinewidth=0.65,
-                        capsize=1.1, alpha=0.55, zorder=3)
-    ax.axhline(0, color=NAVY, lw=1.0)
+        rows = measurement.loc[measurement["metric"].eq(metric)].reset_index(drop=True)
+        for key, label, color, offset in component_specs:
+            values = rows[key].to_numpy(dtype=float)
+            ax.scatter(np.full(len(values), metric_index + offset), values, s=11, alpha=0.25, color=color, edgecolor="white", linewidth=0.2)
+            ax.plot([metric_index + offset - 0.07, metric_index + offset + 0.07], [np.mean(values), np.mean(values)], color=color, lw=2.0, solid_capstyle="round")
+        model_rows = noise_floor.loc[noise_floor["environment_id"].isin(rows["source_environment_id"])]
+        if not model_rows.empty:
+            ax.scatter(metric_index + 0.24, model_rows["normalized_rank_displacement_mean"].mean(), marker="D", s=22, color=GOLD, edgecolor="white", linewidth=0.35, zorder=4)
+    ax.axhline(0, color=NAVY, lw=0.8)
     ax.set_xticks(np.arange(len(metric_order)), list(metric_labels.values()), fontsize=5.7)
-    ax.set_ylabel("cross $D$ − joint-floor $D$")
-    ax.set_ylim(-0.12, 0.06)
-    ax.text(0.02, 0.96, "30 raw-cell split seeds · 2,000 paired label bootstrap draws", transform=ax.transAxes, va="top", fontsize=5.5, color=SLATE)
-    ax.text(0.02, 0.04, "positive values would support excess cross-context signal; intervals mostly cross 0", transform=ax.transAxes, fontsize=5.2, color=SLATE)
+    ax.set_ylabel("rank displacement $D$")
+    ax.set_ylim(0, 0.38)
+    ax.legend(handles=[mpl.lines.Line2D([], [], marker="o", color=color, lw=2, markersize=3.5, label=label) for _, label, color, _ in component_specs] +
+              [mpl.lines.Line2D([], [], marker="D", color=GOLD, lw=0, markersize=4, label="model-only rank floor")], fontsize=5.0, loc="upper left", ncol=2)
+    ax.text(0.02, 0.04, "points = source/pair; bars = macro means · model floor is metric-agnostic rank noise", transform=ax.transAxes, fontsize=5.1, color=SLATE)
 
     ax = fig.add_subplot(grid[1, 1])
-    panel(ax, "d", "Confidence tracks less than the null")
-    positions = np.arange(len(pairs))
-    for position, pair_label in zip(positions, pairs):
-        row = inference.loc[
-            inference.apply(lambda item: PAIR_LABELS.get((item["left_environment_id"], item["right_environment_id"])) == pair_label, axis=1)
-        ].iloc[0]
-        observed = float(row["confidence_tracking_rate"])
-        observed_low = float(row["confidence_tracking_rate_ci_low"])
-        observed_high = float(row["confidence_tracking_rate_ci_high"])
-        null = float(row["permutation_null_mean"])
-        null_low = float(row["permutation_null_ci_low"])
-        null_high = float(row["permutation_null_ci_high"])
-        ax.errorbar(position - 0.075, observed, yerr=[[observed - observed_low], [observed_high - observed]],
-                    fmt="o", ms=5.0, color=PAIR_COLORS[pair_label], ecolor=PAIR_COLORS[pair_label],
-                    elinewidth=1.1, capsize=2.0, markeredgecolor="white", markeredgewidth=0.45, zorder=4)
-        ax.errorbar(position + 0.075, null, yerr=[[null - null_low], [null_high - null]],
-                    fmt="s", ms=4.0, color=SLATE, ecolor=SLATE, elinewidth=1.0, capsize=2.0,
-                    markeredgecolor="white", markeredgewidth=0.4, zorder=3)
-    ax.set_xticks(positions, pairs, rotation=22, ha="right", fontsize=5.7)
-    ax.set_ylabel("confidence tracking rate")
-    ax.set_ylim(0, 0.5)
-    ax.legend(handles=[
-        mpl.lines.Line2D([], [], color=BLUE, marker="o", lw=0, markersize=4.5, label="observed"),
-        mpl.lines.Line2D([], [], color=SLATE, marker="s", lw=0, markersize=4.0, label="permutation null"),
-    ], fontsize=5.4, loc="upper right")
-    ax.text(0.02, 0.96, "95% label bootstrap / permutation intervals", transform=ax.transAxes, va="top", fontsize=5.5, color=SLATE)
-    ax.text(0.02, 0.04, "null shuffles confidence within each environment", transform=ax.transAxes, fontsize=5.5, color=SLATE)
+    panel(ax, "d", "Joint-floor excess is not consistently positive")
+    pair_keys = list(PAIR_LABELS)
+    pair_short = [PAIR_LABELS[key].replace("frangieh_melanoma_", "") for key in pair_keys]
+    metric_colors = {"delta_cosine": CORAL, "systema_centroid_accuracy": BLUE, "absolute_effect_rank_agreement": PURPLE}
+    metric_names = {"delta_cosine": "delta cosine", "systema_centroid_accuracy": "Systema centroid", "absolute_effect_rank_agreement": "absolute-effect rank"}
+    offsets = {"delta_cosine": 0.22, "systema_centroid_accuracy": 0.0, "absolute_effect_rank_agreement": -0.22}
+    for pair_index, (left, right) in enumerate(pair_keys):
+        for metric in metric_order:
+            rows = measurement.loc[
+                measurement["left_target_environment_id"].eq(left)
+                & measurement["right_target_environment_id"].eq(right)
+                & measurement["metric"].eq(metric)
+            ]
+            for _, row in rows.iterrows():
+                value = float(row["delta_joint"])
+                ax.errorbar(pair_index + offsets[metric], value,
+                            yerr=[[value - float(row["delta_joint_ci_low"])], [float(row["delta_joint_ci_high"]) - value]],
+                            fmt="o", ms=3.4, color=metric_colors[metric], ecolor=metric_colors[metric], elinewidth=0.65,
+                            capsize=1.2, alpha=0.65, markeredgecolor="white", markeredgewidth=0.25)
+    ax.axhline(0, color=NAVY, lw=0.9)
+    ax.set_xticks(np.arange(len(pair_keys)), pair_short, rotation=22, ha="right", fontsize=5.5)
+    ax.set_ylabel(r"$Delta_{joint}$ = cross $D$ − joint-floor $D$")
+    ax.set_ylim(-0.12, 0.08)
+    ax.legend(handles=[mpl.lines.Line2D([], [], marker="o", color=color, lw=0, markersize=4, label=metric_names[metric]) for metric, color in metric_colors.items()], fontsize=5.1, loc="upper left")
+    ax.text(0.02, 0.04, "30 raw-cell split seeds · 2,000 paired label-bootstrap draws", transform=ax.transAxes, fontsize=5.2, color=SLATE)
 
-    fig.suptitle("Biological context can reorder reliability, but the excess signal is not noise-locked", x=0.03, y=1.015, ha="left", fontsize=11.2, fontweight="bold", color=NAVY)
+    fig.suptitle("Measurement reliability limits claims of context-dependent reordering", x=0.03, y=1.015, ha="left", fontsize=11.2, fontweight="bold", color=NAVY)
     outputs = save_figure(fig, ROOT / "results/figures/iclr_formal/formal_fig1_reliability_reordering")
     manifest = {
         "schema_version": 1,
@@ -230,9 +228,10 @@ def make_figure() -> tuple[list[str], dict[str, object]]:
             "artifacts/source_data/frangieh_source_frozen_predictions.npz",
             "artifacts/manifests/formal_v2_claim_lock_source_frozen_reordering.csv",
             "artifacts/manifests/formal_v2_claim_lock_measurement_summary.csv",
-            "artifacts/manifests/formal_v2_controlled_shift_oof_predictions.csv",
-            "artifacts/manifests/formal_v2_controlled_shift_oof_inference.csv",
+            "artifacts/manifests/formal_v2_claim_lock_measurement_sensitivity40.csv",
             "artifacts/manifests/formal_v2_controlled_shift_noise_floor.csv",
+            "artifacts/manifests/reordering_replication_candidate_registry.json",
+            "artifacts/manifests/formal_v2_claim_lock_guide_id_semantics.json",
         ],
         "outputs": outputs,
     }

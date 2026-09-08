@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "backend": "python_matplotlib",
-  "core_conclusion": "Source-frozen biological conditions can reorder perturbation reliability, but matched raw-cell measurement-plus-model noise does not provide a stable excess signal; coarse response-program displacement is not a stable rank proxy, confidence tracking is below a label-preserving permutation null, monotonic recalibration cannot repair the ordering, and prospective transfer remains heterogeneous",
+  "core_conclusion": "Source-frozen biological conditions show substantial observed rank displacement, but matched raw-cell measurement-plus-model noise does not identify a stable context-specific excess; replication eligibility is bounded before risk evaluation, guide semantics are explicit, monotonic recalibration cannot repair the ordering, and prospective transfer remains heterogeneous",
   "source_provenance": {
     "primary_trained_predictor_evidence": "Frangieh condition ladder with formal out-of-fold predictor evaluation",
     "orthogonal_external_extension": "matched CRISPRko/CRISPRi guide-level SCEPTRE effects evaluated with a source-response persistence baseline; not pooled with the formal predictor benchmark"
@@ -49,7 +49,11 @@
     "artifacts/manifests/formal_v2_claim_lock_measurement.json",
     "artifacts/manifests/formal_v2_claim_lock_measurement_floors.csv",
     "artifacts/manifests/formal_v2_claim_lock_measurement_summary.csv",
+    "artifacts/manifests/formal_v2_claim_lock_measurement_sensitivity40.csv",
     "artifacts/manifests/formal_v2_claim_lock_guide_composition_coverage.csv",
+    "artifacts/manifests/formal_v2_claim_lock_guide_id_semantics.json",
+    "artifacts/manifests/reordering_replication_candidate_registry.csv",
+    "artifacts/manifests/reordering_replication_candidate_registry.json",
     "artifacts/manifests/formal_v2_claim_lock_replication_boundary.json",
     "artifacts/manifests/head_to_head_controlled_shift_ladder.csv",
     "artifacts/manifests/head_to_head_controlled_shift_ladder_summary.csv",
@@ -69,16 +73,16 @@
       "results/figures/iclr_formal/formal_fig1_reliability_reordering.tiff"
     ],
     "figure_2": [
-      "results/figures/iclr_formal/formal_fig2_response_reprogramming.svg",
-      "results/figures/iclr_formal/formal_fig2_response_reprogramming.pdf",
-      "results/figures/iclr_formal/formal_fig2_response_reprogramming.png",
-      "results/figures/iclr_formal/formal_fig2_response_reprogramming.tiff"
+      "results/figures/iclr_formal/formal_fig2_measurement_reliability.svg",
+      "results/figures/iclr_formal/formal_fig2_measurement_reliability.pdf",
+      "results/figures/iclr_formal/formal_fig2_measurement_reliability.png",
+      "results/figures/iclr_formal/formal_fig2_measurement_reliability.tiff"
     ],
     "figure_3": [
-      "results/figures/iclr_formal/formal_fig3_recalibration_counterfactual.svg",
-      "results/figures/iclr_formal/formal_fig3_recalibration_counterfactual.pdf",
-      "results/figures/iclr_formal/formal_fig3_recalibration_counterfactual.png",
-      "results/figures/iclr_formal/formal_fig3_recalibration_counterfactual.tiff"
+      "results/figures/iclr_formal/formal_fig3_replication_boundary.svg",
+      "results/figures/iclr_formal/formal_fig3_replication_boundary.pdf",
+      "results/figures/iclr_formal/formal_fig3_replication_boundary.png",
+      "results/figures/iclr_formal/formal_fig3_replication_boundary.tiff"
     ],
     "figure_4": [
       "results/figures/iclr_formal/formal_fig4_deployment_consequences.svg",

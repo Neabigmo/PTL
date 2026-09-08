@@ -52,7 +52,8 @@ def test_canonical_split_and_gene_contracts_are_current() -> None:
 def test_figure_manifest_sources_exist_and_conclusion_is_cautious() -> None:
     payload = json.loads((MANIFESTS / "formal_v2_figure_manifest.json").read_text(encoding="utf-8"))
     conclusion = payload["core_conclusion"].lower()
-    assert "can reorder" in conclusion
+    assert "rank displacement" in conclusion
+    assert "context-specific excess" in conclusion
     assert "heterogeneous" in conclusion
     for relative in payload["source_data"]:
         assert (ROOT / relative).is_file(), relative
@@ -171,3 +172,20 @@ def test_claim_lock_source_frozen_and_measurement_artifacts_are_materialized() -
     assert summary[["cross_d", "measurement_floor_d", "joint_floor_d", "delta_joint"]].notna().all().all()
     boundary = json.loads((MANIFESTS / "formal_v2_claim_lock_replication_boundary.json").read_text(encoding="utf-8"))
     assert boundary["status"] == "no_valid_independent_matched_context_replication_available"
+    sensitivity = json.loads((MANIFESTS / "formal_v2_claim_lock_measurement_sensitivity40.json").read_text(encoding="utf-8"))
+    assert sensitivity["status"] == "matched_budget_measurement_and_joint_floors_sensitivity40_executed"
+    assert sensitivity["sensitivity_executed"] is True
+    sensitivity_detail = pd.read_csv(MANIFESTS / "formal_v2_claim_lock_measurement_sensitivity40.csv")
+    assert len(sensitivity_detail) == 27
+    assert set(sensitivity_detail["eligibility_min_cells"]) == {40}
+    registry = json.loads((MANIFESTS / "reordering_replication_candidate_registry.json").read_text(encoding="utf-8"))
+    assert registry["outcome_blind"] is True
+    assert registry["prediction_evaluated"] is False
+    assert registry["risk_evaluated"] is False
+    assert int(registry["candidate_count"]) >= 4
+    registry_detail = pd.read_csv(MANIFESTS / "reordering_replication_candidate_registry.csv")
+    assert set(registry_detail["prediction_evaluated"]) == {False}
+    assert set(registry_detail["risk_evaluated"]) == {False}
+    guide = json.loads((MANIFESTS / "formal_v2_claim_lock_guide_id_semantics.json").read_text(encoding="utf-8"))
+    assert guide["status"] == "guide_id_semantics_audited_not_single_sgrna_identity"
+    assert guide["risk_evaluated"] is False

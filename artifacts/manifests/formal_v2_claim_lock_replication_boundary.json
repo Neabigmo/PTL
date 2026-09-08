@@ -2,7 +2,12 @@
   "schema_version": 1,
   "benchmark_id": "ptl_context_v2_frangieh_claim_lock_v1",
   "status": "no_valid_independent_matched_context_replication_available",
-  "boundary": "Tian provides only one shared label and the existing head-to-head CRISPRko/CRISPRi artifact is a persistence baseline, not a same-source-predictor matched outcome surface",
+  "boundary": "the outcome-blind registry found no local candidate passing the exact shared-perturbation, raw-cell, matched-control, modality, library and batch/context provenance gate; no independent replication claim is made",
   "policy": "do not force a replication claim; report the boundary explicitly and do not claim universality",
+  "registry": "artifacts/manifests/reordering_replication_candidate_registry.json",
+  "registry_sha256": "f550e2bdd12060ef81f4cf4710d7c1398aa952d681d9349960c1526b84d8e56b",
+  "selected_candidate": null,
+  "prediction_evaluated": false,
+  "risk_evaluated": false,
   "optional_candidate": "GEARS remains optional only if a legal same-predictor/source-outcome contract is established; no new model training was introduced"
 }

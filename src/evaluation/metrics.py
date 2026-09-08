@@ -78,6 +78,46 @@ def _ordinal_rank(values: np.ndarray) -> np.ndarray:
     return ranks
 
 
+def _rowwise_rankdata_average(values: np.ndarray) -> np.ndarray:
+    """Tie-aware row ranking equivalent to ``scipy.stats.rankdata``.
+
+    The SciPy axis implementation applies a Python-level operation per row,
+    which is unnecessarily costly for the repeated 8,229-gene audit.  This
+    vectorized implementation preserves average ranks for ties; the ordering
+    within an equal-valued tie group is immaterial.  Non-finite inputs use
+    SciPy's established ``nan_policy='propagate'``
+    behavior as a conservative fallback.
+    """
+
+    values = np.asarray(values, dtype=np.float64)
+    if values.ndim != 2:
+        raise ValueError("rowwise rankdata expects a two-dimensional array")
+    if not np.isfinite(values).all():
+        return stats.rankdata(values, axis=1, method="average", nan_policy="propagate")
+    n_rows, n_columns = values.shape
+    if n_columns == 0:
+        return np.empty(values.shape, dtype=np.float64)
+    order = np.argsort(values, axis=1, kind="quicksort")
+    sorted_values = np.take_along_axis(values, order, axis=1)
+    starts = np.ones((n_rows, n_columns), dtype=bool)
+    if n_columns > 1:
+        starts[:, 1:] = sorted_values[:, 1:] != sorted_values[:, :-1]
+    positions = np.broadcast_to(np.arange(n_columns), (n_rows, n_columns))
+    group_starts = np.maximum.accumulate(np.where(starts, positions, 0), axis=1)
+    ends = np.empty_like(starts)
+    if n_columns > 1:
+        ends[:, :-1] = starts[:, 1:]
+    ends[:, -1] = True
+    group_ends = np.minimum.accumulate(
+        np.where(ends, positions, n_columns - 1)[:, ::-1], axis=1
+    )[:, ::-1]
+    sizes = group_ends - group_starts + 1.0
+    sorted_ranks = group_starts + 1.0 + (sizes - 1.0) / 2.0
+    ranks = np.empty((n_rows, n_columns), dtype=np.float64)
+    np.put_along_axis(ranks, order, sorted_ranks, axis=1)
+    return ranks
+
+
 def rowwise_spearman(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     y_true = np.asarray(y_true, dtype=np.float64)
     y_pred = np.asarray(y_pred, dtype=np.float64)
@@ -85,8 +125,8 @@ def rowwise_spearman(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     pred_constant = np.max(np.abs(y_pred - y_pred[:, :1]), axis=1) <= EPS
     both_constant = true_constant & pred_constant
     one_constant = true_constant ^ pred_constant
-    true_rank = stats.rankdata(y_true, axis=1, method="average")
-    pred_rank = stats.rankdata(y_pred, axis=1, method="average")
+    true_rank = _rowwise_rankdata_average(y_true)
+    pred_rank = _rowwise_rankdata_average(y_pred)
     output = _rowwise_centered_pearson(true_rank, pred_rank)
     output[one_constant] = 0.0
     output[both_constant] = 0.0

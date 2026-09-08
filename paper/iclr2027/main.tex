@@ -7,7 +7,7 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 
-\title{Biological Context Can Rewrite the Reliability Ordering in Single-Cell Perturbation Prediction}
+\title{Measurement Reliability Limits Claims of Context-Dependent Reliability Reordering in Single-Cell Perturbation Prediction}
 \author{Anonymous Authors}
 
 \newcommand{\ptl}{\textsc{PTL}}
@@ -34,7 +34,10 @@ half-splits and pair-specific cell budgets. The resulting cross-context rank
 displacement is not consistently above the joint measurement-plus-model noise
 floor: the macro mean $\Delta_{\mathrm{joint}}$ is $-0.009$ for delta cosine,
 $+0.006$ for Systema centroid accuracy and $-0.036$ for absolute-effect rank
-agreement, with bootstrap intervals generally crossing zero. The previously
+agreement, with bootstrap intervals generally crossing zero. The pre-specified
+real $n\geq40$ sensitivity gives $-0.009$, $+0.006$ and $-0.034$ for the same
+metrics, respectively, preserving this direction and interval interpretation.
+The previously
 reported context-adapted OOF inversion is therefore retained as secondary
 deployment evidence, not as a frozen-predictor causal diagnostic. A train-only
 monotonic Platt recalibration changes probability calibration while producing
@@ -79,14 +82,14 @@ that the identity of easy and hard perturbations survives a biological change
 question of whether reliability ordering can be transported to a new setting
 without observing target outcomes.
 
-Our central object is reliability reordering:
+Our central object is the identifiability boundary for reliability reordering:
 \begin{quote}
-\emph{Biological context can rewrite which matched perturbations are easy or
-hard, but a valid claim must separate source-frozen prediction from
-context-adapted refitting and must exceed a matched measurement-plus-model
-noise floor. We diagnose this as reliability reordering, separate
-response-program displacement from outcome-derived risk, and test whether
-monotonic recalibration can repair the ordering.}
+\emph{Source-frozen predictions can show substantial cross-context rank
+displacement, but a valid excess-reordering claim must exceed a matched
+measurement-plus-model noise floor. We therefore separate observed rank
+instability from identifiable context-specific excess, audit replication
+eligibility before looking at risk, and test whether monotonic recalibration
+can repair the ordering.}
 \end{quote}
 We use \emph{Reliability Shift} only as an umbrella term for the broader
 difficulty, ranking and calibration audits.
@@ -106,21 +109,21 @@ tuning it away.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig1_reliability_reordering.pdf}
-  \caption{\textbf{Claim Lock for biological reliability reordering.}
+  \caption{\textbf{Claim Lock for the measurement boundary.}
   (a) A source-context predictor is fit once and scored unchanged against two
   target outcomes; delta-cosine normalized rank displacement is shown for all
   three source contexts and condition pairs. (b) Each line is a matched
   perturbation's rank under the same control-source predictor in control and
   IFN$\gamma$; crossings expose source-frozen reordering. (c) With pair-specific
-  matched raw-cell budgets, cross-context displacement minus the joint
-  measurement-plus-model floor is not stably positive across the three metrics.
-  (d) Context-adapted OOF confidence tracking is shown against a
-  label-preserving permutation null; this surface is secondary to the frozen
-  predictor diagnostic.}
+  matched raw-cell budgets, cross-context displacement is compared with
+  measurement, model-only and joint floors. (d) Pair- and metric-level
+  $\Delta_{\mathrm{joint}}$ intervals are not consistently above zero; the
+  confidence-permutation null remains in the machine-readable audit rather
+  than the hero panel.}
   \label{fig:hero}
 \end{figure*}
 
-\section{Biological context reorders prediction reliability}
+\section{Observed reordering is bounded by measurement reliability}
 For biological instance $i$, let $\hat y_i$ be a predictor output and $y_i$
 the observed delta-expression response. Fidelity $F_i$ is computed from the
 prediction and response, and continuous risk is $R_i=1-F_i$. A binary label is
@@ -140,18 +143,15 @@ environment-first averages, paired hierarchical bootstrap intervals, risk at
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig2_response_reprogramming.pdf}
-  \caption{\textbf{Controlled Shift Ladder: response programs move, but coarse
-  rank displacement is not a stable proxy.} (a) Full-surface Frangieh OOF response-program shifts across exact
-  condition matches. (b) The external matched CRISPRko/CRISPRi resource is an
-  orthogonal biological extension evaluated with a source-response persistence
-  baseline, not a trained perturbation predictor; it probes modality, time and
-  cell context. (c) Response displacement and normalized risk-rank displacement
-  are plotted directly; the association is weak and not consistent across
-  pairs. (d) Guide-level
-  reproducibility is retained as a measured covariate rather than silently
-  folded into the response shift.}
-  \label{fig:response}
+  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig2_measurement_reliability.pdf}
+  \caption{\textbf{Raw-cell measurement lock and sensitivity.} (a) The source-frozen
+  predictor is held fixed while independent raw-cell halves provide two outcome
+  realizations per context. (b) Enforcing the real $n\geq40$ per-perturbation
+  sensitivity reduces the matched label set under the same contract. (c) The
+  three metric-specific $\Delta_{\mathrm{joint}}$ distributions are shown with
+  macro means. (d) The result is re-evaluated at $n\geq40$ using the same
+  vectors, splits, metrics and paired bootstrap policy.}
+  \label{fig:measurement}
 \end{figure*}
 
 \subsection{Same confidence, different realized risk}
@@ -179,9 +179,10 @@ source predictor fixed while changing the target outcome. The shared five-fold
 assignment contains 243 labels. Across the three source contexts and three
 fidelity definitions, source-frozen pairwise risk inversions range from
 $0.10$ to $0.32$ and normalized rank displacement ranges from $0.073$ to
-$0.229$. These are direct evidence that a reliability ordering can change
-under a biological condition change, but they are not by themselves evidence
-that the change exceeds measurement noise. The same matched labels have
+$0.229$. These establish observable source-frozen rank displacement under a
+biological condition change, but they are not by themselves evidence that the
+change exceeds measurement noise or represents a stable context-specific
+excess. The same matched labels have
 response-program shifts of $0.79$--$0.85$ in mean $1-\cos$ distance. The
 direct, label-level response-shift/rank-displacement association is weak
 ($\rho=0.04$--$0.17$), with perturbation-bootstrap intervals crossing zero in
@@ -209,9 +210,12 @@ source contexts and three metrics, matched-budget cross-context displacement
 does not clear the joint measurement-plus-model floor. The macro mean
 $\Delta_{\mathrm{joint}}$ is $-0.009$ for delta cosine, $+0.006$ for Systema
 centroid accuracy and $-0.036$ for absolute-effect rank agreement; the
-2,000-draw paired intervals generally cross zero. Thus the data support
-context-dependent reordering as an observed phenomenon, while not supporting a
-stable excess beyond the measured noise floor. Confidence tracking on the
+2,000-draw paired intervals generally cross zero. The real $n\geq40$
+sensitivity gives $-0.009$, $+0.006$ and $-0.034$, respectively, with no
+direction reversal except one pair-level Systema comparison whose interval
+still crosses zero. Thus the data support
+observed context-dependent rank instability, while not supporting a stable
+excess beyond the measured noise floor. Confidence tracking on the
 context-adapted surface is $0.122$--$0.152$, below the independent
 confidence-permutation null of $0.249$--$0.251$. The two surfaces are reported
 separately and are not pooled.
@@ -259,7 +263,21 @@ has zero confidence-tracking rate for these inverted pairs, which is a
 diagnostic failure of this source-only confidence signal rather than evidence
 that every perturbation model is uncalibratable.
 
-\section{Recalibration cannot repair reordered reliability}
+\section{Replication boundary and calibration safeguard}
+An outcome-blind registry scanned 33 local same-study file pairs, including
+Nadig HepG2--Jurkat and Replogle K562--RPE1/GWPS overlaps. Four pairs were
+metadata-complete and had at least 200 exact shared perturbations, matched
+controls, the same RNA readout and strong guide-signature agreement. All four
+were conservatively excluded because the context-separated exports do not
+document cross-context batch provenance; no risk or inversion statistic was
+used in this selection. Drepanos K562--A549 and knockout--interference files
+were not present locally. The registry therefore defines an explicit boundary:
+the Frangieh result is not promoted to an independent same-predictor replication
+claim. The guide audit also shows that $\texttt{guide\_id}$ contains combinatorial
+multi-token strings (median 47 unique strings per perturbation group), so it is
+not interpreted as a single-sgRNA identity or used as a primary split key.
+
+\subsection{Recalibration cannot repair reordered reliability}
 The recalibration counterfactual makes the distinction operational. The
 calibration-side scalar score is mapped by a train-only monotonic Platt model
 and evaluated on untouched test rows. The map changes Brier score in some
@@ -277,13 +295,15 @@ richer non-monotonic predictors.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig3_recalibration_counterfactual.pdf}
-  \caption{\textbf{Recalibration changes scale, not ranking.} (a) Train-only
-  Platt maps can improve or worsen Brier score. (b) They produce zero AURC
-  change across all 45 environment--predictor groups. (c) No strict pairwise
-  order disagreements occur. (d) The rank-preservation proposition explains
-  why calibration cannot repair a context-reordered reliability surface.}
-  \label{fig:recalibration}
+  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig3_replication_boundary.pdf}
+  \caption{\textbf{Outcome-blind replication boundary and safeguards.} (a) Candidate
+  selection is frozen before any target risk or inversion evaluation. (b) The
+  metadata-complete overlaps meet the shared-label threshold but fail the
+  unresolved batch/context provenance criterion. (c) The guide audit exposes
+  combinatorial guide strings and therefore prevents a false single-sgRNA
+  interpretation. (d) The independent calibration counterfactual confirms that
+  monotonic Platt maps preserve strict order.}
+  \label{fig:replication}
 \end{figure*}
 
 \section{Deployment consequence: prospective reliability transport is difficult}
