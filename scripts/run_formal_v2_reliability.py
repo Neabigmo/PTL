@@ -39,6 +39,7 @@ from scripts.run_formal_v2_predictors import (  # noqa: E402
 )
 from src.evaluation.metrics import safe_rowwise_cosine  # noqa: E402
 from src.ptl.data.contracts import validate_feature_columns  # noqa: E402
+from src.ptl.reliability.calibration import assert_positive_platt_slope  # noqa: E402
 from src.ptl.uncertainty.uq import UQNormalizer, summarize_ensemble  # noqa: E402
 
 
@@ -427,6 +428,7 @@ def _fit_ptl(
     else:
         logistic = LogisticRegression(C=1.0, max_iter=1000, random_state=20260907)
         logistic.fit(best_scalar_train.reshape(-1, 1), train_labels)
+        assert_positive_platt_slope(logistic)
         platt = logistic.predict_proba(best_scalar_query.reshape(-1, 1))[:, 1]
         isotonic_model = IsotonicRegression(out_of_bounds="clip", increasing=True)
         isotonic_model.fit(best_scalar_train, train_labels)

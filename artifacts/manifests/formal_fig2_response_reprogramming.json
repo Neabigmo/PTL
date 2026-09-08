@@ -2,6 +2,8 @@
   "schema_version": 1,
   "figure": "formal_fig2_response_reprogramming",
   "claim": "matched contexts show descriptive response-program displacement alongside risk reordering; no causal mechanism is inferred",
+  "evidence_tier": "orthogonal biological extension",
+  "predictor_contract": "evaluation-only source-response persistence baseline; not a trained perturbation model",
   "source_data": [
     "artifacts/manifests/formal_v2_controlled_shift_oof_perturbations.csv",
     "artifacts/manifests/head_to_head_controlled_shift_ladder.csv",

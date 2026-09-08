@@ -2,6 +2,10 @@
   "schema_version": 1,
   "backend": "python_matplotlib",
   "core_conclusion": "Biological context can reorder perturbation reliability; response-program displacement is a descriptive correlate, monotonic recalibration cannot repair the ordering, and prospective transfer remains heterogeneous",
+  "source_provenance": {
+    "primary_trained_predictor_evidence": "Frangieh condition ladder with formal out-of-fold predictor evaluation",
+    "orthogonal_external_extension": "matched CRISPRko/CRISPRi guide-level SCEPTRE effects evaluated with a source-response persistence baseline; not pooled with the formal predictor benchmark"
+  },
   "source_data": [
     "artifacts/source_data/formal_v2_reliability_predictions.csv",
     "artifacts/manifests/formal_v2_reliability_metrics.csv",

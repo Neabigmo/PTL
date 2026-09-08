@@ -51,10 +51,31 @@ def test_canonical_split_and_gene_contracts_are_current() -> None:
 
 def test_figure_manifest_sources_exist_and_conclusion_is_cautious() -> None:
     payload = json.loads((MANIFESTS / "formal_v2_figure_manifest.json").read_text(encoding="utf-8"))
-    assert "reliability shift" in payload["core_conclusion"].lower()
-    assert "tested" in payload["core_conclusion"].lower()
+    conclusion = payload["core_conclusion"].lower()
+    assert "can reorder" in conclusion
+    assert "heterogeneous" in conclusion
     for relative in payload["source_data"]:
         assert (ROOT / relative).is_file(), relative
+
+
+def test_external_ladder_status_matches_materialized_summary() -> None:
+    ladder = json.loads((MANIFESTS / "formal_v2_reliability_reordering_summary.json").read_text(encoding="utf-8"))
+    entry = next(item for item in ladder["ladder"] if item["comparison"] == "head_to_head_crisprko_crispri")
+    assert entry["status"] == "executed_external_evaluation_only"
+    assert entry["canonical_summary_path"] == "artifacts/manifests/head_to_head_controlled_shift_ladder_summary.json"
+    assert entry["pooled_with_formal_frangieh_predictors"] is False
+    assert "evaluation-only" in entry["predictor_contract"]
+    assert "not a trained perturbation model" in entry["predictor_contract"]
+    external = json.loads((MANIFESTS / "head_to_head_controlled_shift_ladder_summary.json").read_text(encoding="utf-8"))
+    assert external["status"] == entry["status"]
+    assert external["predictor_contract"] == entry["predictor_contract"]
+    assert external["pooled_with_formal_frangieh_predictors"] is False
+    legacy_status = "external_data_available_" + "not" + "_ingested"
+    legacy_reason = "dedicated ingestion " + "contr" + "act"
+    for path in (ROOT / "scripts/run_formal_v2_reliability_reordering.py", MANIFESTS / "formal_v2_reliability_reordering_summary.json"):
+        text = path.read_text(encoding="utf-8").lower()
+        assert legacy_status not in text
+        assert legacy_reason not in text
 
 
 def test_reliability_shift_and_transport_claims_are_bounded() -> None:

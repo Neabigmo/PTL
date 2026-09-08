@@ -52,6 +52,9 @@
 /paper/iclr2027/*.fls
 /paper/iclr2027/*.log
 /paper/iclr2027/*.out
+# Local raster previews made while reviewing the reordered submission.
+/paper/iclr2027/main_reordered_page-1.png
+/paper/iclr2027/main_reordered_page-2.png
 
 # Historical checkout and nested third-party repository internals.
 /_github_ptl_work/

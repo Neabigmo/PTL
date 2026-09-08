@@ -13,6 +13,15 @@ def _clip_probability(values: np.ndarray) -> np.ndarray:
     return np.clip(np.asarray(values, dtype=float), 1e-5, 1.0 - 1e-5)
 
 
+def assert_positive_platt_slope(model: LogisticRegression) -> float:
+    """Require the scalar Platt map to be strictly increasing."""
+
+    coefficient = np.asarray(model.coef_, dtype=float).reshape(-1)
+    if coefficient.size != 1 or not np.isfinite(coefficient[0]) or coefficient[0] <= 0.0:
+        raise ValueError("Platt calibration requires a finite positive slope")
+    return float(coefficient[0])
+
+
 def fit_platt(p0: np.ndarray, y: np.ndarray) -> LogisticRegression | float:
     """Fit scalar logistic calibration on training-fold probabilities only."""
 
@@ -22,6 +31,7 @@ def fit_platt(p0: np.ndarray, y: np.ndarray) -> LogisticRegression | float:
         return float(y.mean())
     model = LogisticRegression(C=10.0, solver="lbfgs", max_iter=1000)
     model.fit(np.log(p0 / (1.0 - p0)).reshape(-1, 1), y)
+    assert_positive_platt_slope(model)
     return model
 
 

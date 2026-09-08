@@ -113,7 +113,7 @@ def make_response_figure() -> tuple[list[str], dict[str, object]]:
     ax.text(0.02, 0.96, "five-fold perturbation-label OOF · n=243–244", transform=ax.transAxes, va="top", fontsize=5.7, color=SLATE)
 
     ax = fig.add_subplot(grid[0, 1])
-    panel(ax, "b", "Matched assay shifts")
+    panel(ax, "b", "Matched shifts (persistence baseline)")
     external_summary = external_summary.sort_values(["axis", "comparison_id", "modality"], kind="stable").reset_index(drop=True)
     x = np.arange(len(external_summary))
     colors = external_summary["axis"].map({"modality": CORAL, "time": BLUE, "cell_context": PURPLE}).fillna(SLATE)
@@ -128,7 +128,7 @@ def make_response_figure() -> tuple[list[str], dict[str, object]]:
     ax.set_xlabel("controlled comparison")
     ax.set_ylabel("mean response-program shift")
     ax.set_ylim(0, 1.12)
-    ax.text(0.02, 0.035, "exact target intersection · SCEPTRE effects", transform=ax.transAxes, va="bottom", fontsize=5.7, color=SLATE)
+    ax.text(0.02, 0.035, "evaluation-only · exact target intersection · SCEPTRE effects", transform=ax.transAxes, va="bottom", fontsize=5.3, color=SLATE)
 
     ax = fig.add_subplot(grid[1, 0])
     panel(ax, "c", "Response shift and risk change")
@@ -161,6 +161,8 @@ def make_response_figure() -> tuple[list[str], dict[str, object]]:
         "schema_version": 1,
         "figure": "formal_fig2_response_reprogramming",
         "claim": "matched contexts show descriptive response-program displacement alongside risk reordering; no causal mechanism is inferred",
+        "evidence_tier": "orthogonal biological extension",
+        "predictor_contract": "evaluation-only source-response persistence baseline; not a trained perturbation model",
         "source_data": [
             "artifacts/manifests/formal_v2_controlled_shift_oof_perturbations.csv",
             "artifacts/manifests/head_to_head_controlled_shift_ladder.csv",
@@ -293,7 +295,7 @@ def make_deployment_figure() -> tuple[list[str], dict[str, object]]:
     ax.text(0.03, 0.96, "candidate source ranking; outcomes excluded at selection time", transform=ax.transAxes, va="top", fontsize=5.5, color=SLATE)
 
     ax = fig.add_subplot(grid[1, 1])
-    panel(ax, "d", "Deployment use: show uncertainty, keep fallback")
+    panel(ax, "d", "Deployment use: U-only baseline fallback")
     utility = utility.loc[utility["aggregation_level"].eq("environment_macro")].copy()
     if utility.empty:
         utility = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_deployment_utility.csv")
@@ -305,7 +307,7 @@ def make_deployment_figure() -> tuple[list[str], dict[str, object]]:
     ax.set_xlabel("selected budget (%)")
     ax.set_ylabel("realized fidelity")
     ax.legend(fontsize=5.7, loc="best")
-    fig.suptitle("Deployment consequence: reliability transport needs an auditable fallback", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
+    fig.suptitle("Deployment consequence: reliability transport remains difficult prospectively", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
     outputs = save_figure(fig, ROOT / "results/figures/iclr_formal/formal_fig4_deployment_consequences")
     manifest = {
         "schema_version": 1,

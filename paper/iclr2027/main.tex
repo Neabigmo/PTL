@@ -40,22 +40,34 @@ overstate portability.
 
 \section{Introduction}
 Single-cell perturbation models turn large screens into predictions of
-cellular responses. Their practical value depends on whether a user can
-decide which predictions to trust before the corresponding experiment is
-performed. Predictors span matching baselines, linear perturbation models,
-generative models and graph neural networks such as \gears{}~\citep{norman2019manifolds,lotfollahi2019scgen,bunne2023cellot,lotfollahi2023cpa,roohani2023gears}.
+cellular responses and thereby offer a way to prioritize experiments over a
+combinatorial intervention space. Their practical value is consequently not
+only the average fidelity of a screen, but whether a researcher can decide
+which predictions to trust before spending experimental budget. Predictors
+span matching baselines, linear perturbation models, generative models and
+graph neural networks such as \gears{}~\citep{norman2019manifolds,lotfollahi2019scgen,bunne2023cellot,lotfollahi2023cpa,roohani2023gears}.
 Each model may expose an uncertainty score, but a score learned in a K562
 screen need not have the same meaning in RPE1, iPSC-derived neurons or
 patient-derived melanoma.
 
-We study a narrower operational question: when can the ordering of reliability
-itself be transported to a new biological setting without observing target
-outcomes?
-The answer must separate deployment evidence from outcome evidence. Target
-fidelity, ground truth, QC and reproducibility are appropriate for evaluation;
-they are not available when a new perturbation is deployed. Conversely,
-prediction geometry, training support, novelty and declared assay context can
-be available before the target response is known.
+Accuracy alone does not settle this decision problem. Recent analyses show
+that deep perturbation predictors do not yet reliably outperform simple
+linear baselines~\citep{ahlmann2025simple,wong2025simple}, while Systema
+shows that control-referenced metrics can be inflated by systematic variation
+and that perturbation-specific evaluation is substantially harder
+\citep{systema2025,scperteval2026}. These results make the ordering of
+trusted versus risky predictions an object of interest in its own right, not
+an afterthought to a single benchmark score.
+
+Uncertainty, calibration and selective-prediction work provides tools for
+turning scores into decisions, including calibration maps, abstention rules
+and distribution-shift audits~\citep{guo2017calibration,geifman2017selective,ovadia2019uncertainty,liang2024selective}.
+However, these tools usually ask whether a score tracks error in one task or
+whether a representation transports across domains; they do not establish
+that the identity of easy and hard perturbations survives a biological change
+\citep{jalaldoust2024transport}. We therefore study the narrower operational
+question of whether reliability ordering can be transported to a new setting
+without observing target outcomes.
 
 Our central object is Reliability Shift:
 \begin{quote}
@@ -65,15 +77,16 @@ displacement from outcome-derived risk, and test whether monotonic
 recalibration can repair the ordering.}
 \end{quote}
 
-We make four contributions. First, we turn Frangieh into a controlled
+We make four contributions. First, we turn Frangieh into the primary
 condition-shift ladder with a matched-perturbation inversion estimand and a
-response-program displacement audit. Second, we show with a monotonic
-recalibration counterfactual that probability calibration cannot repair a
-strict reliability ordering. Third, we retain the eight-environment telescope,
-its canonical identities, difficulty/ranking decomposition and coverage-limited
-Tian modality contrast. Fourth, we compare PTL with an equal-capacity U-only
-probe, audit prospective source selection and modern-model validity, and retain
-negative transport evidence rather than tuning it away.
+response-program displacement audit. Second, we add an orthogonal
+CRISPRko/CRISPRi extension as an evaluation-only source-response persistence
+baseline, explicitly separating it from trained Frangieh predictors. Third,
+we show with a monotonic recalibration counterfactual that probability
+calibration cannot repair a strict reliability ordering. Fourth, we compare
+PTL with an equal-capacity U-only probe, audit prospective source selection
+and modern-model validity, and retain negative transport evidence rather than
+tuning it away.
 
 \begin{figure*}[t]
   \centering
@@ -115,11 +128,13 @@ environment-first averages, paired hierarchical bootstrap intervals, risk at
   \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig2_response_reprogramming.pdf}
   \caption{\textbf{Controlled Shift Ladder: response programs move with
   context.} (a) Full-surface Frangieh OOF response-program shifts across exact
-  condition matches. (b) The external matched CRISPRko/CRISPRi resource
-  extends the ladder across modality, time and cell context. (c) Response
-  displacement and risk change are plotted as descriptive quantities, not a
-  causal mechanism. (d) Guide-level reproducibility is retained as a measured
-  covariate rather than silently folded into the response shift.}
+  condition matches. (b) The external matched CRISPRko/CRISPRi resource is an
+  orthogonal biological extension evaluated with a source-response persistence
+  baseline, not a trained perturbation predictor; it probes modality, time and
+  cell context. (c) Response displacement and risk change are plotted as
+  descriptive quantities, not a causal mechanism. (d) Guide-level
+  reproducibility is retained as a measured covariate rather than silently
+  folded into the response shift.}
   \label{fig:response}
 \end{figure*}
 
@@ -189,13 +204,14 @@ condition changes within study, complementing the eight-environment telescope;
 coverage-limited axes remain explicitly marked in the machine-readable audit.
 
 \subsection{Response reprogramming across modality, time and cell context}
-The Frangieh OOF surface supplies a dense within-study condition ladder, while
-the matched head-to-head resource~\citep{headtohead2026crispr} supplies orthogonal axes with exact target
-intersections. We ingest guide-level SCEPTRE effects as response-program
-coordinates and keep the predictor contract explicit: a source target mean is
-persisted to destination guide outcomes, so the resulting risk is an
-evaluation-only persistence baseline rather than a newly trained perturbation
-model. Guide modality is taken from the released reference table; ambiguous
+The Frangieh OOF surface supplies a dense within-study condition ladder and is
+the primary trained-predictor evidence, while the matched head-to-head
+resource~\citep{headtohead2026crispr} supplies orthogonal axes with exact target
+intersections. We ingest guide-level SCEPTRE effects only for an
+evaluation-only source-response persistence baseline: a source target mean is
+persisted to destination guide outcomes, not pooled with the formal Frangieh
+predictor benchmark and not presented as a newly trained perturbation model.
+Guide modality is taken from the released reference table; ambiguous
 ``either'' guides and negative controls are excluded. Day-14 K562 is compared
 separately for CRISPR knockout and CRISPR interference, while Day 7/10 and
 K562/A549 comparisons are stratified by the same modality. This design keeps
@@ -216,12 +232,15 @@ calibration-side scalar score is mapped by a train-only monotonic Platt model
 and evaluated on untouched test rows. The map changes Brier score in some
 groups, but it preserves every comparable pairwise order: all 45 groups have
 zero order disagreements and zero AURC change. Isotonic regression is reported
-separately because its monotonic ties can alter tie handling. Formally, for a
-monotone map $g$, $\operatorname{rank}(g(C))=\operatorname{rank}(C)$ up to ties;
-therefore it cannot change which perturbations occupy the high-confidence
-part of a ranking. This rules out probability-scale recalibration as an
-explanation for the observed strict ordering change, while leaving open richer
-non-monotonic predictors.
+separately because its non-decreasing map can introduce ties. Formally, if
+$g$ is strictly increasing, then $C_i<C_j$ if and only if
+$g(C_i)<g(C_j)$, so strict order is preserved exactly. If $g$ is only
+non-decreasing, $C_i<C_j$ implies $g(C_i)\leq g(C_j)$: ties may be introduced,
+but an existing strict order cannot be reversed. The fitted Platt map is
+$g(C)=\sigma(aC+b)$; our implementation asserts $a>0$ before using it as a
+monotonic calibration contract. This rules out probability-scale recalibration
+as an explanation for the observed strict ordering change, while leaving open
+richer non-monotonic predictors.
 
 \begin{figure*}[t]
   \centering
@@ -270,12 +289,12 @@ validation-only acceptance criterion is not met.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig4_deployment_consequences.pdf}
-  \caption{\textbf{Deployment consequence: reliability transport needs an
-  auditable fallback.} (a) Source--target gains are heterogeneous. (b) PTL's
+  \caption{\textbf{Deployment consequence: reliability transport remains
+  difficult prospectively.} (a) Source--target gains are heterogeneous. (b) PTL's
   selective gain is scenario-dependent. (c) Prospective source selection is
   near chance in the within-target audit. (d) Budget curves show how the
-  confidence surface can be used prospectively while retaining an explicit
-  U-only fallback.}
+  confidence surface can be inspected prospectively, while U-only is retained
+  as the operational baseline fallback rather than presented as a solution.}
   \label{fig:deployment}
 \end{figure*}
 
@@ -416,16 +435,43 @@ Context is allowed deployment information, but it changes what transportability
 means; all headline PTL features remain target-outcome-free and explicit-ID-free.
 
 \section{Related work and positioning}
-Existing perturbation-model work primarily asks whether a predictor is
-accurate, evaluation frameworks ask whether scores are valid, experimental
-studies ask whether measured responses are reproducible, and uncertainty work
-usually asks whether a score tracks error within one setting. Our boundary
-question is different: does the identity of easy and hard perturbations survive
-a biological context shift? We therefore treat response reprogramming as a
-descriptive diagnostic, test rank preservation under monotonic calibration, and
-place PTL after—not inside—the controlled biological argument. This distinction
-also explains why the transport audit remains target-outcome-free and why
-negative transfer is retained rather than tuned away.
+The first dispute is evaluative. Ahlmann--Eltze et al. show that deep
+perturbation predictors do not yet outperform simple linear baselines, whereas
+Systema argues that control-referenced scores can reward systematic variation
+and proposes perturbation-specific references~\citep{ahlmann2025simple,systema2025}.
+The scPertEval framework likewise emphasizes that metric choice, split design
+and reference construction are part of the scientific question
+\citep{scperteval2026}; independent work finds that simple controls can exceed
+deep models~\citep{wong2025simple}. These studies tell us how a model ranks on
+an evaluation surface, but do not ask whether the same perturbations remain
+easy or hard after a matched biological shift. We add that missing paired
+ordering question rather than claim a new leaderboard.
+
+The second line of work concerns biological context and generalization.
+Generalization benchmarks and context-aware virtual-cell proposals emphasize
+cellular context as a source of out-of-distribution variation
+\citep{generalizable2025benchmark,dibaeinia2026context,molina2026decomposition}.
+Frangieh et al. provide a patient-model, multimodal condition surface, while
+the matched CRISPRko/CRISPRi study supplies orthogonal modality, time and cell
+contexts~\citep{frangieh2021multimodal,headtohead2026crispr}. Those works
+measure response or prediction changes, but a response shift is not itself a
+reliability shift, and neither establishes universal reordering for all
+trained predictors. Our primary Frangieh OOF ladder tests the trained-model
+ordering directly; the external ladder is deliberately limited to an
+evaluation-only persistence baseline.
+
+The third line concerns uncertainty, calibration, selective prediction and
+transport. Calibration maps~\citep{guo2017calibration}, selective rules
+\citep{geifman2017selective,liang2024selective}, shift audits
+\citep{ovadia2019uncertainty}, grouping-loss analysis
+\citep{perezlebel2023grouping} and epistemic decision criteria
+\citep{melo2026epistemic} improve how scores are interpreted. Recent biological
+methods such as PRESCRIBE and the PertEMA reliability layer also target
+uncertainty-aware decisions~\citep{prescribe2025,shrestha2026pertema}.
+Our object is different: transport of a reliability ordering across biological
+contexts. We therefore test what monotonic recalibration cannot change, audit
+outcome-free source selection with explicit transport descriptors, and retain
+negative transfer instead of presenting PTL as a new uncertainty estimator.
 
 \section{Limitations and reproducibility}
 The present claim is bounded by the eight-environment headline surface and the

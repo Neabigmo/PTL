@@ -1,7 +1,10 @@
 import numpy as np
 import pandas as pd
+import pytest
+from sklearn.linear_model import LogisticRegression
 
 from scripts.run_formal_v2_recalibration_counterfactual import _aurc, _order_audit
+from src.ptl.reliability.calibration import assert_positive_platt_slope
 
 
 def test_strict_monotonic_recalibration_preserves_comparable_order() -> None:
@@ -32,3 +35,16 @@ def test_order_audit_reports_ties_without_calling_them_disagreements() -> None:
     assert result["n_base_tied_pairs"] == 1
     assert result["n_recalibrated_tied_pairs"] == 1
     assert result["n_order_disagreements"] == 0
+
+
+def test_platt_contract_requires_a_strictly_increasing_map() -> None:
+    model = LogisticRegression(C=10.0, solver="lbfgs", max_iter=1000).fit(
+        np.array([[-2.0], [-1.0], [1.0], [2.0]]), np.array([0, 0, 1, 1])
+    )
+    assert assert_positive_platt_slope(model) > 0.0
+
+    decreasing = LogisticRegression(C=10.0, solver="lbfgs", max_iter=1000).fit(
+        np.array([[-2.0], [-1.0], [1.0], [2.0]]), np.array([1, 1, 0, 0])
+    )
+    with pytest.raises(ValueError, match="positive slope"):
+        assert_positive_platt_slope(decreasing)

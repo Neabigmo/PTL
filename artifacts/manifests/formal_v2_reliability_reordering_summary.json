@@ -25,9 +25,13 @@
     {
       "comparison": "head_to_head_crisprko_crispri",
       "axis": "time_modality_cell_context",
-      "status": "external_data_available_not_ingested",
+      "status": "executed_external_evaluation_only",
       "source": "10.64898/2026.07.04.736492; 10.5281/zenodo.20722064",
-      "reason": "aligned RDS inputs are multi-gigabyte and require a dedicated ingestion contract before model evaluation"
+      "canonical_summary_path": "artifacts/manifests/head_to_head_controlled_shift_ladder_summary.json",
+      "evidence_tier": "orthogonal_biological_extension",
+      "predictor_contract": "evaluation-only source-response persistence baseline on guide-level SCEPTRE effects; not a trained perturbation model",
+      "pooled_with_formal_frangieh_predictors": false,
+      "raw_data_policy": "raw external CSVs remain outside Git; only derived summaries are canonical"
     }
   ],
   "detail_path": "artifacts/manifests/formal_v2_reliability_reordering.csv",

@@ -1,6 +1,11 @@
 {
   "schema_version": 1,
   "benchmark_id": "head_to_head_crisprko_crispri_controlled_shift_v1",
+  "evidence_tier": "orthogonal_biological_extension",
+  "predictor_contract": "evaluation-only source-response persistence baseline on guide-level SCEPTRE effects; not a trained perturbation model",
+  "pooled_with_formal_frangieh_predictors": false,
+  "raw_data_policy": "raw external CSVs remain outside Git; only derived summaries are canonical",
+  "canonical_role": "external evaluation summary referenced by the formal reliability-reordering ladder",
   "config_path": "configs/external_head_to_head_crisprko_crispri.json",
   "input_reports": {
     "d7_k562": {
@@ -97,5 +102,5 @@
     "guide-level effects are an evaluation outcome and can include measurement variance",
     "response-program associations are descriptive and not causal mechanism evidence"
   ],
-  "status": "executed"
+  "status": "executed_external_evaluation_only"
 }
