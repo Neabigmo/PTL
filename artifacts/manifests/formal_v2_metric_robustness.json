@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2",
+  "definitions": [
+    "delta_cosine",
+    "centered_delta_cosine",
+    "environment_centroid_cosine",
+    "absolute_effect_rank_agreement"
+  ],
+  "protocol_source": "local_diagnostic_only; no Systema or scPertEval claim",
+  "refit_per_metric": false,
+  "prediction_source": "existing_formal_v2_test_prediction_arrays",
+  "output_path": "artifacts/manifests/formal_v2_metric_robustness.csv",
+  "selective_output_path": "artifacts/manifests/formal_v2_metric_robustness_selective.csv",
+  "selective_rows": 1512,
+  "selective_metric_policy": "reuse_saved_reliability_scores; recompute row-level fidelity risks without refitting",
+  "prediction_surface_spearman_vs_primary": [
+    {
+      "metric": "centered_delta_cosine",
+      "atlas_spearman_vs_primary": 0.9965217391304346
+    },
+    {
+      "metric": "environment_centroid_cosine",
+      "atlas_spearman_vs_primary": 0.9678260869565216
+    },
+    {
+      "metric": "absolute_effect_rank_agreement",
+      "atlas_spearman_vs_primary": 0.9478260869565217
+    }
+  ],
+  "status": "metric_robustness_executed_real_predictions"
+}

@@ -1,0 +1,82 @@
+"""Global checks for the canonical formal-v2 artifact surface."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pandas as pd
+
+
+ROOT = Path(__file__).resolve().parents[1]
+MANIFESTS = ROOT / "artifacts/manifests"
+REMOVED_IDS = {"adamson_k562", "replogle_k562_gwps"}
+STABILITY_SEEDS = {20260907, 20260917, 20260927, 20261007, 20261017}
+
+
+def test_canonical_environment_ids_match_registry_and_removed_surface_is_absent() -> None:
+    registry = pd.read_csv(MANIFESTS / "environment_registry.csv")
+    current = set(registry["environment_id"].astype(str))
+    assert len(current) == 8
+    paths = [
+        MANIFESTS / "formal_v2_environment_transfer_matrix.csv",
+        MANIFESTS / "formal_v2_deployment_utility.csv",
+        MANIFESTS / "formal_v2_identity_probe_confusion.csv",
+        MANIFESTS / "formal_v2_reproducibility.csv",
+        MANIFESTS / "formal_v2_reliability_metrics.csv",
+        MANIFESTS / "formal_v2_predictor_metrics.csv",
+    ]
+    for path in paths:
+        assert path.is_file(), path
+        text = path.read_text(encoding="utf-8").lower()
+        assert not any(removed in text for removed in REMOVED_IDS), path
+        if "environment_id" in pd.read_csv(path, nrows=0).columns:
+            frame = pd.read_csv(path, usecols=["environment_id"])
+            observed = {value for value in frame["environment_id"].dropna().astype(str) if value not in {"all", "off_diagonal", "environment_macro"}}
+            assert observed.issubset(current), (path, observed - current)
+
+
+def test_canonical_split_and_gene_contracts_are_current() -> None:
+    summary = json.loads((MANIFESTS / "formal_v2_reliability_summary.json").read_text(encoding="utf-8"))
+    assert int(summary["split_seed"]) == 20260907
+    assert int(summary["rows"]) == len(pd.read_csv(ROOT / "artifacts/source_data/formal_v2_reliability_predictions.csv"))
+    predictor = json.loads((MANIFESTS / "formal_v2_predictor_summary.json").read_text(encoding="utf-8"))
+    assert int(predictor["split_seed"]) == 20260907
+    assert int(predictor["evaluation_gene_count"]) == 8229
+    for path in MANIFESTS.glob("formal_v2_*__split_*.csv"):
+        # Split-suffixed files may only be one of the five declared seeds.
+        seed = int(path.stem.rsplit("_", 1)[-1])
+        assert seed in STABILITY_SEEDS, path
+
+
+def test_figure_manifest_sources_exist_and_conclusion_is_cautious() -> None:
+    payload = json.loads((MANIFESTS / "formal_v2_figure_manifest.json").read_text(encoding="utf-8"))
+    assert "reliability shift" in payload["core_conclusion"].lower()
+    assert "tested" in payload["core_conclusion"].lower()
+    for relative in payload["source_data"]:
+        assert (ROOT / relative).is_file(), relative
+
+
+def test_reliability_shift_and_transport_claims_are_bounded() -> None:
+    paper = (ROOT / "paper/iclr2027/main.tex").read_text(encoding="utf-8").lower()
+    assert "hard limits" not in paper
+    assert "deployment-available context is insufficient" not in paper
+    assert "information is insufficient" not in paper
+    assert "validation-only acceptance criterion" in paper
+    descriptors = json.loads((MANIFESTS / "formal_v2_transport_predictor_summary.json").read_text(encoding="utf-8"))
+    descriptor_columns = descriptors.get("descriptor_columns") or descriptors.get("feature_columns")
+    assert descriptor_columns is not None
+    assert set(descriptor_columns) == {
+        "same_cell_context", "same_perturbation_modality", "same_platform", "same_condition",
+        "same_dataset_family", "same_context_modality", "prediction_geometry_distance",
+        "uq_distribution_distance",
+    }
+    systema = json.loads((MANIFESTS / "formal_v2_systema_robustness_summary.json").read_text(encoding="utf-8"))
+    assert systema.get("metric_entrypoint")
+    gears = json.loads((MANIFESTS / "formal_v2_gears_reliability_summary.json").read_text(encoding="utf-8"))
+    assert gears["validation_predictions_used"] is True
+    assert set(gears["datasets"]) == {"NormanWeissman2019_filtered", "ReplogleWeissman2022_rpe1"}
+    multisplit = json.loads((MANIFESTS / "formal_v2_multisplit_reliability_summary.json").read_text(encoding="utf-8"))
+    contrast = multisplit["paired_asymmetry_contrast"]
+    assert contrast["contrast"] == "delta_leave_environment_out_minus_delta_leave_predictor_out"
+    assert int(contrast["n_splits"]) == 5

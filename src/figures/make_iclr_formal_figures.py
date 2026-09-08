@@ -1,9 +1,9 @@
-"""Create publication-ready formal-v2 Figures 2--4.
+"""Create publication-ready formal-v2 Figures 1--4.
 
 Figure contract
 ---------------
-Core conclusion: confidence changes meaning across biology, while reliability
-transfer follows a measurable source-to-target structure.
+Core conclusion: reliability shifts under biological domain change and can be
+decomposed into difficulty, ranking and tested semantic components.
 Archetype: asymmetric mixed-modality quantitative composite.
 Backend: Python/matplotlib only; double-column vector exports plus 600-dpi
 previews. All panels read formal-v2 artifacts and never the historical pilot.
@@ -52,19 +52,19 @@ GREEN = "#2E9E66"
 RED = "#B64342"
 
 ENV_ORDER = [
-    "norman_k562", "replogle_k562_essential", "replogle_rpe1",
+    "norman_k562", "replogle_rpe1",
     "tian_neuron_crispra", "tian_neuron_crispri", "frangieh_melanoma_control",
-    "frangieh_melanoma_coculture", "frangieh_melanoma_ifng",
+    "frangieh_melanoma_coculture", "frangieh_melanoma_ifng", "xu_he293",
 ]
 ENV_LABELS = {
     "norman_k562": "Norman\nK562",
-    "replogle_k562_essential": "K562\nessential",
     "replogle_rpe1": "RPE1",
     "tian_neuron_crispra": "Tian\nCRISPRa",
     "tian_neuron_crispri": "Tian\nCRISPRi",
     "frangieh_melanoma_control": "Frangieh\ncontrol",
     "frangieh_melanoma_coculture": "Frangieh\nco-culture",
     "frangieh_melanoma_ifng": "Frangieh\nIFNγ",
+    "xu_he293": "Xu\nHEK293",
 }
 PREDICTOR_LABELS = {"mean_matching": "Matching mean", "strong_linear": "Ahlmann–Eltze", "slim_string": "SLIM"}
 PREDICTOR_COLORS = {"mean_matching": BLUE, "strong_linear": PURPLE, "slim_string": GOLD}
@@ -160,7 +160,7 @@ def figure2(pred: pd.DataFrame, metrics: pd.DataFrame, out_dir: Path) -> list[st
 
     ax = fig.add_subplot(gs[0, 0])
     panel(ax, "a", "The same confidence quantile has different realized risk")
-    chosen = ["norman_k562", "replogle_rpe1", "frangieh_melanoma_ifng"]
+    chosen = [env for env in ["norman_k562", "replogle_rpe1", "frangieh_melanoma_ifng", "xu_he293"] if env in set(data["environment_key"])]
     for env, color in zip(chosen, [BLUE, TEAL, CORAL]):
         subset = data.loc[data["environment_key"].eq(env)]
         curve = subset.groupby("confidence_decile", observed=True)["risk"].mean().reindex(range(1, 11))
@@ -173,23 +173,27 @@ def figure2(pred: pd.DataFrame, metrics: pd.DataFrame, out_dir: Path) -> list[st
     ax.legend(fontsize=6, loc="upper right")
 
     ax = fig.add_subplot(gs[0, 1])
-    panel(ax, "b", "High confidence is not a universal risk level")
-    high = data.loc[data["confidence"].ge(data.groupby("predictor")["confidence"].transform("quantile", 0.8))]
-    envs = [env for env in ENV_ORDER if env in set(high["environment_key"])]
-    vals = [high.loc[high["environment_key"].eq(env), "risk"].to_numpy() for env in envs]
-    positions = np.arange(len(envs))
-    box = ax.boxplot(vals, positions=positions, widths=0.58, patch_artist=True, showfliers=False,
-                     medianprops={"color": NAVY, "linewidth": 1.0},
-                     boxprops={"facecolor": "#DCEEF0", "edgecolor": BLUE, "linewidth": 0.8},
-                     whiskerprops={"color": SLATE}, capprops={"color": SLATE})
-    ax.set_xticks(positions)
-    ax.set_xticklabels([ENV_LABELS[e] for e in envs], rotation=45, ha="right", fontsize=5.4)
-    ax.set_ylabel("risk among top 20% confidence")
-    ax.set_ylim(bottom=0)
-    ax.text(0.02, 0.96, f"n={len(high)} test rows", transform=ax.transAxes, va="top", fontsize=6, color=SLATE)
+    panel(ax, "b", "Controlled microscope: matched perturbations")
+    controlled_path = ROOT / "artifacts/manifests/formal_v2_controlled_shift.csv"
+    if controlled_path.is_file():
+        controlled = pd.read_csv(controlled_path)
+        controlled = controlled.loc[controlled["method"].eq("ptl_rf") & controlled["status"].eq("executed")].copy()
+        controlled["pair"] = controlled["left_environment_id"].map(lambda value: ENV_LABELS.get(value, value).replace("\n", " ")) + " → " + controlled["right_environment_id"].map(lambda value: ENV_LABELS.get(value, value).replace("\n", " "))
+        controlled["pair"] = controlled["pair"].str.replace("Frangieh ", "", regex=False)
+        plot = controlled.groupby(["comparison", "pair"], as_index=False)["centered_confidence_mapping_gap"].mean()
+        plot = plot.sort_values(["comparison", "pair"])
+        x = np.arange(len(plot))
+        colors = [CORAL if value >= 0 else TEAL for value in plot["centered_confidence_mapping_gap"]]
+        ax.bar(x, plot["centered_confidence_mapping_gap"], color=colors, width=0.68)
+        ax.axhline(0, color=NAVY, lw=0.8)
+        ax.set_xticks(x, [value.replace(" → ", "\n→ ") for value in plot["pair"]], rotation=0, fontsize=5.0)
+        ax.set_ylabel("centered matched-bin risk gap")
+        ax.text(0.02, 0.96, "shared perturbation labels; PTL", transform=ax.transAxes, va="top", fontsize=5.8, color=SLATE)
+    else:
+        ax.text(0.5, 0.5, "controlled-shift artifact pending", ha="center", va="center", transform=ax.transAxes, color=SLATE)
 
     ax = fig.add_subplot(gs[1, 0])
-    panel(ax, "c", "Raw-UQ discrimination varies by environment and predictor")
+    panel(ax, "c", "Raw UQ: ranking varies by environment")
     heat = data.groupby(["environment_key", "predictor"], observed=True).apply(lambda group: _aurc(group, "confidence"), include_groups=False).unstack()
     heat = heat.reindex(index=[e for e in ENV_ORDER if e in heat.index], columns=list(PREDICTOR_LABELS))
     im = ax.imshow(heat.to_numpy(dtype=float), cmap="YlGnBu", aspect="auto", vmin=float(np.nanmin(heat.values)), vmax=float(np.nanmax(heat.values)))
@@ -203,33 +207,26 @@ def figure2(pred: pd.DataFrame, metrics: pd.DataFrame, out_dir: Path) -> list[st
     cbar.ax.tick_params(labelsize=6)
 
     ax = fig.add_subplot(gs[1, 1])
-    panel(ax, "d", "Matched confidence, contrasting outcomes")
-    sample = data.sample(min(1400, len(data)), random_state=20260907)
-    ax.scatter(sample["confidence"], sample["risk"], s=6, alpha=0.14, color=SLATE, linewidths=0)
-    high_conf = data.loc[data["confidence"].ge(0.75)]
-    if len(high_conf) >= 2:
-        values = high_conf.sort_values("confidence")
-        best_pair = None
-        best_gap = -1.0
-        for i in range(len(values)):
-            upper = values.iloc[i + 1:]
-            close = upper.loc[(upper["confidence"] - values.iloc[i]["confidence"]).abs() <= 0.015]
-            if len(close):
-                candidate = close.iloc[(close["risk"] - values.iloc[i]["risk"]).abs().argmax()]
-                gap = abs(float(candidate["risk"]) - float(values.iloc[i]["risk"]))
-                if gap > best_gap:
-                    best_pair = (values.iloc[i], candidate)
-                    best_gap = gap
-        if best_pair is not None:
-            for row, color, label in zip(best_pair, [GREEN, CORAL], ["success", "failure"]):
-                ax.scatter([row["confidence"]], [row["risk"]], s=44, color=color, edgecolor="white", linewidth=0.8, zorder=3)
-                ax.annotate(label, (row["confidence"], row["risk"]), xytext=(5, 5 if label == "success" else -12), textcoords="offset points", fontsize=6, color=color, fontweight="bold")
-            ax.annotate("same confidence\n≠ same risk", xy=(np.mean([r["confidence"] for r in best_pair]), np.mean([r["risk"] for r in best_pair])), xytext=(0.80, 0.30), textcoords="axes fraction", arrowprops={"arrowstyle": "-", "color": CORAL, "lw": 0.8}, fontsize=7, color=NAVY, ha="center", fontweight="bold")
-    ax.set_xlabel("formal deployment confidence")
-    ax.set_ylabel("realized risk")
-    ax.set_xlim(0, 1.02)
-    ax.set_ylim(bottom=0)
-    fig.suptitle("Confidence changes meaning across biological environments", x=0.03, y=1.015, ha="left", fontsize=12, fontweight="bold", color=NAVY)
+    panel(ax, "d", "Conditional grouping loss")
+    grouping_path = ROOT / "artifacts/manifests/formal_v2_grouping_loss_summary.json"
+    if grouping_path.is_file():
+        grouping = json.loads(grouping_path.read_text(encoding="utf-8"))
+        grouping_frame = pd.DataFrame(grouping.get("summary", []))
+        if not grouping_frame.empty:
+            plot = grouping_frame.groupby(["predictor", "method"], as_index=False)["mean_contextual_grouping_loss"].mean()
+            plot["x"] = plot["predictor"].map({"mean_matching": 0, "strong_linear": 1, "slim_string": 2})
+            for method, color, label in [("raw_normalized_uq", SLATE, "raw UQ"), ("u_only_rf", TEAL, "U-only RF"), ("ptl_rf", BLUE, "PTL")]:
+                subset = plot.loc[plot["method"].eq(method)].sort_values("x")
+                ax.plot(subset["x"], subset["mean_contextual_grouping_loss"], marker="o", lw=1.5, color=color, label=label)
+            ax.set_xticks([0, 1, 2], [PREDICTOR_LABELS.get(p, p) for p in ["mean_matching", "strong_linear", "slim_string"]], rotation=24, ha="right", fontsize=5.6)
+            ax.set_ylabel("contextual grouping loss")
+            ax.legend(fontsize=5.4, loc="best")
+            ax.text(0.02, 0.96, "bins fixed from calibration scores", transform=ax.transAxes, va="top", fontsize=5.8, color=SLATE)
+        else:
+            ax.text(0.5, 0.5, "no valid grouping-loss rows", ha="center", va="center", transform=ax.transAxes)
+    else:
+        ax.text(0.5, 0.5, "grouping-loss artifact pending", ha="center", va="center", transform=ax.transAxes, color=SLATE)
+    fig.suptitle("Reliability Shift: matched confidence does not erase environment heterogeneity", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
     return save_publication(fig, out_dir / "formal_fig2_confidence_semantics")
 
 
@@ -240,14 +237,15 @@ def figure3(pred: pd.DataFrame, atlas: pd.DataFrame, out_dir: Path) -> list[str]
     u_only = atlas.loc[atlas["baseline"].eq("u_only_rf")].copy()
     heat = u_only.pivot(index="source_environment_key", columns="target_environment_key", values="transfer_gain").reindex(index=ENV_ORDER, columns=ENV_ORDER)
     ax = fig.add_subplot(gs[0, 0])
-    panel(ax, "a", "Reliability transfer follows a source → target landscape")
+    panel(ax, "a", "Reliability transfer is heterogeneous across source → target pairs")
     lim = float(np.nanmax(np.abs(heat.to_numpy(dtype=float))))
     cmap = LinearSegmentedColormap.from_list("transfer", [RED, "#F7F7F7", GREEN])
     im = ax.imshow(heat.to_numpy(dtype=float), cmap=cmap, norm=TwoSlopeNorm(vmin=-lim, vcenter=0, vmax=lim), aspect="auto")
-    ax.set_xticks(range(8), [ENV_LABELS[e] for e in ENV_ORDER], rotation=55, ha="right", fontsize=5.0)
-    ax.set_yticks(range(8), [ENV_LABELS[e] for e in ENV_ORDER], fontsize=5.2)
-    for i in range(8):
-        for j in range(8):
+    heat = heat.reindex(index=[e for e in ENV_ORDER if e in heat.index], columns=[e for e in ENV_ORDER if e in heat.columns])
+    ax.set_xticks(range(len(heat.columns)), [ENV_LABELS[e] for e in heat.columns], rotation=55, ha="right", fontsize=5.0)
+    ax.set_yticks(range(len(heat.index)), [ENV_LABELS[e] for e in heat.index], fontsize=5.2)
+    for i in range(heat.shape[0]):
+        for j in range(heat.shape[1]):
             val = heat.iloc[i, j]
             ax.text(j, i, f"{val:+.2f}", ha="center", va="center", fontsize=5.2, color=NAVY if abs(val) < lim * 0.55 else "white")
     cbar = fig.colorbar(im, ax=ax, fraction=0.045, pad=0.03)
@@ -255,7 +253,7 @@ def figure3(pred: pd.DataFrame, atlas: pd.DataFrame, out_dir: Path) -> list[str]
     cbar.ax.tick_params(labelsize=5.5)
 
     ax = fig.add_subplot(gs[0, 1])
-    panel(ax, "b", "Some targets receive reusable reliability knowledge")
+    panel(ax, "b", "Target-level transfer gains vary and can be negative")
     off = u_only.loc[~u_only["source_environment_id"].eq(u_only["target_environment_id"])]
     target_gain = off.groupby("target_environment_key", observed=True)["transfer_gain"].mean().reindex(ENV_ORDER).dropna().sort_values()
     colors = [CORAL if value < 0 else GREEN for value in target_gain.values]
@@ -267,7 +265,7 @@ def figure3(pred: pd.DataFrame, atlas: pd.DataFrame, out_dir: Path) -> list[str]
         ax.text(value + (0.003 if value >= 0 else -0.003), y, f"{value:+.2f}", va="center", ha="left" if value >= 0 else "right", fontsize=5.8, color=NAVY)
 
     ax = fig.add_subplot(gs[1, 0])
-    panel(ax, "c", "Context similarity is a measurable transfer descriptor")
+    panel(ax, "c", "Context similarity is descriptive, not a prospective guarantee")
     off = off.copy()
     off["context_group"] = np.where(off["same_context_modality"].eq(1), "same cell + modality", "different context")
     groups = [off.loc[off["context_group"].eq(name), "transfer_gain"].to_numpy() for name in ["different context", "same cell + modality"]]
@@ -285,7 +283,7 @@ def figure3(pred: pd.DataFrame, atlas: pd.DataFrame, out_dir: Path) -> list[str]
     ax.text(0.02, 0.96, f"off-diagonal pairs: n={len(off)}", transform=ax.transAxes, va="top", fontsize=6, color=SLATE)
 
     ax = fig.add_subplot(gs[1, 1])
-    panel(ax, "d", "Predictor transfer is evaluated on held-out families")
+    panel(ax, "d", "Holdout contrast: asymmetry is not established")
     subset = data.groupby("heldout_predictor", observed=True)
     rows = []
     for predictor, group in subset:
@@ -298,7 +296,7 @@ def figure3(pred: pd.DataFrame, atlas: pd.DataFrame, out_dir: Path) -> list[str]
     ax.set_xticks(x, [PREDICTOR_LABELS.get(p, p) for p in compare.index], rotation=20, ha="right", fontsize=5.6)
     ax.set_ylabel("AURC · lower is better")
     ax.legend(fontsize=5.7, loc="upper right")
-    fig.suptitle("Confidence does not travel uniformly — reliability has structure", x=0.03, y=1.015, ha="left", fontsize=12, fontweight="bold", color=NAVY)
+    fig.suptitle("Reliability transfer is heterogeneous and difficult to predict prospectively", x=0.03, y=1.015, ha="left", fontsize=12, fontweight="bold", color=NAVY)
     return save_publication(fig, out_dir / "formal_fig3_reliability_transfer_atlas")
 
 
@@ -319,7 +317,7 @@ def figure4(pred: pd.DataFrame, ablation: pd.DataFrame, out_dir: Path) -> list[s
     ax.text(6.5, ax.get_ylim()[1] * 0.97, "context surface", ha="center", fontsize=5.8, color=TEAL)
 
     ax = fig.add_subplot(gs[0, 1])
-    panel(ax, "b", "The gain remains after restricting to reliable outcomes")
+    panel(ax, "b", "PTL versus U-only is scenario-dependent")
     data = pred.loc[pred["scenario"].eq("in_domain")].copy()
     groups = []
     labels = []
@@ -355,24 +353,87 @@ def figure4(pred: pd.DataFrame, ablation: pd.DataFrame, out_dir: Path) -> list[s
     ax.legend(fontsize=5.5, loc="upper right")
 
     ax = fig.add_subplot(gs[1, 1])
-    panel(ax, "d", "Formal predictor surface used for every headline panel")
-    pm = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_predictor_metrics.csv")
-    pm = pm.loc[pm["split_id"].eq("ptl_biological_instance_split_v1")].copy()
-    pm = pm.loc[pm["predictor"].isin(PREDICTOR_LABELS)]
-    fidelity = pm.groupby(["environment_key", "predictor"], observed=True)["mean_fidelity"].mean().unstack().reindex(index=ENV_ORDER, columns=list(PREDICTOR_LABELS))
-    im = ax.imshow(fidelity.to_numpy(dtype=float), cmap="YlGnBu", aspect="auto", vmin=0, vmax=max(0.7, float(np.nanmax(fidelity.values))))
-    ax.set_xticks(range(3), [PREDICTOR_LABELS[p] for p in fidelity.columns], rotation=25, ha="right", fontsize=5.5)
-    ax.set_yticks(range(len(fidelity)), [ENV_LABELS[e] for e in fidelity.index], fontsize=5.3)
-    for i in range(fidelity.shape[0]):
-        for j in range(fidelity.shape[1]):
-            value = fidelity.iloc[i, j]
-            if pd.notna(value):
-                ax.text(j, i, f"{value:.2f}", ha="center", va="center", fontsize=5.5, color="white" if value > fidelity.values.mean() else NAVY)
-    cbar = fig.colorbar(im, ax=ax, fraction=0.045, pad=0.03)
-    cbar.set_label("mean test fidelity", fontsize=6.2)
-    cbar.ax.tick_params(labelsize=5.5)
-    fig.suptitle("Deployment-safe information improves selective reliability", x=0.03, y=1.015, ha="left", fontsize=12, fontweight="bold", color=NAVY)
+    panel(ax, "d", "Modern-model audit: validation-backed GEARS")
+    gears_path = ROOT / "artifacts/manifests/formal_v2_gears_reliability_summary.json"
+    if gears_path.is_file():
+        gears = json.loads(gears_path.read_text(encoding="utf-8"))
+        rows = pd.DataFrame(gears.get("shift_by_seed", []))
+        if not rows.empty:
+            x = np.arange(len(rows))
+            width = 0.34
+            ax.bar(x - width / 2, rows["contextual_grouping_loss"], width, color=BLUE, label="grouping loss")
+            ax.bar(x + width / 2, rows["difficulty_shift_range"], width, color=GOLD, label="difficulty range")
+            ax.set_xticks(x, [f"seed {int(value)}" for value in rows["gears_seed"]])
+            ax.set_ylabel("shift magnitude")
+            ax.legend(fontsize=5.5, loc="best")
+            ax.text(0.02, 0.96, "Norman + RPE1; bins from validation", transform=ax.transAxes, va="top", fontsize=5.8, color=SLATE)
+        else:
+            ax.text(0.5, 0.5, "no GEARS shift rows", ha="center", va="center", transform=ax.transAxes)
+    else:
+        ax.text(0.5, 0.5, "GEARS validation audit pending", ha="center", va="center", transform=ax.transAxes, color=SLATE)
+    fig.suptitle("Reliability Shift across controlled, transport and modern-model audits", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
     return save_publication(fig, out_dir / "formal_fig4_information_and_robustness")
+
+
+def figure1(pred: pd.DataFrame, metrics: pd.DataFrame, atlas: pd.DataFrame, out_dir: Path) -> list[str]:
+    """Hero figure: the Reliability Shift proof chain."""
+
+    shift_path = ROOT / "artifacts/manifests/formal_v2_reliability_shift_decomposition.csv"
+    semantic_path = ROOT / "artifacts/manifests/formal_v2_reliability_shift_semantic.csv"
+    if not shift_path.is_file() or not semantic_path.is_file():
+        raise FileNotFoundError("Reliability Shift artifacts are required for Figure 1")
+    shift = pd.read_csv(shift_path)
+    semantic = pd.read_csv(semantic_path)
+    primary = shift.loc[(shift["split_seed"].eq(20260907)) & (shift["method"].eq("ptl_rf"))].copy()
+    primary_semantic = semantic.loc[(semantic["split_seed"].eq(20260907)) & (semantic["method"].eq("ptl_rf"))].copy()
+    fig = plt.figure(figsize=(7.25, 6.1))
+    gs = fig.add_gridspec(2, 2, width_ratios=[1.2, 1], height_ratios=[1.05, 1], hspace=0.48, wspace=0.38)
+
+    ax = fig.add_subplot(gs[0, 0])
+    panel(ax, "a", "Difficulty shift: mean risk differs by environment")
+    difficulty = primary.groupby("environment_key", observed=True)["difficulty_mean_risk"].mean().reindex([e for e in ENV_ORDER if e in set(primary["environment_key"])])
+    x = np.arange(len(difficulty))
+    ax.bar(x, difficulty.values, color=BLUE, alpha=0.9)
+    ax.set_xticks(x, [ENV_LABELS[e].replace("\n", " ") for e in difficulty.index], rotation=55, ha="right", fontsize=4.8)
+    ax.set_ylabel("mean realized risk")
+
+    ax = fig.add_subplot(gs[0, 1])
+    panel(ax, "b", "Ranking shift: confidence–risk concordance varies")
+    ranking = primary.groupby("environment_key", observed=True)["ranking_spearman_confidence_vs_negative_risk"].mean().reindex(difficulty.index)
+    colors = [TEAL if value >= 0 else CORAL for value in ranking.values]
+    ax.axhline(0, color=NAVY, lw=0.8)
+    ax.bar(np.arange(len(ranking)), ranking.values, color=colors)
+    ax.set_xticks(np.arange(len(ranking)), [ENV_LABELS[e].replace("\n", " ") for e in ranking.index], rotation=55, ha="right", fontsize=4.8)
+    ax.set_ylabel("Spearman(confidence, −risk)")
+    ax.set_ylim(-1.0, 1.0)
+
+    ax = fig.add_subplot(gs[1, 0])
+    panel(ax, "c", "Semantic shift after additive difficulty control")
+    if not primary_semantic.empty:
+        display = primary_semantic.sort_values("predictor")
+        labels = [PREDICTOR_LABELS.get(value, value) for value in display["predictor"]]
+        x = np.arange(len(display))
+        width = 0.35
+        ax.bar(x - width / 2, display["additive_null_mse"], width, color=SLATE, label="additive null")
+        ax.bar(x + width / 2, display["environment_interaction_mse"], width, color=PURPLE, label="environment × confidence")
+        ax.set_xticks(x, labels, rotation=25, ha="right", fontsize=5.3)
+        ax.set_ylabel("held-out risk MSE")
+        ax.legend(fontsize=5.5, loc="best")
+
+    ax = fig.add_subplot(gs[1, 1])
+    panel(ax, "d", "Interaction gain is tested, not assumed")
+    if not primary_semantic.empty:
+        display = primary_semantic.sort_values("predictor")
+        x = np.arange(len(display))
+        center = display["semantic_shift_bootstrap_mean"]
+        lower = center - display["semantic_shift_ci_lower"]
+        upper = display["semantic_shift_ci_upper"] - center
+        ax.errorbar(x, center, yerr=[lower, upper], fmt="o", color=PURPLE, capsize=4, lw=1.2)
+        ax.axhline(0, color=NAVY, lw=0.8)
+        ax.set_xticks(x, [PREDICTOR_LABELS.get(value, value) for value in display["predictor"]], rotation=25, ha="right", fontsize=5.3)
+        ax.set_ylabel("interaction improvement\n(additive MSE − interaction MSE)")
+    fig.suptitle("Reliability Shift: difficulty, ranking and semantic change", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
+    return save_publication(fig, out_dir / "formal_fig1_same_confidence_different_risk")
 
 
 def main() -> int:
@@ -380,6 +441,7 @@ def main() -> int:
     pred, metrics, ablation, atlas = load_data()
     out_dir = ROOT / "results/figures/iclr_formal"
     outputs = {
+        "figure_1": figure1(pred, metrics, atlas, out_dir),
         "figure_2": figure2(pred, metrics, out_dir),
         "figure_3": figure3(pred, atlas, out_dir),
         "figure_4": figure4(pred, ablation, out_dir),
@@ -387,12 +449,31 @@ def main() -> int:
     manifest = {
         "schema_version": 1,
         "backend": "python_matplotlib",
-        "core_conclusion": "confidence changes meaning across biology, while reliability transfer follows a measurable source-to-target structure",
+        "core_conclusion": "Reliability Shift changes difficulty and ranking across biology; the semantic interaction is tested with a null rather than assumed, while source-specific transfer remains heterogeneous",
         "source_data": [
             "artifacts/source_data/formal_v2_reliability_predictions.csv",
             "artifacts/manifests/formal_v2_reliability_metrics.csv",
             "artifacts/manifests/formal_v2_information_ablation_metrics.csv",
             "artifacts/manifests/formal_v2_environment_transfer_matrix.csv",
+            "artifacts/manifests/formal_v2_environment_transfer_stability.csv",
+            "artifacts/manifests/formal_v2_transport_predictor_summary.json",
+            "artifacts/manifests/formal_v2_metric_robustness.csv",
+            "artifacts/manifests/formal_v2_metric_robustness_selective.csv",
+            "artifacts/manifests/formal_v2_raw_cell_split_half.csv",
+            "artifacts/manifests/formal_v2_grouping_loss.csv",
+            "artifacts/manifests/formal_v2_grouping_loss_summary.json",
+            "artifacts/manifests/formal_v2_reliability_shift_decomposition.csv",
+            "artifacts/manifests/formal_v2_reliability_shift_decomposition.json",
+            "artifacts/manifests/formal_v2_reliability_shift_semantic.csv",
+            "artifacts/manifests/formal_v2_controlled_shift.csv",
+            "artifacts/manifests/formal_v2_controlled_shift.json",
+            "artifacts/source_data/formal_v2_gears_reliability_predictions.csv",
+            "artifacts/manifests/formal_v2_gears_reliability.csv",
+            "artifacts/manifests/formal_v2_gears_reliability_summary.json",
+            "artifacts/manifests/formal_v2_multisplit_reliability.csv",
+            "artifacts/manifests/formal_v2_multisplit_reliability_summary.json",
+            "artifacts/manifests/formal_v2_systema_robustness.csv",
+            "artifacts/manifests/formal_v2_reproducibility_stratified_reliability.csv",
             "artifacts/manifests/formal_v2_predictor_metrics.csv",
             "artifacts/manifests/formal_v2_feature_transform_manifest.json",
         ],

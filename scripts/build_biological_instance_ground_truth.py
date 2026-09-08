@@ -74,6 +74,8 @@ def aggregate_dataset(root: Path, records: list[dict[str, Any]], output_dir: Pat
     if missing:
         raise ValueError(f"{source} is missing columns: {sorted(missing)}")
     frame = frame.loc[~frame["is_control"].astype(bool)].copy()
+    labels = frame["perturbation_label"].astype(str).str.strip()
+    frame = frame.loc[labels.ne("") & ~labels.str.casefold().isin({"nan", "none", "null"})].copy()
     frame["n_cells"] = pd.to_numeric(frame["n_cells"], errors="coerce")
     frame = frame.loc[frame["n_cells"].gt(0)].copy()
     assignments = [assign_environment(row, records) for _, row in frame.iterrows()]
@@ -85,6 +87,7 @@ def aggregate_dataset(root: Path, records: list[dict[str, Any]], output_dir: Pat
     metadata_columns = {
         "dataset_id", "source_dataset", "signature_id", "reference_key", "perturbation_label",
         "is_control", "n_cells", "control_label_used", "batch", "perturbation_2",
+        "cell_line", "celltype", "cell_context", "target", "guide_id", "perturbation_type",
         "environment_id", "environment_key", "condition", "condition_field", "dose", "timepoint",
     }
     gene_columns = [column for column in frame.columns if column not in metadata_columns]
@@ -136,8 +139,8 @@ def aggregate_dataset(root: Path, records: list[dict[str, Any]], output_dir: Pat
     return aggregate_rows
 
 
-def assign_splits(rows: list[dict[str, Any]], split_spec: dict[str, Any]) -> None:
-    seed = int(split_spec["split_seed"])
+def assign_splits(rows: list[dict[str, Any]], split_spec: dict[str, Any], *, split_seed: int | None = None) -> None:
+    seed = int(split_spec["split_seed"] if split_seed is None else split_seed)
     fractions = split_spec["split_fractions"]
     if abs(sum(float(value) for value in fractions.values()) - 1.0) > 1e-9:
         raise ValueError("Split fractions must sum to one")
@@ -166,9 +169,13 @@ def materialize(
     split_path: Path,
     manifest_path: Path,
     summary_path: Path,
+    split_seed: int | None = None,
 ) -> dict[str, Any]:
     benchmark = load_yaml(benchmark_path)
     split_spec = load_yaml(split_path)
+    if split_seed is not None:
+        split_spec = dict(split_spec)
+        split_spec["split_seed"] = int(split_seed)
     registry = load_registry(registry_path)
     benchmark_keys = {str(row["environment_id"]) for row in benchmark["environments"]}
     registry_keys = set(registry["environment_key"].astype(str))
@@ -190,7 +197,7 @@ def materialize(
         dataset_rows = aggregate_dataset(root, records, root / "data" / "processed")
         rows.extend(dataset_rows)
         ground_truth_paths[dataset] = dataset_rows[0]["ground_truth_path"] if dataset_rows else ""
-    assign_splits(rows, split_spec)
+    assign_splits(rows, split_spec, split_seed=split_seed)
 
     manifest_columns = [
         "biological_instance_id", "environment_id", "environment_key", "dataset_id", "condition",
@@ -233,15 +240,23 @@ def main() -> int:
     parser.add_argument("--split", type=Path, default=None)
     parser.add_argument("--manifest", type=Path, default=None)
     parser.add_argument("--summary", type=Path, default=None)
+    parser.add_argument("--split-seed", type=int, default=None)
     args = parser.parse_args()
     root = args.root.resolve()
+    selected_seed = args.split_seed
+    manifest_default = root / "artifacts/manifests/biological_instance_registry.csv"
+    summary_default = root / "artifacts/manifests/biological_instance_registry.json"
+    if selected_seed is not None and selected_seed != 20260907:
+        manifest_default = root / f"artifacts/manifests/biological_instance_registry__split_{selected_seed}.csv"
+        summary_default = root / f"artifacts/manifests/biological_instance_registry__split_{selected_seed}.json"
     result = materialize(
         root,
         (args.benchmark or root / "configs/context_benchmark.yaml").resolve(),
         (args.registry or root / "artifacts/manifests/environment_registry.csv").resolve(),
         (args.split or root / "configs/biological_instance_split.yaml").resolve(),
-        (args.manifest or root / "artifacts/manifests/biological_instance_registry.csv").resolve(),
-        (args.summary or root / "artifacts/manifests/biological_instance_registry.json").resolve(),
+        (args.manifest or manifest_default).resolve(),
+        (args.summary or summary_default).resolve(),
+        split_seed=selected_seed,
     )
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0

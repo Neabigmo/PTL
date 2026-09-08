@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2",
+  "join": "dataset_id + perturbation_label",
+  "reproducibility_source": "formal_v2_raw_cell_split_half.csv",
+  "strata": [
+    "low",
+    "middle",
+    "high"
+  ],
+  "methods": [
+    "raw_normalized_uq",
+    "u_only_rf",
+    "ptl_rf"
+  ],
+  "evaluation_only": true,
+  "raw_cell_rows_joined": 153,
+  "datasets": [
+    "NormanWeissman2019_filtered",
+    "ReplogleWeissman2022_rpe1"
+  ],
+  "output_path": "artifacts/manifests/formal_v2_reproducibility_stratified_reliability.csv",
+  "relationship_path": "artifacts/manifests/formal_v2_reproducibility_risk_relationship.csv",
+  "status": "formal_v2_reproducibility_stratified_reliability_executed"
+}

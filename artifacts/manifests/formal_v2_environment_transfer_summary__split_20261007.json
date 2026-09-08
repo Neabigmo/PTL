@@ -1,0 +1,34 @@
+{
+  "schema_version": 2,
+  "benchmark_id": "ptl_context_v2",
+  "split_seed": 20261007,
+  "environment_count": 8,
+  "matrix_shape": [
+    8,
+    8
+  ],
+  "off_diagonal_pair_count": 56,
+  "matrix_rows": 112,
+  "baselines": [
+    "u_only_rf",
+    "raw_scalar_uq"
+  ],
+  "source_split": "source environment validation set",
+  "target_split": "target environment untouched test set",
+  "primary_transfer_gain_definition": "target-excluded pooled U-only AURC - source-trained PTL AURC",
+  "secondary_transfer_gain_definition": "target-excluded pooled raw normalized UQ AURC - source-trained PTL AURC",
+  "descriptors": [
+    "same_cell_context",
+    "same_perturbation_modality",
+    "same_platform",
+    "same_condition",
+    "same_dataset_family",
+    "same_context_modality",
+    "prediction_geometry_distance",
+    "uq_distribution_distance"
+  ],
+  "self_source_pairs_included": false,
+  "matrix_path": "artifacts/manifests/formal_v2_environment_transfer_matrix__split_20261007.csv",
+  "summary_path": "artifacts/manifests/formal_v2_environment_transfer_summary__split_20261007.csv",
+  "status": "formal_v2_off_diagonal_target_excluded_transfer_atlas_executed"
+}

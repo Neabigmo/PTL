@@ -10,9 +10,9 @@ entries:
   - name: GEARS
     url: https://github.com/snap-stanford/GEARS.git
     pinned_commit: f374e43e197b295016d80395d7a54ddb81cc6769
-    role: "Optional learned predictor; official implementation audit for G2/G5."
+    role: "Optional learned predictor; formal external-contract audit for G2/G5."
     license: "MIT (repository LICENSE)"
-    status: present
+    status: formal_external_contract_executed_remote_cuda
   - name: ICLR-2027-style-files
     url: https://www.iclr.cc/
     pinned_commit: null
@@ -24,7 +24,7 @@ entries:
     pinned_commit: aaf5b5353993b48b78543f2f93b3e18ca65df515
     role: "Perturbation-specific metric and unified predictor-pipeline reference; checked out locally but not vendored."
     license: "To be verified before code or data reuse."
-    status: reference_checked_out
+    status: centroid_accuracy_entrypoint_verified
   - name: scPertEval
     url: null
     pinned_commit: null

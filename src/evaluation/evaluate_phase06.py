@@ -309,8 +309,9 @@ def compute_selective_metrics(per_signature_df: pd.DataFrame) -> dict[str, float
     coverage_array = np.array(coverages, dtype=np.float64)
     risk_array = np.array(risks, dtype=np.float64)
     order = np.argsort(coverage_array)
-    result["area_under_selective_risk_curve"] = float(np.trapz(risk_array[order], coverage_array[order]))
-    result["area_under_coverage_curve"] = float(np.trapz(np.sort(coverage_array), np.linspace(0.0, 1.0, len(coverage_array))))
+    trapezoid = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
+    result["area_under_selective_risk_curve"] = float(trapezoid(risk_array[order], coverage_array[order]))
+    result["area_under_coverage_curve"] = float(trapezoid(np.sort(coverage_array), np.linspace(0.0, 1.0, len(coverage_array))))
     return result
 
 

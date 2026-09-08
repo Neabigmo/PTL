@@ -652,8 +652,9 @@ def selective_profile(y_true: np.ndarray, risk: np.ndarray, scores: np.ndarray, 
     ]
     result["mean_false_transportability_rate"] = float(np.mean(false_rate_columns)) if false_rate_columns else float("nan")
     order_cov = np.argsort(coverage_values)
+    trapezoid = np.trapezoid if hasattr(np, "trapezoid") else np.trapz
     result["area_under_selective_risk_curve"] = float(
-        np.trapz(np.asarray(risk_values, dtype=float)[order_cov], np.asarray(coverage_values, dtype=float)[order_cov])
+        trapezoid(np.asarray(risk_values, dtype=float)[order_cov], np.asarray(coverage_values, dtype=float)[order_cov])
     )
     return result
 

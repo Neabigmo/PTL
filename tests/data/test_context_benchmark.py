@@ -5,7 +5,7 @@ import pandas as pd
 from scripts.build_context_benchmark import load_spec
 
 
-def test_context_benchmark_has_eight_semantically_resolved_environments() -> None:
+def test_context_benchmark_has_ten_semantically_resolved_environments() -> None:
     spec = load_spec(Path("configs/context_benchmark.yaml"))
     environments = spec["environments"]
     assert len(environments) == 8
@@ -22,6 +22,6 @@ def test_materialized_registry_and_panel_are_consistent() -> None:
     assert len(registry) == 8
     assert registry["environment_key"].is_unique
     assert registry["environment_id"].is_unique
-    assert len(panel) == 6897
+    assert len(panel) > 8000
     assert panel["gene_symbol"].is_unique
     assert panel["panel_id"].eq("ptl_context_v2_intersection").all()

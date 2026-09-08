@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import anndata as ad
+from src.data.preprocess_dataset import load_adata
 
 from src.data.preprocess_dataset import load_config, resolve_cell_context, resolve_perturbation_label, resolve_obs_series
 
@@ -22,7 +22,7 @@ def test_new_preprocessing_configs_resolve_required_obs_fields() -> None:
     for name in NEW_PHASE11_CONFIGS:
         config = load_config(config_dir / name)
         assert config.input_path.exists(), f"Raw h5ad missing for {config.dataset_id}"
-        adata = ad.read_h5ad(config.input_path, backed="r")
+        adata = load_adata(config)
         obs = adata.obs.head(256).copy()
         perturbation = resolve_perturbation_label(obs, config)
         context = resolve_cell_context(obs, config)
@@ -31,4 +31,7 @@ def test_new_preprocessing_configs_resolve_required_obs_fields() -> None:
         assert context.notna().all(), config.dataset_id
         assert batch.notna().all(), config.dataset_id
         assert perturbation.astype(str).str.len().gt(0).all(), config.dataset_id
-        adata.file.close()
+        if hasattr(adata, "close"):
+            adata.close()
+        else:
+            adata.file.close()

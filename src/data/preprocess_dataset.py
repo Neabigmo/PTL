@@ -7,15 +7,80 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
-import anndata as ad
+import h5py
+try:
+    import anndata as ad
+except ImportError:  # pragma: no cover - exercised when the lightweight H5AD path is used
+    ad = None
 import numpy as np
 import pandas as pd
-import scanpy as sc
+try:
+    import scanpy as sc
+except ImportError:  # pragma: no cover - only needed for 10x_h5 input
+    sc = None
 import yaml
 from scipy import sparse
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _decode_h5_value(value: Any) -> Any:
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    if isinstance(value, np.generic):
+        return value.item()
+    return value
+
+
+def _read_h5_column(node: Any) -> np.ndarray:
+    if isinstance(node, h5py.Group) and "categories" in node and "codes" in node:
+        categories = np.asarray([_decode_h5_value(value) for value in node["categories"][:]], dtype=object)
+        codes = np.asarray(node["codes"][:], dtype=np.int64)
+        output = np.empty(len(codes), dtype=object)
+        output[:] = ""
+        valid = (codes >= 0) & (codes < len(categories))
+        output[valid] = categories[codes[valid]]
+        return output
+    return np.asarray([_decode_h5_value(value) for value in node[:]])
+
+
+def _read_h5_frame(group: h5py.Group) -> pd.DataFrame:
+    columns = {str(key): _read_h5_column(group[key]) for key in group.keys()}
+    return pd.DataFrame(columns)
+
+
+class _H5SparseMatrix:
+    def __init__(self, group: h5py.Group) -> None:
+        self.group = group
+        self.format = str(group.attrs.get("encoding-type", "csr_matrix")).split("_", 1)[0]
+        self.shape = tuple(int(value) for value in group.attrs["shape"])
+
+
+class _H5BackedAnnData:
+    """Minimal backed reader for CSC H5AD files when anndata is unavailable."""
+
+    isbacked = True
+
+    def __init__(self, path: Path) -> None:
+        self._handle = h5py.File(path, "r")
+        self.X = _H5SparseMatrix(self._handle["X"])
+        self.n_obs, self.n_vars = self.X.shape
+        self.obs = _read_h5_frame(self._handle["obs"])
+        self.var = _read_h5_frame(self._handle["var"])
+        if len(self.obs) != self.n_obs or len(self.var) != self.n_vars:
+            raise ValueError(f"H5AD metadata shape mismatch in {path}")
+        if "cell_barcode" in self.obs:
+            self.obs.index = self.obs["cell_barcode"].astype(str)
+        else:
+            self.obs.index = pd.Index([str(index) for index in range(self.n_obs)])
+        if "gene_symbol" in self.var:
+            self.var_names = pd.Index(self.var["gene_symbol"].astype(str))
+        else:
+            self.var_names = pd.Index([str(index) for index in range(self.n_vars)])
+
+    def close(self) -> None:
+        self._handle.close()
 
 @dataclass
 class DatasetConfig:
@@ -53,6 +118,20 @@ def parse_args() -> argparse.Namespace:
 def load_config(path: Path) -> DatasetConfig:
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     legacy_mode = raw.get("processed_adata_mode", "none")
+    input_path = Path(raw["input_path"])
+    output_dir = Path(raw["output_dir"])
+    # Historical configs used an absolute checkout path.  Resolve the
+    # project-relative data portion when a config is reused from another
+    # checkout, while preserving any path that still exists verbatim.
+    for original, key in ((input_path, "input_path"), (output_dir, "output_dir")):
+        if original.exists():
+            continue
+        normalized = str(original).replace("\\", "/")
+        for marker in ("data/raw/", "data/processed/", "data/external/"):
+            if marker in normalized:
+                candidate = ROOT / marker.rstrip("/") / normalized.split(marker, 1)[1]
+                raw[key] = str(candidate)
+                break
     return DatasetConfig(
         dataset_id=raw["dataset_id"],
         source_dataset=raw["source_dataset"],
@@ -94,10 +173,14 @@ def make_index_unique(values: Iterable[str]) -> pd.Index:
     return pd.Index(unique)
 
 
-def load_adata(config: DatasetConfig) -> ad.AnnData:
+def load_adata(config: DatasetConfig) -> Any:
     if config.input_format == "h5ad":
-        return ad.read_h5ad(config.input_path, backed="r")
+        if ad is not None:
+            return ad.read_h5ad(config.input_path, backed="r")
+        return _H5BackedAnnData(config.input_path)
     if config.input_format == "10x_h5":
+        if sc is None:
+            raise RuntimeError("10x_h5 preprocessing requires scanpy or anndata")
         return sc.read_10x_h5(config.input_path, gex_only=False)
     raise ValueError(f"Unsupported input_format: {config.input_format}")
 

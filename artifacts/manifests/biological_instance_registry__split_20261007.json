@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "split_id": "ptl_biological_instance_split_v1",
+  "benchmark_id": "ptl_context_v2",
+  "unit": "environment_id x perturbation_label x dose x timepoint",
+  "environment_count": 8,
+  "biological_instance_count": 1603,
+  "instances_per_environment": {
+    "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~co-culture": 244,
+    "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~control": 244,
+    "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~ifn%CE%B3": 246,
+    "env__v~normanweissman2019%5Ffiltered__v~k562__v~rna__v~baseline": 236,
+    "env__v~replogleweissman2022%5Frpe1__v~rpe1__v~rna__v~baseline": 165,
+    "env__v~tiankampmann2021%5Fcrispra__v~ipsc-induced%5Fneuron__v~rna__v~baseline": 100,
+    "env__v~tiankampmann2021%5Fcrispri__v~ipsc-induced%5Fneuron__v~rna__v~baseline": 184,
+    "env__v~xucao2023__v~hek293__v~rna__v~baseline": 184
+  },
+  "split_counts": {
+    "train": 959,
+    "test": 327,
+    "validation": 317
+  },
+  "split_seed": 20261007,
+  "model_seeds": [
+    0,
+    1,
+    2
+  ],
+  "aggregation": {
+    "definition": "weighted_mean_of_batch_matched_deltas",
+    "weight": "valid_cell_count_per_reference_group",
+    "controls": "matched_within_reference_group"
+  },
+  "reliability_target": {
+    "definition": "fidelity >= tau * median(validation_fidelity)",
+    "primary_tau": 0.8,
+    "tau_sensitivity": [
+      0.6,
+      0.7,
+      0.8,
+      0.9
+    ]
+  },
+  "ground_truth_paths": {
+    "FrangiehIzar2021_RNA": "data/processed/FrangiehIzar2021_RNA_condition_ground_truth.parquet",
+    "NormanWeissman2019_filtered": "data/processed/NormanWeissman2019_filtered_condition_ground_truth.parquet",
+    "ReplogleWeissman2022_rpe1": "data/processed/ReplogleWeissman2022_rpe1_condition_ground_truth.parquet",
+    "TianKampmann2021_CRISPRa": "data/processed/TianKampmann2021_CRISPRa_condition_ground_truth.parquet",
+    "TianKampmann2021_CRISPRi": "data/processed/TianKampmann2021_CRISPRi_condition_ground_truth.parquet",
+    "XuCao2023": "data/processed/XuCao2023_condition_ground_truth.parquet"
+  },
+  "manifest_path": "artifacts/manifests/biological_instance_registry__split_20261007.csv"
+}

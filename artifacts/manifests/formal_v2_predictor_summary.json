@@ -2,6 +2,7 @@
   "schema_version": 1,
   "benchmark_id": "ptl_context_v2",
   "split_id": "ptl_biological_instance_split_v1",
+  "split_seed": 20260907,
   "predictors": [
     "mean_matching",
     "strong_linear",
@@ -14,7 +15,7 @@
     2
   ],
   "metric_rows": 96,
-  "contract_rows": 6795,
+  "contract_rows": 5796,
   "predictor_version": "formal_v2_exact_linear_20260907",
   "predictor_versions": {
     "mean_matching": "formal_v2_mean_matching_bootstrap_20260907",
@@ -25,15 +26,15 @@
   "metrics_path": "artifacts/manifests/formal_v2_predictor_metrics.csv",
   "contract_path": "artifacts/manifests/formal_v2_prediction_index.csv",
   "evaluation_gene_space": "ptl_context_v2_intersection",
-  "evaluation_gene_count": 6897,
+  "evaluation_gene_count": 8229,
   "training_gene_space_policy": "native_predictor_gene_space",
   "training_gene_counts_by_dataset": {
     "FrangiehIzar2021_RNA": 23712,
     "NormanWeissman2019_filtered": 33694,
-    "ReplogleWeissman2022_K562_essential": 8563,
     "ReplogleWeissman2022_rpe1": 8749,
     "TianKampmann2021_CRISPRa": 33538,
-    "TianKampmann2021_CRISPRi": 33538
+    "TianKampmann2021_CRISPRi": 33538,
+    "XuCao2023": 59429
   },
   "status": "formal_v2_simple_predictors_executed"
 }

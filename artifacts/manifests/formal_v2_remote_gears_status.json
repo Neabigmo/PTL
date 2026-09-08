@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "status": "scientific_pilot_executed_remote_cuda",
+  "execution_root": "/root/ptl_9_5",
+  "official_gears_commit": "f374e43e197b295016d80395d7a54ddb81cc6769",
+  "compatibility_patch_id": "gears-0.7.2-torch-leaf-inplace-algebraic-rewrite-v1",
+  "compatibility_patch_hash": "51c591fac3124e5e91ed8e4e7f308ea2eef2e05f742ad2968afae1ca6554f861",
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "gpu_memory_mib": 24576,
+    "cuda_device": "cuda:0",
+    "parallel_gpu_workers": 1,
+    "cpu_threads_per_run": 8
+  },
+  "software": {
+    "torch": "2.12.1+cu130",
+    "cuda_available": true,
+    "torch_geometric": "2.8.0.post1",
+    "anndata": "0.10.8",
+    "scanpy": "1.10.2",
+    "pandas": "2.2.2",
+    "numpy": "1.26.4",
+    "scipy": "1.14.1",
+    "scikit_learn": "1.5.1"
+  },
+  "protocol": {
+    "split_protocol": "random_condition_holdout",
+    "perturbation_overlap": "zero",
+    "model_seeds": [0, 1, 2],
+    "epochs": 1,
+    "batch_size": 16,
+    "prediction_space_input": "absolute_expression",
+    "prediction_space_output": "delta",
+    "gene_space_policy": "fixed_dataset_train_variance_4096",
+    "native_uncertainty_fields": [
+      "native_confidence_gears_exp_neg_mean_logvar",
+      "native_uncertainty_gears_mean_logvar"
+    ]
+  },
+  "pilot_runs": {
+    "successful": 9,
+    "expected": 9,
+    "datasets": [
+      {
+        "dataset_scope": "NormanWeissman2019_filtered",
+        "run_count": 3,
+        "gene_count": 4096,
+        "test_noncontrol_range": [346, 363],
+        "mean_cosine": 0.227972963,
+        "mean_mse": 0.011889576,
+        "mean_mae": 0.073747746
+      },
+      {
+        "dataset_scope": "ReplogleWeissman2022_K562_gwps",
+        "run_count": 3,
+        "gene_count": 4096,
+        "test_noncontrol_range": [16, 26],
+        "mean_cosine": 0.071998316,
+        "mean_mse": 0.026830447,
+        "mean_mae": 0.127334897
+      },
+      {
+        "dataset_scope": "ReplogleWeissman2022_rpe1",
+        "run_count": 3,
+        "gene_count": 4096,
+        "test_noncontrol_range": [233, 418],
+        "mean_cosine": 0.129646559,
+        "mean_mse": 0.022252311,
+        "mean_mae": 0.111354542
+      }
+    ]
+  },
+  "audit": {
+    "manifest": "artifacts/manifests/gears_pilot_audit.csv",
+    "all_runs_have_finite_native_uncertainty": true,
+    "all_runs_have_zero_condition_overlap": true,
+    "all_runs_emit_delta_predictions": true,
+    "all_runs_use_dataset_frozen_panel": true
+  },
+  "cpa_scgpt": {
+    "status": "blocked_pending_official_project_and_weights",
+    "reason": "No pinned project or weights were available on the remote host; the 24GB RTX 3090 is below the 48-80GB recommended range for the planned modern-model execution.",
+    "headline_comparison_inclusion": false
+  },
+  "interpretation": "This is a non-headline scientific pilot validating official-stack execution and contract compliance; it is not directly pooled with the PTL common 10-environment comparison and does not add a superiority claim."
+}

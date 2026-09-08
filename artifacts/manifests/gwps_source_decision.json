@@ -1,0 +1,11 @@
+{
+  "decision_schema_version": 1,
+  "local_surface_perturbations": 31,
+  "local_surface_signatures": 440,
+  "local_surface_is_headline_eligible": false,
+  "decision": "requires_pinned_systema_processed_surface",
+  "reason": "local batch-by-perturbation eligibility leaves a small surface; QC and reference matching remain unchanged",
+  "minimum_headline_perturbations": 100,
+  "missing_eligible_signature_labels": [],
+  "source_policy": "use_pinned_systema_processed_surface_if_available; otherwise keep GWPS supplementary"
+}

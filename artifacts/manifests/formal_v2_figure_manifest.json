@@ -1,12 +1,31 @@
 {
   "schema_version": 1,
   "backend": "python_matplotlib",
-  "core_conclusion": "confidence changes meaning across biology, while reliability transfer follows a measurable source-to-target structure",
+  "core_conclusion": "Reliability Shift changes difficulty and ranking across biology; the semantic interaction is tested with a null rather than assumed, while source-specific transfer remains heterogeneous",
   "source_data": [
     "artifacts/source_data/formal_v2_reliability_predictions.csv",
     "artifacts/manifests/formal_v2_reliability_metrics.csv",
     "artifacts/manifests/formal_v2_information_ablation_metrics.csv",
     "artifacts/manifests/formal_v2_environment_transfer_matrix.csv",
+    "artifacts/manifests/formal_v2_environment_transfer_stability.csv",
+    "artifacts/manifests/formal_v2_transport_predictor_summary.json",
+    "artifacts/manifests/formal_v2_metric_robustness.csv",
+    "artifacts/manifests/formal_v2_metric_robustness_selective.csv",
+    "artifacts/manifests/formal_v2_raw_cell_split_half.csv",
+    "artifacts/manifests/formal_v2_grouping_loss.csv",
+    "artifacts/manifests/formal_v2_grouping_loss_summary.json",
+    "artifacts/manifests/formal_v2_reliability_shift_decomposition.csv",
+    "artifacts/manifests/formal_v2_reliability_shift_decomposition.json",
+    "artifacts/manifests/formal_v2_reliability_shift_semantic.csv",
+    "artifacts/manifests/formal_v2_controlled_shift.csv",
+    "artifacts/manifests/formal_v2_controlled_shift.json",
+    "artifacts/source_data/formal_v2_gears_reliability_predictions.csv",
+    "artifacts/manifests/formal_v2_gears_reliability.csv",
+    "artifacts/manifests/formal_v2_gears_reliability_summary.json",
+    "artifacts/manifests/formal_v2_multisplit_reliability.csv",
+    "artifacts/manifests/formal_v2_multisplit_reliability_summary.json",
+    "artifacts/manifests/formal_v2_systema_robustness.csv",
+    "artifacts/manifests/formal_v2_reproducibility_stratified_reliability.csv",
     "artifacts/manifests/formal_v2_predictor_metrics.csv",
     "artifacts/manifests/formal_v2_feature_transform_manifest.json"
   ],
@@ -17,6 +36,12 @@
     "unsupported_predictors": "excluded from scientific panels"
   },
   "outputs": {
+    "figure_1": [
+      "results/figures/iclr_formal/formal_fig1_same_confidence_different_risk.svg",
+      "results/figures/iclr_formal/formal_fig1_same_confidence_different_risk.pdf",
+      "results/figures/iclr_formal/formal_fig1_same_confidence_different_risk.png",
+      "results/figures/iclr_formal/formal_fig1_same_confidence_different_risk.tiff"
+    ],
     "figure_2": [
       "results/figures/iclr_formal/formal_fig2_confidence_semantics.svg",
       "results/figures/iclr_formal/formal_fig2_confidence_semantics.pdf",

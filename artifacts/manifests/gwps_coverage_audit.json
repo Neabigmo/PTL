@@ -214,11 +214,34 @@
       "n_signatures": 440,
       "n_pseudobulk_rows": 440,
       "filter_rule": "reference_key must contain a control profile before delta signature is emitted"
+    },
+    {
+      "stage": "signature_eligibility_reconciliation",
+      "n_cells": 77168,
+      "n_perturbations": 31,
+      "n_control_cells": 267,
+      "control_fraction": 0.6068181818181818,
+      "n_unique_labels": 32,
+      "n_signatures": 440,
+      "n_eligible_labels": 31,
+      "n_eligible_labels_missing_signature": 0,
+      "filter_rule": "eligible non-control labels must have a reference-matched delta signature"
     }
   ],
   "interpretation": {
     "final_surface_is_small": true,
     "coverage_loss_is_qc_dominated": true,
     "not_a_headline_genome_wide_benchmark": true
+  },
+  "source_decision": {
+    "decision_schema_version": 1,
+    "local_surface_perturbations": 31,
+    "local_surface_signatures": 440,
+    "local_surface_is_headline_eligible": false,
+    "decision": "requires_pinned_systema_processed_surface",
+    "reason": "local batch-by-perturbation eligibility leaves a small surface; QC and reference matching remain unchanged",
+    "minimum_headline_perturbations": 100,
+    "missing_eligible_signature_labels": [],
+    "source_policy": "use_pinned_systema_processed_surface_if_available; otherwise keep GWPS supplementary"
   }
 }

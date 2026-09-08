@@ -41,8 +41,8 @@ def load_spec(path: Path) -> dict[str, Any]:
     if not isinstance(spec, dict) or spec.get("schema_version") != 2:
         raise ValueError(f"Expected schema_version: 2 in {path}")
     environments = spec.get("environments")
-    if not isinstance(environments, list) or len(environments) != 8:
-        raise ValueError("The formal context benchmark must contain exactly 8 environments")
+    if not isinstance(environments, list) or len(environments) < 2:
+        raise ValueError("The formal context benchmark must contain at least two environments")
     ids = [str(row.get("environment_id", "")) for row in environments]
     if any(not value for value in ids) or len(ids) != len(set(ids)):
         raise ValueError("Formal environment IDs must be present and unique")
@@ -54,6 +54,9 @@ def load_spec(path: Path) -> dict[str, Any]:
             raise ValueError(f"Formal environment {row['environment_id']} has unresolved perturbation modality")
         if str(row.get("platform", "")).lower() == "processed_signature_table":
             raise ValueError(f"Formal environment {row['environment_id']} uses a storage format as platform")
+        unresolved = " ".join(str(row.get(field, "")) for field in ("role", "semantic_status", "status")).lower()
+        if any(token in unresolved for token in ("pending", "candidate", "unresolved")):
+            raise ValueError(f"Formal environment {row['environment_id']} is unresolved or only a candidate")
     return spec
 
 

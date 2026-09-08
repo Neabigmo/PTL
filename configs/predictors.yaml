@@ -19,7 +19,7 @@ predictors:
   strong_linear:
     family: bilinear_linear
     implementation: ahlmann_eltze_bilinear_ridge
-    headline_status: formal_reproduction_pending
+    headline_status: formal_execution_and_oracle_audit
     native_uq: bootstrap_across_training_instances
   slim_string:
     family: string_embedding_bilinear
@@ -31,9 +31,9 @@ predictors:
     family: graph_neural_network
     implementation: official_cell_gears
     repository: https://github.com/snap-stanford/GEARS.git
-    headline_status: contract_pass_scientific_performance_pending
+    headline_status: formal_validation_backed_reliability_shift_supported_norman_rpe1
     environment_check: pytorch-clean_plus_sw_mgli_site_packages
-    status_reason: official package imports and fallback paths are disabled; the audited condition-holdout pilot validates the output contract, while final scientific performance remains pending
+    status_reason: official package ran remotely for 3 datasets x 3 seeds at 20 epochs with native uncertainty; validation predictions are persisted for Norman/RPE1 and enter the independent Reliability Shift audit, while GWPS remains test-only and outside the canonical headline surface
     forbidden_fallbacks:
       - self_loop_graph_replacement
       - zero_vector_prediction_fallback

@@ -2,9 +2,9 @@
   "schema_version": 2,
   "roster_id": "ptl_formal_predictor_roster_v2",
   "benchmark_id": "ptl_context_v2",
-  "predictor_count": 6,
+  "predictor_count": 7,
   "environment_count": 8,
-  "matrix_rows": 48,
+  "matrix_rows": 56,
   "split_seed": 20260907,
   "model_seeds": [
     0,

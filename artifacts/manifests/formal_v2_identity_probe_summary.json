@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2",
+  "policy": "explicit-ID-free and target-outcome-free deployment feature probe with grouped CV by biological instance",
+  "metrics_path": "artifacts/manifests/formal_v2_identity_probe_metrics.csv",
+  "confusion_path": "artifacts/manifests/formal_v2_identity_probe_confusion.csv",
+  "status": "identity_probe_executed_deployment_safe",
+  "rows": [
+    {
+      "target": "environment_key",
+      "feature_block": "uq_mean_gene_variance+uq_median_gene_variance+uq_top_effect_variance+uq_cosine_disagreement+uq_effect_norm_variance+prediction_norm+prediction_sparsity+prediction_concentration+prediction_manifold_distance+exact_training_support_fraction+component_training_support_fraction+training_neighborhood_density+perturbation_seen_fraction+component_seen_fraction+combination_novelty+perturbation_novelty",
+      "n_rows": 2943,
+      "n_biological_instance_groups": 327,
+      "grouped_cv_folds": 5,
+      "accuracy": 0.744138634046891,
+      "balanced_accuracy": 0.7395651692362218,
+      "target_outcome_free": 1,
+      "explicit_id_free": 1,
+      "deployment_safe": 1,
+      "feature_block_name": "U+P+S+N"
+    },
+    {
+      "target": "dataset_family",
+      "feature_block": "uq_mean_gene_variance+uq_median_gene_variance+uq_top_effect_variance+uq_cosine_disagreement+uq_effect_norm_variance+prediction_norm+prediction_sparsity+prediction_concentration+prediction_manifold_distance+exact_training_support_fraction+component_training_support_fraction+training_neighborhood_density+perturbation_seen_fraction+component_seen_fraction+combination_novelty+perturbation_novelty",
+      "n_rows": 2943,
+      "n_biological_instance_groups": 327,
+      "grouped_cv_folds": 5,
+      "accuracy": 0.8307849133537207,
+      "balanced_accuracy": 0.7713530831607056,
+      "target_outcome_free": 1,
+      "explicit_id_free": 1,
+      "deployment_safe": 1,
+      "feature_block_name": "U+P+S+N"
+    },
+    {
+      "target": "environment_key",
+      "feature_block": "uq_mean_gene_variance+uq_median_gene_variance+uq_top_effect_variance+uq_cosine_disagreement+uq_effect_norm_variance+prediction_norm+prediction_sparsity+prediction_concentration+prediction_manifold_distance+exact_training_support_fraction+component_training_support_fraction+training_neighborhood_density+perturbation_seen_fraction+component_seen_fraction+combination_novelty+perturbation_novelty+cell_context+perturbation_modality+readout_modality+condition+platform",
+      "n_rows": 2943,
+      "n_biological_instance_groups": 327,
+      "grouped_cv_folds": 5,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "target_outcome_free": 1,
+      "explicit_id_free": 1,
+      "deployment_safe": 1,
+      "feature_block_name": "U+P+S+N+C"
+    },
+    {
+      "target": "dataset_family",
+      "feature_block": "uq_mean_gene_variance+uq_median_gene_variance+uq_top_effect_variance+uq_cosine_disagreement+uq_effect_norm_variance+prediction_norm+prediction_sparsity+prediction_concentration+prediction_manifold_distance+exact_training_support_fraction+component_training_support_fraction+training_neighborhood_density+perturbation_seen_fraction+component_seen_fraction+combination_novelty+perturbation_novelty+cell_context+perturbation_modality+readout_modality+condition+platform",
+      "n_rows": 2943,
+      "n_biological_instance_groups": 327,
+      "grouped_cv_folds": 5,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "target_outcome_free": 1,
+      "explicit_id_free": 1,
+      "deployment_safe": 1,
+      "feature_block_name": "U+P+S+N+C"
+    }
+  ]
+}

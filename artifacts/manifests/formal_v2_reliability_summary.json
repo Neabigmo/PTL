@@ -3,6 +3,7 @@
   "benchmark_id": "ptl_context_v2",
   "prediction_source": "formal_v2_predictors_validation_test_only",
   "split_id": "ptl_biological_instance_split_v1",
+  "split_seed": 20260907,
   "calibration_split": "validation",
   "final_evaluation_split": "test",
   "scenarios": [
@@ -54,6 +55,12 @@
       "platform"
     ]
   },
+  "headline_bootstrap": {
+    "replicates": 2000,
+    "primary": "ptl_rf_vs_u_only_rf",
+    "secondary": "ptl_rf_vs_raw_normalized_uq",
+    "resampling": "paired_hierarchical_outer_environment_inner_biological_instance"
+  },
   "feature_policy": "identity_free_shared_estimator_train_only_uq_normalization_deployment_only_support",
   "feature_transform": {
     "uq": "predictor-relative empirical confidence fitted on calibration rows only",
@@ -98,10 +105,11 @@
     "target_batch_composition",
     "target_reproducibility"
   ],
-  "rows": 3438,
+  "rows": 2943,
   "metric_rows": 387,
   "score_path": "artifacts/source_data/formal_v2_reliability_predictions.csv",
   "feature_path": "artifacts/source_data/formal_v2_reliability_deployment_features.csv",
+  "calibration_score_path": "artifacts/source_data/formal_v2_reliability_calibration_scores.csv",
   "metrics_path": "artifacts/manifests/formal_v2_reliability_metrics.csv",
   "information_ablation_path": "artifacts/manifests/formal_v2_information_ablation_metrics.csv",
   "information_ablation_summary_path": "artifacts/manifests/formal_v2_information_ablation_summary.json",

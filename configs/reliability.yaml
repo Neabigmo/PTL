@@ -82,7 +82,7 @@ ptl_context:
   architecture: small_linear_block_encoder
 ptl_no_context:
   input_blocks: [P, S, N]
-  interpretation: excludes all context features; identity-free ablation
+  interpretation: excludes all context features; explicit-ID-free target-outcome-free ablation
 ptl_full_id:
   input_blocks: [P, S, N, C, predictor_id, environment_id]
   interpretation: identity-rich upper-bound diagnostic, not headline

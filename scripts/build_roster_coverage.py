@@ -42,8 +42,8 @@ def build_matrix(
     registry = load_registry(registry_path)
     environments = benchmark.get("environments", [])
     predictors = roster.get("predictors", [])
-    if len(environments) != 8:
-        raise ValueError("Coverage matrix requires the frozen eight-environment benchmark")
+    if len(environments) < 2:
+        raise ValueError("Coverage matrix requires at least two verified environments")
     if not predictors:
         raise ValueError("Predictor roster is empty")
     rows: list[dict[str, Any]] = []

@@ -22,6 +22,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score, log_loss, roc_auc_score
+from sklearn.utils.extmath import randomized_svd
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -76,6 +77,7 @@ C_CATEGORICAL_COLUMNS = (
 FEATURE_COLUMNS = UQ_COLUMNS + P_COLUMNS + S_COLUMNS + N_COLUMNS + C_NUMERIC_COLUMNS + C_CATEGORICAL_COLUMNS
 PREDICTORS = ("mean_matching", "strong_linear", "slim_string")
 SCENARIOS = ("in_domain", "leave_environment_out", "leave_predictor_out")
+BOOTSTRAP_REPLICATES = 2000
 METHODS = (
     "raw_normalized_uq",
     "best_scalar_uq",
@@ -173,7 +175,7 @@ def _fold_local_one_hot(train_values: np.ndarray, values: np.ndarray) -> tuple[n
 
 
 def _manifold_distance(reference: np.ndarray, queries: np.ndarray, *, exclude_self: bool = False) -> np.ndarray:
-    """Compute nearest train-response distance in a train-only PCA space."""
+    """Compute nearest train-response distance in a train-only truncated-PCA space."""
 
     reference = np.asarray(reference, dtype=np.float64)
     queries = np.asarray(queries, dtype=np.float64)
@@ -185,9 +187,15 @@ def _manifold_distance(reference: np.ndarray, queries: np.ndarray, *, exclude_se
     queries_scaled = (queries - center) / scale
     rank = min(8, reference_scaled.shape[0], reference_scaled.shape[1])
     if rank:
-        _, _, components = np.linalg.svd(reference_scaled, full_matrices=False)
-        reference_latent = reference_scaled @ components[:rank].T
-        query_latent = queries_scaled @ components[:rank].T
+        _, _, components = randomized_svd(
+            reference_scaled,
+            n_components=rank,
+            n_iter=5,
+            n_oversamples=10,
+            random_state=20260907,
+        )
+        reference_latent = reference_scaled @ components.T
+        query_latent = queries_scaled @ components.T
     else:
         reference_latent = reference_scaled
         query_latent = queries_scaled
@@ -347,6 +355,10 @@ def _feature_matrix(
             "standardization": "calibration-column mean and population std",
             "rank": int(min(8, train_vectors.shape[0], train_vectors.shape[1])),
             "distance": "nearest calibration prediction Euclidean distance",
+            "solver": "sklearn.utils.extmath.randomized_svd",
+            "n_iter": 5,
+            "n_oversamples": 10,
+            "random_state": 20260907,
         },
         "numeric_imputation": {**p_fills, **s_fills, **n_fills, **c_fills},
         "feature_order": {
@@ -436,10 +448,16 @@ def _fit_ptl(
     return scores, threshold, model_name, materialized_train, materialized_query
 
 
-def _prediction_rows(root: Path) -> pd.DataFrame:
+def _prediction_rows(
+    root: Path,
+    *,
+    manifest_path: Path | None = None,
+    predictor_dir: Path | None = None,
+    split_seed: int = 20260907,
+) -> pd.DataFrame:
     evaluation_genes = load_panel(root)
     registry = load_registry(root)
-    manifest = load_manifest(root).fillna("")
+    manifest = load_manifest(root, manifest_path, split_seed=split_seed).fillna("")
     manifest_by_id = manifest.set_index("biological_instance_id", drop=False)
     registry_by_id = registry.set_index("environment_id", drop=False)
     frames: list[dict[str, Any]] = []
@@ -476,7 +494,8 @@ def _prediction_rows(root: Path) -> pd.DataFrame:
                 train_labels_by_component.setdefault(part, set()).add(label)
         n_unique_train_labels = max(1, len(train_label_components))
         for predictor in PREDICTORS:
-            array_path = root / "results/formal_v2/predictors" / f"{environment_key}__{predictor}.npz"
+            array_root = predictor_dir or root / "results/formal_v2/predictors"
+            array_path = array_root / f"{environment_key}__{predictor}.npz"
             if not array_path.is_file():
                 raise FileNotFoundError(f"missing formal-v2 prediction array: {array_path}")
             # These arrays are local outputs created by the formal runner; the
@@ -619,12 +638,12 @@ def _paired_hierarchical_bootstrap(
     baseline: str = "raw_normalized_uq",
     replicates: int = 500,
 ) -> dict[str, Any]:
-    """Bootstrap paired selective-risk deltas by environment and row.
+    """Bootstrap paired selective-risk deltas by environment and biological instance.
 
-    The outer resample preserves environment-level dependence; the inner
-    resample preserves the fact that rows within an environment share a
-    calibration/data context. Both methods use the same sampled rows, so the
-    interval is paired rather than a difference of independent estimates.
+    The outer resample preserves environment-level dependence. The inner
+    resample draws biological-instance IDs with replacement and retains every
+    predictor/scenario row belonging to each sampled instance. Both methods
+    use the same sampled clusters, so the interval remains paired.
     """
 
     selected = score_frame.loc[score_frame["scenario"].eq(scenario)].copy()
@@ -634,6 +653,23 @@ def _paired_hierarchical_bootstrap(
     groups = [group for _, group in selected.groupby(cluster_columns, sort=True)]
     if not groups:
         raise ValueError(f"no score groups available for bootstrap scenario {scenario}")
+
+    # Materialize each environment/predictor cluster once.  The previous
+    # implementation rebuilt a pandas DataFrame for every sampled biological
+    # instance in every replicate, which made the declared hierarchical
+    # bootstrap needlessly dominated by dataframe bookkeeping.
+    group_arrays: list[tuple[np.ndarray, np.ndarray, np.ndarray, list[str], dict[str, np.ndarray]]] = []
+    for group in groups:
+        ids = group["biological_instance_id"].astype(str).to_numpy()
+        cluster_ids = list(pd.unique(ids))
+        positions = {cluster_id: np.flatnonzero(ids == cluster_id) for cluster_id in cluster_ids}
+        group_arrays.append((
+            group["continuous_risk"].to_numpy(dtype=float),
+            group[baseline].to_numpy(dtype=float),
+            group[method].to_numpy(dtype=float),
+            cluster_ids,
+            positions,
+        ))
 
     def grouped_aurc(column: str) -> float:
         return float(np.mean([
@@ -653,16 +689,16 @@ def _paired_hierarchical_bootstrap(
         baseline_values: list[float] = []
         method_values: list[float] = []
         for group_index in sampled_groups:
-            group = groups[int(group_index)]
-            row_indices = rng.integers(0, len(group), size=len(group))
-            sampled = group.iloc[row_indices]
+            risk, baseline_score, method_score, cluster_ids, positions = group_arrays[int(group_index)]
+            sampled_ids = rng.choice(cluster_ids, size=len(cluster_ids), replace=True)
+            sampled_positions = np.concatenate([positions[str(cluster_id)] for cluster_id in sampled_ids])
             baseline_values.append(_aurc_only(
-                sampled["continuous_risk"].to_numpy(dtype=float),
-                sampled[baseline].to_numpy(dtype=float),
+                risk[sampled_positions],
+                baseline_score[sampled_positions],
             ))
             method_values.append(_aurc_only(
-                sampled["continuous_risk"].to_numpy(dtype=float),
-                sampled[method].to_numpy(dtype=float),
+                risk[sampled_positions],
+                method_score[sampled_positions],
             ))
         deltas[replicate] = float(np.mean(method_values) - np.mean(baseline_values))
     return {
@@ -675,15 +711,31 @@ def _paired_hierarchical_bootstrap(
         "method_aurc": observed_method,
         "ci_lower": float(np.quantile(deltas, 0.025)),
         "ci_upper": float(np.quantile(deltas, 0.975)),
-        "n_clusters": len(groups),
+        "n_outer_clusters": len(groups),
+        "inner_resampling_unit": "biological_instance_id_with_all_associated_score_rows",
+        "n_inner_clusters": int(sum(group["biological_instance_id"].nunique() for group in groups)),
         "bootstrap_replicates": replicates,
     }
 
 
-def run(root: Path) -> dict[str, Any]:
+def run(
+    root: Path,
+    *,
+    manifest_path: Path | None = None,
+    predictor_dir: Path | None = None,
+    split_seed: int = 20260907,
+    output_dir: Path | None = None,
+    bootstrap_replicates: int = BOOTSTRAP_REPLICATES,
+) -> dict[str, Any]:
     validate_deployment_features(FEATURE_COLUMNS)
-    frame = _prediction_rows(root)
+    frame = _prediction_rows(
+        root,
+        manifest_path=manifest_path,
+        predictor_dir=predictor_dir,
+        split_seed=split_seed,
+    )
     score_rows: list[dict[str, Any]] = []
+    calibration_score_rows: list[dict[str, Any]] = []
     metric_rows: list[dict[str, Any]] = []
     transform_records: list[dict[str, Any]] = []
 
@@ -694,6 +746,24 @@ def run(root: Path) -> dict[str, Any]:
         method_scores, threshold, model_name, materialized_train, materialized_test = _fit_ptl(
             train_frame, test_frame
         )
+        if scenario == "in_domain":
+            # Materialize the calibration-side score distributions with the
+            # same train-only transforms. These distributions define the
+            # confidence bins used by the grouping-loss analysis; test
+            # outcomes never participate in bin construction.
+            calibration_scores, _, _, _, _ = _fit_ptl(train_frame, train_frame)
+            for method, values in calibration_scores.items():
+                for row_index, value in zip(train_frame.index, values):
+                    row = train_frame.loc[row_index]
+                    calibration_score_rows.append({
+                        "split_seed": int(split_seed),
+                        "scenario": scenario,
+                        "environment_id": str(row["environment_id"]),
+                        "predictor": str(row["predictor"]),
+                        "biological_instance_id": str(row["biological_instance_id"]),
+                        "method": method,
+                        "confidence": float(value),
+                    })
         transform_records.append({
             "scenario": scenario,
             "heldout_environment_id": heldout if scenario == "leave_environment_out" else "",
@@ -723,6 +793,7 @@ def run(root: Path) -> dict[str, Any]:
                 "calibration_rows": int(len(train_frame)),
                 "test_rows": int(len(test_frame)),
                 "ptl_model": model_name,
+                "split_seed": int(split_seed),
             })
             payload.update(native_uq)
             # The formal feature artifact must contain the values consumed by
@@ -783,20 +854,31 @@ def run(root: Path) -> dict[str, Any]:
     macro["information_set"] = macro["method"].map(INFORMATION_SET_BY_METHOD)
     metric_frame = pd.concat([metric_frame, macro[metric_frame.columns]], ignore_index=True)
 
-    bootstrap_rows = [
-        _paired_hierarchical_bootstrap(score_frame, scenario, method)
-        for scenario in SCENARIOS
-        for method in METHODS
-        if method != "raw_normalized_uq"
-    ]
+    # The headline comparison is PTL versus the U-only deployment baseline.
+    # PTL versus the raw scalar UQ is retained as a declared secondary row;
+    # both are paired and use the same environment/biological-instance draws.
+    bootstrap_rows = []
+    for scenario in SCENARIOS:
+        bootstrap_rows.append(
+            _paired_hierarchical_bootstrap(
+                score_frame, scenario, "ptl_rf", baseline="u_only_rf", replicates=bootstrap_replicates,
+            )
+        )
+        bootstrap_rows.append(
+            _paired_hierarchical_bootstrap(
+                score_frame, scenario, "ptl_rf", baseline="raw_normalized_uq", replicates=bootstrap_replicates,
+            )
+        )
     bootstrap_frame = pd.DataFrame(bootstrap_rows)
 
-    source_dir = root / "artifacts/source_data"
-    manifest_dir = root / "artifacts/manifests"
+    artifact_root = (output_dir or root).resolve()
+    source_dir = artifact_root / "artifacts/source_data"
+    manifest_dir = artifact_root / "artifacts/manifests"
     source_dir.mkdir(parents=True, exist_ok=True)
     manifest_dir.mkdir(parents=True, exist_ok=True)
     score_path = source_dir / "formal_v2_reliability_predictions.csv"
     feature_path = source_dir / "formal_v2_reliability_deployment_features.csv"
+    calibration_path = source_dir / "formal_v2_reliability_calibration_scores.csv"
     metrics_path = manifest_dir / "formal_v2_reliability_metrics.csv"
     ablation_path = manifest_dir / "formal_v2_information_ablation_metrics.csv"
     ablation_summary_path = manifest_dir / "formal_v2_information_ablation_summary.json"
@@ -804,6 +886,10 @@ def run(root: Path) -> dict[str, Any]:
     summary_path = manifest_dir / "formal_v2_reliability_summary.json"
     transform_manifest_path = manifest_dir / "formal_v2_feature_transform_manifest.json"
     score_frame.to_csv(score_path, index=False)
+    pd.DataFrame(calibration_score_rows).sort_values(
+        ["scenario", "environment_id", "predictor", "biological_instance_id", "method"],
+        kind="stable",
+    ).to_csv(calibration_path, index=False)
     feature_columns = [
         "prediction_id", "biological_instance_id", "environment_id", "environment_key", "predictor",
         "scenario", "heldout_environment_id", "heldout_predictor", *FEATURE_COLUMNS,
@@ -846,12 +932,19 @@ def run(root: Path) -> dict[str, Any]:
         "benchmark_id": "ptl_context_v2",
         "prediction_source": "formal_v2_predictors_validation_test_only",
         "split_id": "ptl_biological_instance_split_v1",
+        "split_seed": int(split_seed),
         "calibration_split": "validation",
         "final_evaluation_split": "test",
         "scenarios": list(SCENARIOS),
         "predictors_executed": sorted(frame["predictor"].unique().tolist()),
         "predictors_not_executed": ["official_gears", "cpa", "scgpt", "prescribe"],
         "feature_blocks": {"U": list(UQ_COLUMNS), "P": list(P_COLUMNS), "S": list(S_COLUMNS), "N": list(N_COLUMNS), "C": list(C_NUMERIC_COLUMNS + C_CATEGORICAL_COLUMNS)},
+        "headline_bootstrap": {
+            "replicates": int(bootstrap_replicates),
+            "primary": "ptl_rf_vs_u_only_rf",
+            "secondary": "ptl_rf_vs_raw_normalized_uq",
+            "resampling": "paired_hierarchical_outer_environment_inner_biological_instance",
+        },
         "feature_policy": "identity_free_shared_estimator_train_only_uq_normalization_deployment_only_support",
         "feature_transform": {
             "uq": "predictor-relative empirical confidence fitted on calibration rows only",
@@ -871,6 +964,7 @@ def run(root: Path) -> dict[str, Any]:
         "metric_rows": int(len(metric_frame)),
         "score_path": score_path.relative_to(root).as_posix(),
         "feature_path": feature_path.relative_to(root).as_posix(),
+        "calibration_score_path": calibration_path.relative_to(root).as_posix(),
         "metrics_path": metrics_path.relative_to(root).as_posix(),
         "information_ablation_path": ablation_path.relative_to(root).as_posix(),
         "information_ablation_summary_path": ablation_summary_path.relative_to(root).as_posix(),
@@ -885,8 +979,21 @@ def run(root: Path) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument("--manifest", type=Path, default=None)
+    parser.add_argument("--predictor-dir", type=Path, default=None)
+    parser.add_argument("--split-seed", type=int, default=20260907)
+    parser.add_argument("--output-dir", type=Path, default=None)
+    parser.add_argument("--bootstrap-replicates", type=int, default=BOOTSTRAP_REPLICATES)
     args = parser.parse_args()
-    print(json.dumps(run(args.root.resolve()), indent=2, ensure_ascii=False))
+    root = args.root.resolve()
+    print(json.dumps(run(
+        root,
+        manifest_path=args.manifest.resolve() if args.manifest else None,
+        predictor_dir=args.predictor_dir.resolve() if args.predictor_dir else None,
+        split_seed=args.split_seed,
+        output_dir=args.output_dir.resolve() if args.output_dir else None,
+        bootstrap_replicates=args.bootstrap_replicates,
+    ), indent=2, ensure_ascii=False))
     return 0
 
 

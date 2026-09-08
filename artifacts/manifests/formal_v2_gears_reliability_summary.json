@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2",
+  "predictor": "official_gears",
+  "method": "gears_native_uq",
+  "datasets": [
+    "NormanWeissman2019_filtered",
+    "ReplogleWeissman2022_rpe1"
+  ],
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "validation_predictions_used": true,
+  "validation_scores_define_bins": true,
+  "test_outcomes_evaluation_only": true,
+  "prediction_path": "artifacts/source_data/formal_v2_gears_reliability_predictions.csv",
+  "per_environment_path": "artifacts/manifests/formal_v2_gears_reliability.csv",
+  "shift_by_seed": [
+    {
+      "gears_seed": 0,
+      "n_test_rows": 695,
+      "n_environments": 2,
+      "difficulty_shift_variance": 0.00015505768853525402,
+      "difficulty_shift_range": 0.024904432419571743,
+      "ranking_shift_spearman_range": 0.5948609763503583,
+      "contextual_grouping_loss": 0.016121278020361115,
+      "matched_confidence_cross_environment_risk_gap": 0.18031121438879102,
+      "matched_confidence_same_environment_risk_gap": 0.16753174851798247,
+      "semantic_shift_improvement": -7.159422294417619e-05,
+      "semantic_shift_ci_lower": -0.00152572572939287,
+      "semantic_shift_ci_upper": -0.00019071016083787651,
+      "semantic_shift_permutation_p": 0.22709163346613545,
+      "score_direction": "higher_native_exp_neg_mean_logvar_is_more_confident",
+      "evaluation_only": 1
+    },
+    {
+      "gears_seed": 1,
+      "n_test_rows": 593,
+      "n_environments": 2,
+      "difficulty_shift_variance": 0.0005077807181118682,
+      "difficulty_shift_range": 0.04506798056766548,
+      "ranking_shift_spearman_range": 0.10751275807929728,
+      "contextual_grouping_loss": 0.029312411644566144,
+      "matched_confidence_cross_environment_risk_gap": 0.19263356174116658,
+      "matched_confidence_same_environment_risk_gap": 0.16536031469301996,
+      "semantic_shift_improvement": 0.0007273031316505787,
+      "semantic_shift_ci_lower": -0.0028291381369789396,
+      "semantic_shift_ci_upper": 0.0005431453187636513,
+      "semantic_shift_permutation_p": 0.00398406374501992,
+      "score_direction": "higher_native_exp_neg_mean_logvar_is_more_confident",
+      "evaluation_only": 1
+    },
+    {
+      "gears_seed": 2,
+      "n_test_rows": 764,
+      "n_environments": 2,
+      "difficulty_shift_variance": 0.0005819374539322812,
+      "difficulty_shift_range": 0.048246759639680725,
+      "ranking_shift_spearman_range": 0.0661734457347933,
+      "contextual_grouping_loss": 0.009048194648603031,
+      "matched_confidence_cross_environment_risk_gap": 0.14817151971821668,
+      "matched_confidence_same_environment_risk_gap": 0.13088248526767685,
+      "semantic_shift_improvement": 0.00038229760276652645,
+      "semantic_shift_ci_lower": -2.7414151814817992e-05,
+      "semantic_shift_ci_upper": 0.0006649513062377295,
+      "semantic_shift_permutation_p": 0.00796812749003984,
+      "score_direction": "higher_native_exp_neg_mean_logvar_is_more_confident",
+      "evaluation_only": 1
+    }
+  ],
+  "status": "formal_v2_gears_reliability_executed"
+}

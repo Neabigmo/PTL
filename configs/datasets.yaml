@@ -18,14 +18,11 @@ common_core:
     source_file: data/raw/scperturb_v1.4/ReplogleWeissman2022_rpe1.h5ad
     role: common_core_cell_context
     headline_eligible: true
-  - dataset_id: AdamsonWeissman2016_full_candidate
-    source_files:
-      - data/raw/scperturb_v1.4/AdamsonWeissman2016_GSM2406675_10X001.h5ad
-      - data/raw/scperturb_v1.4/AdamsonWeissman2016_GSM2406677_10X005.h5ad
-      - data/raw/scperturb_v1.4/AdamsonWeissman2016_GSM2406681_10X010.h5ad
-    role: common_core_candidate
-    headline_eligible: false
-    status: pending_adamson_audit
+  - dataset_id: AdamsonWeissman2016_GSM2406677_10X005
+    source_file: data/raw/scperturb_v1.4/AdamsonWeissman2016_GSM2406677_10X005.h5ad
+    role: common_core_accession
+    headline_eligible: true
+    status: raw_context_verified_accession_10X005
 
 gears_contract_pilots:
   - dataset_id: ReplogleWeissman2022_K562_gwps
@@ -50,8 +47,9 @@ context_expansion:
   - dataset_id: PapalexiSatija2021_eccite_RNA
     role: context_expansion
   - dataset_id: XuCao2023
-    role: context_expansion_candidate
-    status: exact_systema_mapping_unresolved
+    role: context_expansion
+    headline_eligible: true
+    status: raw_context_verified_he293_crispri
   - dataset_id: DatlingerBock2017
     role: context_expansion_supplementary
   - dataset_id: DatlingerBock2021

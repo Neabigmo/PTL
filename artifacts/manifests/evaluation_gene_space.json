@@ -4,55 +4,55 @@
   "environment_count": 8,
   "environment_keys": [
     "norman_k562",
-    "replogle_k562_essential",
     "replogle_rpe1",
     "tian_neuron_crispra",
     "tian_neuron_crispri",
     "frangieh_melanoma_control",
     "frangieh_melanoma_coculture",
-    "frangieh_melanoma_ifng"
+    "frangieh_melanoma_ifng",
+    "xu_he293"
   ],
   "environment_ids": [
     "env__v~normanweissman2019%5Ffiltered__v~k562__v~rna__v~baseline",
-    "env__v~replogleweissman2022%5Fk562%5Fessential__v~k562__v~rna__v~essential%5Fgene%5Fscreen",
     "env__v~replogleweissman2022%5Frpe1__v~rpe1__v~rna__v~baseline",
     "env__v~tiankampmann2021%5Fcrispra__v~ipsc-induced%5Fneuron__v~rna__v~baseline",
     "env__v~tiankampmann2021%5Fcrispri__v~ipsc-induced%5Fneuron__v~rna__v~baseline",
     "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~control",
     "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~co-culture",
-    "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~ifn%CE%B3"
+    "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~ifn%CE%B3",
+    "env__v~xucao2023__v~hek293__v~rna__v~baseline"
   ],
   "canonical_environment_ids": [
     "env__v~normanweissman2019%5Ffiltered__v~k562__v~rna__v~baseline",
-    "env__v~replogleweissman2022%5Fk562%5Fessential__v~k562__v~rna__v~essential%5Fgene%5Fscreen",
     "env__v~replogleweissman2022%5Frpe1__v~rpe1__v~rna__v~baseline",
     "env__v~tiankampmann2021%5Fcrispra__v~ipsc-induced%5Fneuron__v~rna__v~baseline",
     "env__v~tiankampmann2021%5Fcrispri__v~ipsc-induced%5Fneuron__v~rna__v~baseline",
     "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~control",
     "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~co-culture",
-    "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~ifn%CE%B3"
+    "env__v~frangiehizar2021%5Frna__v~patient-derived%5Fmelanoma__v~rna__v~ifn%CE%B3",
+    "env__v~xucao2023__v~hek293__v~rna__v~baseline"
   ],
   "dataset_count": 6,
   "dataset_feature_counts": {
     "FrangiehIzar2021_RNA": 23712,
     "NormanWeissman2019_filtered": 33694,
-    "ReplogleWeissman2022_K562_essential": 8563,
     "ReplogleWeissman2022_rpe1": 8749,
     "TianKampmann2021_CRISPRa": 33538,
-    "TianKampmann2021_CRISPRi": 33538
+    "TianKampmann2021_CRISPRi": 33538,
+    "XuCao2023": 59429
   },
-  "shared_gene_count": 6897,
+  "shared_gene_count": 8229,
   "panel_id": "ptl_context_v2_intersection",
   "gene_id_normalization": "strip_exact_case_preserving",
   "panel_policy": "intersection_of_formal_environment_feature_universes",
   "predictor_native_space_separate": true,
   "source_feature_metadata": {
     "NormanWeissman2019_filtered": "data/processed/NormanWeissman2019_filtered_feature_metadata.parquet",
-    "ReplogleWeissman2022_K562_essential": "data/processed/ReplogleWeissman2022_K562_essential_feature_metadata.parquet",
     "ReplogleWeissman2022_rpe1": "data/processed/ReplogleWeissman2022_rpe1_feature_metadata.parquet",
     "TianKampmann2021_CRISPRa": "data/processed/TianKampmann2021_CRISPRa_feature_metadata.parquet",
     "TianKampmann2021_CRISPRi": "data/processed/TianKampmann2021_CRISPRi_feature_metadata.parquet",
-    "FrangiehIzar2021_RNA": "data/processed/FrangiehIzar2021_RNA_feature_metadata.parquet"
+    "FrangiehIzar2021_RNA": "data/processed/FrangiehIzar2021_RNA_feature_metadata.parquet",
+    "XuCao2023": "data/processed/XuCao2023_feature_metadata.parquet"
   },
   "registry_path": "artifacts/manifests/environment_registry.csv",
   "gene_space_path": "artifacts/manifests/evaluation_gene_space.csv"

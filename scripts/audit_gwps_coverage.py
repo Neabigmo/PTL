@@ -28,6 +28,7 @@ DEFAULT_SIGNATURES = ROOT / "data" / "processed" / f"{DATASET}_delta_signatures.
 DEFAULT_SUMMARY = ROOT / "results" / "tables" / "preprocessing_summary.csv"
 DEFAULT_OUTPUT = ROOT / "artifacts" / "manifests" / "gwps_coverage_audit.csv"
 DEFAULT_DETAILS = ROOT / "artifacts" / "manifests" / "gwps_coverage_audit.json"
+DEFAULT_DECISION = ROOT / "artifacts" / "manifests" / "gwps_source_decision.json"
 
 
 def parse_args() -> argparse.Namespace:
@@ -38,6 +39,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--summary", default=str(DEFAULT_SUMMARY))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--details", default=str(DEFAULT_DETAILS))
+    parser.add_argument("--decision", default=str(DEFAULT_DECISION))
     parser.add_argument("--min-genes", type=int, default=700)
     parser.add_argument("--min-counts", type=float, default=1500)
     parser.add_argument("--max-percent-mito", type=float, default=25)
@@ -205,6 +207,25 @@ def main() -> None:
             "filter_rule": "reference_key must contain a control profile before delta signature is emitted",
         }
     )
+    signature_labels_non_control = signature_labels[~signature_controls].astype(str)
+    eligible_signature_labels = set(
+        eligible.loc[~eligible["is_control"].astype(bool), "perturbation_label"].astype(str)
+    )
+    missing_from_signatures = sorted(eligible_signature_labels.difference(set(signature_labels_non_control)))
+    stages.append(
+        {
+            "stage": "signature_eligibility_reconciliation",
+            "n_cells": int(signatures["n_cells"].sum()),
+            "n_perturbations": int(signature_labels_non_control.nunique()),
+            "n_control_cells": int(signature_controls.sum()),
+            "control_fraction": float(signature_controls.mean()),
+            "n_unique_labels": int(signature_labels.nunique(dropna=True)),
+            "n_signatures": int(len(signatures)),
+            "n_eligible_labels": int(len(eligible_signature_labels)),
+            "n_eligible_labels_missing_signature": int(len(missing_from_signatures)),
+            "filter_rule": "eligible non-control labels must have a reference-matched delta signature",
+        }
+    )
     audit = pd.DataFrame(stages)
     audit.insert(0, "dataset_id", DATASET)
     audit.insert(1, "source_path", str(raw_path))
@@ -278,11 +299,25 @@ def main() -> None:
             ),
             "not_a_headline_genome_wide_benchmark": True,
         },
+        "source_decision": {
+            "decision_schema_version": 1,
+            "local_surface_perturbations": int(signature_labels_non_control.nunique()),
+            "local_surface_signatures": int(len(signatures)),
+            "local_surface_is_headline_eligible": False,
+            "decision": "requires_pinned_systema_processed_surface",
+            "reason": "local batch-by-perturbation eligibility leaves a small surface; QC and reference matching remain unchanged",
+            "minimum_headline_perturbations": 100,
+            "missing_eligible_signature_labels": missing_from_signatures[:50],
+            "source_policy": "use_pinned_systema_processed_surface_if_available; otherwise keep GWPS supplementary",
+        },
     }
     details_path = Path(args.details)
     details_path.parent.mkdir(parents=True, exist_ok=True)
     details_path.write_text(json.dumps(details, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"Wrote {len(audit)} GWPS coverage stages to {output} and {details_path}.")
+    decision_path = Path(args.decision)
+    decision_path.parent.mkdir(parents=True, exist_ok=True)
+    decision_path.write_text(json.dumps(details["source_decision"], indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"Wrote {len(audit)} GWPS coverage stages to {output}, {details_path}, and {decision_path}.")
 
 
 if __name__ == "__main__":

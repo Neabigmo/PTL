@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2",
+  "split_seed": 20260907,
+  "unit": "raw_cells_within_reference_perturbation_strata",
+  "raw_cell_expression_split": true,
+  "n_rows": 245,
+  "dataset_count": 2,
+  "dataset_audit": [
+    {
+      "dataset_id": "NormanWeissman2019_filtered",
+      "config_path": "config/preprocessing/norman_weissman_2019.yaml",
+      "n_input_cells": 111445,
+      "n_qc_contract_cells": 111241,
+      "n_split_cells": 108774,
+      "n_delta_rows": 3376,
+      "n_paired_perturbations": 222,
+      "status": "executed"
+    },
+    {
+      "dataset_id": "ReplogleWeissman2022_rpe1",
+      "config_path": "config/preprocessing/replogle_weissman_2022_rpe1.yaml",
+      "n_input_cells": 247914,
+      "n_qc_contract_cells": 247908,
+      "n_split_cells": 28762,
+      "n_delta_rows": 1207,
+      "n_paired_perturbations": 23,
+      "status": "executed"
+    }
+  ],
+  "median_split_half_cosine": 0.814207585014401,
+  "output_path": "artifacts/manifests/formal_v2_raw_cell_split_half.csv",
+  "status": "raw_cell_expression_split_half_executed"
+}

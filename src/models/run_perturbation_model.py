@@ -244,7 +244,9 @@ def build_signature_metadata(test_frame: pd.DataFrame, row: pd.Series) -> pd.Dat
 
 
 def build_gears_adata_from_prepared(prepared_data: Any, dataset_id: str) -> Any:
-    ad, _, _ = import_gears_stack()
+    # AnnData materialization is useful for contract tests and preprocessing
+    # audits even when the optional GEARS training stack is not installed.
+    import anndata as ad
     frames = [
         prepared_data.train_frame.copy(),
         prepared_data.val_frame.copy(),

@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "split_id": "ptl_biological_instance_split_v1",
+  "primary_seed": 20260907,
+  "seeds": [
+    {
+      "split_seed": 20260907,
+      "status": "resumed",
+      "log_path": "results/formal_v2/multisplit/20260907/execution.log"
+    },
+    {
+      "split_seed": 20260917,
+      "status": "completed",
+      "manifest": "artifacts/manifests/biological_instance_registry__split_20260917.csv",
+      "metrics": "artifacts/manifests/formal_v2_predictor_metrics__split_20260917.csv",
+      "contract": "artifacts/manifests/formal_v2_prediction_index__split_20260917.csv",
+      "log_path": "results/formal_v2/multisplit/20260917/execution.log"
+    },
+    {
+      "split_seed": 20260927,
+      "status": "completed",
+      "manifest": "artifacts/manifests/biological_instance_registry__split_20260927.csv",
+      "metrics": "artifacts/manifests/formal_v2_predictor_metrics__split_20260927.csv",
+      "contract": "artifacts/manifests/formal_v2_prediction_index__split_20260927.csv",
+      "log_path": "results/formal_v2/multisplit/20260927/execution.log"
+    },
+    {
+      "split_seed": 20261007,
+      "status": "completed",
+      "manifest": "artifacts/manifests/biological_instance_registry__split_20261007.csv",
+      "metrics": "artifacts/manifests/formal_v2_predictor_metrics__split_20261007.csv",
+      "contract": "artifacts/manifests/formal_v2_prediction_index__split_20261007.csv",
+      "log_path": "results/formal_v2/multisplit/20261007/execution.log"
+    },
+    {
+      "split_seed": 20261017,
+      "status": "completed",
+      "manifest": "artifacts/manifests/biological_instance_registry__split_20261017.csv",
+      "metrics": "artifacts/manifests/formal_v2_predictor_metrics__split_20261017.csv",
+      "contract": "artifacts/manifests/formal_v2_prediction_index__split_20261017.csv",
+      "log_path": "results/formal_v2/multisplit/20261017/execution.log"
+    }
+  ],
+  "process_policy": "independent_source_disjoint_seed_jobs; one BLAS thread per job; no nested parallelism",
+  "status": "completed"
+}

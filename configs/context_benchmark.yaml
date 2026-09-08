@@ -1,9 +1,12 @@
 schema_version: 2
 benchmark_id: ptl_context_v2
 description: >-
-  Eight-environment context benchmark for prediction-level reliability. The
+  Supported eight-environment context benchmark for prediction-level reliability.
+  Adamson multi-accession and Replogle K562 GWPS remain supplementary until
+  their pinned processed surfaces are available. The
   predictor may retain its native gene space; this benchmark defines the
   shared feature space used only for comparable evaluation.
+headline_surface_status: supported_eight_environment_surface
 evaluation:
   gene_id_field: feature_name
   gene_id_normalization: strip_exact_case_preserving
@@ -19,16 +22,6 @@ environments:
     condition: baseline
     role: common_core
     semantic_status: raw_context_verified_crispra
-    status: ready_signature_surface
-  - environment_id: replogle_k562_essential
-    dataset_id: ReplogleWeissman2022_K562_essential
-    cell_context: K562
-    perturbation_modality: CRISPRi
-    readout_modality: RNA
-    platform: Perturb-seq
-    condition: essential_gene_screen
-    role: common_core
-    semantic_status: raw_context_verified
     status: ready_signature_surface
   - environment_id: replogle_rpe1
     dataset_id: ReplogleWeissman2022_rpe1
@@ -92,4 +85,14 @@ environments:
     condition_field: perturbation_2
     role: context_expansion
     semantic_status: raw_condition_field_verified_crisprn
+    status: ready_signature_surface
+  - environment_id: xu_he293
+    dataset_id: XuCao2023
+    cell_context: HEK293
+    perturbation_modality: CRISPRi
+    readout_modality: RNA
+    platform: Perturb-seq
+    condition: baseline
+    role: context_expansion
+    semantic_status: raw_celltype_and_modality_verified
     status: ready_signature_surface

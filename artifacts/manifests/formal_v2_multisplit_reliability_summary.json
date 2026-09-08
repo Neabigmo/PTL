@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2",
+  "split_id": "ptl_biological_instance_split_v1",
+  "primary_split_seed": 20260907,
+  "split_seeds": [
+    20260907,
+    20260917,
+    20260927,
+    20261007,
+    20261017
+  ],
+  "scenarios": [
+    "in_domain",
+    "leave_environment_out",
+    "leave_predictor_out"
+  ],
+  "baseline": "u_only_rf",
+  "method": "ptl_rf",
+  "aggregation": "split_level_summary_with_environment_level_distribution",
+  "no_independent_domain_claim": true,
+  "split_path": "artifacts/manifests/formal_v2_multisplit_reliability.csv",
+  "environment_path": "artifacts/manifests/formal_v2_multisplit_reliability_environment.csv",
+  "rows": [
+    {
+      "scenario": "in_domain",
+      "n_splits": 5,
+      "mean_delta_aurc_ptl_minus_u_only": -0.020576785240572448,
+      "median_delta_aurc_ptl_minus_u_only": -0.022591047668831354,
+      "sd_delta_aurc_ptl_minus_u_only": 0.009002170781632896,
+      "sign_agreement_improvement": 1.0,
+      "n_splits_improved": 5,
+      "split_level_interval_lower": -0.030553926607284843,
+      "split_level_interval_upper": -0.009691951215397898,
+      "environment_level_mean_delta": -0.020576785240572444
+    },
+    {
+      "scenario": "leave_environment_out",
+      "n_splits": 5,
+      "mean_delta_aurc_ptl_minus_u_only": -0.011416971948288812,
+      "median_delta_aurc_ptl_minus_u_only": -0.010839636183621382,
+      "sd_delta_aurc_ptl_minus_u_only": 0.006665680682311804,
+      "sign_agreement_improvement": 1.0,
+      "n_splits_improved": 5,
+      "split_level_interval_lower": -0.019300945726341445,
+      "split_level_interval_upper": -0.0043344410930858945,
+      "environment_level_mean_delta": -0.011416971948288862
+    },
+    {
+      "scenario": "leave_predictor_out",
+      "n_splits": 5,
+      "mean_delta_aurc_ptl_minus_u_only": -0.01395658634996213,
+      "median_delta_aurc_ptl_minus_u_only": -0.01104900365685324,
+      "sd_delta_aurc_ptl_minus_u_only": 0.006160057240858855,
+      "sign_agreement_improvement": 1.0,
+      "n_splits_improved": 5,
+      "split_level_interval_lower": -0.024903304489550915,
+      "split_level_interval_upper": -0.010704990437633066,
+      "environment_level_mean_delta": -0.013956586349962144
+    }
+  ],
+  "paired_asymmetry_contrast": {
+    "contrast": "delta_leave_environment_out_minus_delta_leave_predictor_out",
+    "n_splits": 5,
+    "mean": 0.002539614401673318,
+    "median": 0.0051030310105950605,
+    "sd": 0.005302606741309319,
+    "split_level_interval_lower": -0.006301624306133791,
+    "split_level_interval_upper": 0.006714562563767346,
+    "n_negative": 1,
+    "n_positive": 4,
+    "interpretation": "negative means environment holdout has a more negative PTL-minus-U-only delta; this contrast is descriptive and not a causal portability claim"
+  },
+  "status": "formal_v2_multisplit_reliability_executed",
+  "split_runs": [
+    {
+      "split_seed": 20260907,
+      "status": "resumed",
+      "summary": "artifacts/manifests/formal_v2_reliability_summary.json"
+    },
+    {
+      "split_seed": 20260917,
+      "status": "resumed",
+      "summary": "results/formal_v2/multisplit/20260917/reliability/artifacts/manifests/formal_v2_reliability_summary.json"
+    },
+    {
+      "split_seed": 20260927,
+      "status": "resumed",
+      "summary": "results/formal_v2/multisplit/20260927/reliability/artifacts/manifests/formal_v2_reliability_summary.json"
+    },
+    {
+      "split_seed": 20261007,
+      "status": "resumed",
+      "summary": "results/formal_v2/multisplit/20261007/reliability/artifacts/manifests/formal_v2_reliability_summary.json"
+    },
+    {
+      "split_seed": 20261017,
+      "status": "resumed",
+      "summary": "results/formal_v2/multisplit/20261017/reliability/artifacts/manifests/formal_v2_reliability_summary.json"
+    }
+  ]
+}

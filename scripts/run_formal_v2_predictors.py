@@ -41,10 +41,12 @@ METADATA_COLUMNS = {
     "biological_instance_id", "environment_id", "environment_key", "dataset_id",
     "condition", "condition_field", "perturbation_label", "dose", "timepoint",
     "n_reference_groups", "total_cells", "source_reference_keys", "aggregation_rule",
+    "cell_line", "celltype", "cell_context", "target", "guide_id", "perturbation_type",
 }
 POST_METADATA_COLUMNS = {
     "dataset_id", "source_dataset", "group_key", "reference_key", "perturbation_label",
-    "is_control", "cell_line", "cell_type", "perturbation_2", "batch", "replicate",
+    "is_control", "cell_line", "cell_type", "celltype", "cell_context", "target", "guide_id",
+    "perturbation_type", "perturbation_2", "batch", "replicate",
     "time", "timepoint", "dose", "n_cells", "control_label_used",
 }
 
@@ -101,8 +103,8 @@ def load_registry(root: Path) -> pd.DataFrame:
     return registry
 
 
-def load_manifest(root: Path) -> pd.DataFrame:
-    manifest = pd.read_csv(root / "artifacts/manifests/biological_instance_registry.csv", dtype=str)
+def load_manifest(root: Path, path: Path | None = None, *, split_seed: int = 20260907) -> pd.DataFrame:
+    manifest = pd.read_csv(path or root / "artifacts/manifests/biological_instance_registry.csv", dtype=str)
     required = {
         "biological_instance_id", "environment_id", "perturbation_label", "dose", "timepoint",
         "split", "split_seed", "model_seeds", "ground_truth_path",
@@ -111,8 +113,8 @@ def load_manifest(root: Path) -> pd.DataFrame:
         raise ValueError("biological-instance manifest is missing formal split columns")
     if manifest["biological_instance_id"].duplicated().any():
         raise ValueError("biological-instance manifest contains duplicate IDs")
-    if not manifest["split_seed"].eq("20260907").all() or not manifest["model_seeds"].eq("0,1,2").all():
-        raise ValueError("formal split seed/model seed contract changed")
+    if not manifest["split_seed"].eq(str(split_seed)).all() or not manifest["model_seeds"].eq("0,1,2").all():
+        raise ValueError(f"formal split seed/model seed contract changed for split_seed={split_seed}")
     return manifest
 
 
@@ -442,11 +444,24 @@ def metric_row(true_values: np.ndarray, predicted: np.ndarray, labels: np.ndarra
     return row
 
 
-def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -> dict[str, Any]:
+def run(
+    root: Path,
+    output_dir: Path,
+    metrics_path: Path,
+    contract_path: Path,
+    *,
+    split_seed: int = 20260907,
+    manifest_path: Path | None = None,
+    isolated_output_dir: bool = False,
+) -> dict[str, Any]:
     evaluation_genes = load_panel(root)
     registry = load_registry(root)
-    manifest = load_manifest(root)
+    manifest = load_manifest(root, manifest_path, split_seed=split_seed)
     commit = current_commit(root)
+    if split_seed != 20260907 and not isolated_output_dir:
+        output_dir = output_dir / f"split_seed_{split_seed}"
+    if split_seed == 20260907 and isolated_output_dir and output_dir.name != "predictors":
+        raise ValueError("primary split must use the canonical predictors directory")
     output_dir.mkdir(parents=True, exist_ok=True)
     metric_rows: list[dict[str, Any]] = []
     contract_rows: list[dict[str, Any]] = []
@@ -569,6 +584,7 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                         "predictor": predictor,
                         "seed": str(seed),
                         "split_id": SPLIT_ID,
+                        "split_seed": split_seed,
                         "uncertainty_source": uq_source,
                         "linear_embedding_source": "native_post_expression_X_train_only" if predictor == "strong_linear" else "not_applicable",
                         "linear_reference_release": "const-ae/linear_perturbation_prediction-Paper_publication_runner" if predictor == "strong_linear" else "not_applicable",
@@ -603,6 +619,7 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                     "predictor": predictor,
                     "seed": "ensemble_mean",
                     "split_id": SPLIT_ID,
+                    "split_seed": split_seed,
                     "uncertainty_source": uq_source,
                     "linear_embedding_source": "native_post_expression_X_train_only" if predictor == "strong_linear" else "not_applicable",
                     "linear_reference_release": "const-ae/linear_perturbation_prediction-Paper_publication_runner" if predictor == "strong_linear" else "not_applicable",
@@ -629,6 +646,7 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
                                 "predictor_version": PREDICTOR_VERSIONS[predictor],
                                 "predictor_commit": commit,
                                 "predictor_split_id": SPLIT_ID,
+                                "split_seed": split_seed,
                                 "seed": seed,
                                 "split": split_name,
                                 "prediction_array_path": prediction_array,
@@ -654,6 +672,7 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
         "schema_version": 1,
         "benchmark_id": "ptl_context_v2",
         "split_id": SPLIT_ID,
+        "split_seed": split_seed,
         "predictors": list(predictor_names),
         "environments": int(registry["environment_id"].nunique()),
         "model_seeds": list(seed_values),
@@ -670,7 +689,8 @@ def run(root: Path, output_dir: Path, metrics_path: Path, contract_path: Path) -
         "training_gene_counts_by_dataset": training_gene_counts_by_dataset,
         "status": "formal_v2_simple_predictors_executed",
     }
-    (metrics_path.parent / "formal_v2_predictor_summary.json").write_text(
+    summary_name = "formal_v2_predictor_summary.json" if split_seed == 20260907 else f"formal_v2_predictor_summary__split_{split_seed}.json"
+    (metrics_path.parent / summary_name).write_text(
         json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     return summary
@@ -682,8 +702,16 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, default=ROOT / "results/formal_v2/predictors")
     parser.add_argument("--metrics", type=Path, default=ROOT / "artifacts/manifests/formal_v2_predictor_metrics.csv")
     parser.add_argument("--contract", type=Path, default=ROOT / "artifacts/manifests/formal_v2_prediction_index.csv")
+    parser.add_argument("--split-seed", type=int, default=20260907)
+    parser.add_argument("--manifest", type=Path, default=None)
+    parser.add_argument("--isolated-output-dir", action="store_true")
     args = parser.parse_args()
-    result = run(args.root.resolve(), args.output_dir.resolve(), args.metrics.resolve(), args.contract.resolve())
+    result = run(
+        args.root.resolve(), args.output_dir.resolve(), args.metrics.resolve(), args.contract.resolve(),
+        split_seed=args.split_seed,
+        manifest_path=args.manifest.resolve() if args.manifest else None,
+        isolated_output_dir=args.isolated_output_dir,
+    )
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
 

@@ -25,7 +25,7 @@ predictors:
     family: linear
     role: formal_roster
     implementation: ahlmann_eltze_bilinear_ridge
-    status: reproduction_pending
+    status: available_with_formal_execution_and_oracle_audit
     supported_environment_policy: all_formal_environments
     uncertainty_source: training_bootstrap_disagreement
   - predictor_id: slim_string
@@ -39,7 +39,7 @@ predictors:
     family: graph_neural_network
     role: formal_roster
     implementation: official_gears_systema_compatible_adapter
-    status: contract_validated_scientific_run_pending
+    status: formal_external_contract_executed_remote_cuda_test_only
     supported_environment_policy: predictor_supported_cells_only
     uncertainty_source: native_log_variance_when_available_else_ensemble
   - predictor_id: cpa

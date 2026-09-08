@@ -19,244 +19,244 @@
       "scenario": "in_domain",
       "method": "best_scalar_uq",
       "information_set": "U_scalar_best_validation",
-      "aurc": 0.6531177194356563,
-      "excess_aurc": 0.12583728921111964,
-      "risk_at_80": 0.665926440109401,
-      "ftr_at_80": 0.3423170669129721
+      "aurc": 0.6671270709613296,
+      "excess_aurc": 0.12443670623899439,
+      "risk_at_80": 0.6659527661811857,
+      "ftr_at_80": 0.3512767053973014
     },
     {
       "scenario": "in_domain",
       "method": "isotonic",
       "information_set": "U_scalar_isotonic",
-      "aurc": 0.6462547156129137,
-      "excess_aurc": 0.11897428538837701,
-      "risk_at_80": 0.6652901464869828,
-      "ftr_at_80": 0.3447174292318127
+      "aurc": 0.6626748256662052,
+      "excess_aurc": 0.11998446094386991,
+      "risk_at_80": 0.6627072599958445,
+      "ftr_at_80": 0.3438358945527236
     },
     {
       "scenario": "in_domain",
       "method": "platt_logistic",
       "information_set": "U_scalar_platt",
-      "aurc": 0.6531177194356563,
-      "excess_aurc": 0.12583728921111964,
-      "risk_at_80": 0.665926440109401,
-      "ftr_at_80": 0.3423170669129721
+      "aurc": 0.6671270709613296,
+      "excess_aurc": 0.12443670623899439,
+      "risk_at_80": 0.6659527661811857,
+      "ftr_at_80": 0.3512767053973014
     },
     {
       "scenario": "in_domain",
       "method": "ptl_rf",
       "information_set": "U+P+S+N+C",
-      "aurc": 0.6142263624634754,
-      "excess_aurc": 0.08694593223893872,
-      "risk_at_80": 0.6534722825594392,
-      "ftr_at_80": 0.32750923645320196
+      "aurc": 0.6223386033475309,
+      "excess_aurc": 0.07964823862519563,
+      "risk_at_80": 0.6500809515609253,
+      "ftr_at_80": 0.32783530109945025
     },
     {
       "scenario": "in_domain",
       "method": "raw_normalized_uq",
       "information_set": "U_scalar_raw",
-      "aurc": 0.6557220371721232,
-      "excess_aurc": 0.1284416069475866,
-      "risk_at_80": 0.6690199628342677,
-      "ftr_at_80": 0.347338105500821
+      "aurc": 0.6550215009981369,
+      "excess_aurc": 0.11233113627580174,
+      "risk_at_80": 0.6729464995584075,
+      "ftr_at_80": 0.3591743190904548
     },
     {
       "scenario": "in_domain",
       "method": "u_only_rf",
       "information_set": "U",
-      "aurc": 0.6418907262139295,
-      "excess_aurc": 0.11461029598939287,
-      "risk_at_80": 0.6661096456181603,
-      "ftr_at_80": 0.35001795977011496
+      "aurc": 0.6528925299548157,
+      "excess_aurc": 0.11020216523248054,
+      "risk_at_80": 0.6664767957849478,
+      "ftr_at_80": 0.35576040104947526
     },
     {
       "scenario": "in_domain",
       "method": "u_p_rf",
       "information_set": "U+P",
-      "aurc": 0.6184647403562913,
-      "excess_aurc": 0.09118431013175465,
-      "risk_at_80": 0.6567005192353149,
-      "ftr_at_80": 0.32743483169129717
+      "aurc": 0.6318705164835265,
+      "excess_aurc": 0.08918015176119129,
+      "risk_at_80": 0.6539563879908261,
+      "ftr_at_80": 0.33242675537231386
     },
     {
       "scenario": "in_domain",
       "method": "u_ps_rf",
       "information_set": "U+P+S",
-      "aurc": 0.6164126362135915,
-      "excess_aurc": 0.08913220598905493,
-      "risk_at_80": 0.6557354588709471,
-      "ftr_at_80": 0.3285509031198686
+      "aurc": 0.6306235194878356,
+      "excess_aurc": 0.08793315476550032,
+      "risk_at_80": 0.6528825043422438,
+      "ftr_at_80": 0.33239083583208395
     },
     {
       "scenario": "in_domain",
       "method": "u_psn_rf",
       "information_set": "U+P+S+N",
-      "aurc": 0.6178449374884994,
-      "excess_aurc": 0.09056450726396281,
-      "risk_at_80": 0.6546655486516235,
-      "ftr_at_80": 0.32806727216748766
+      "aurc": 0.6292324427736726,
+      "excess_aurc": 0.08654207805133737,
+      "risk_at_80": 0.6535843578850291,
+      "ftr_at_80": 0.33239083583208395
     },
     {
       "scenario": "leave_environment_out",
       "method": "best_scalar_uq",
       "information_set": "U_scalar_best_validation",
-      "aurc": 0.6517664035167989,
-      "excess_aurc": 0.12448597329226231,
-      "risk_at_80": 0.667554839252412,
-      "ftr_at_80": 0.3571236145320197
+      "aurc": 0.66606124100028,
+      "excess_aurc": 0.1233708762779448,
+      "risk_at_80": 0.6678881344563489,
+      "ftr_at_80": 0.37166651049475263
     },
     {
       "scenario": "leave_environment_out",
       "method": "isotonic",
       "information_set": "U_scalar_isotonic",
-      "aurc": 0.6481012235378917,
-      "excess_aurc": 0.1208207933133551,
-      "risk_at_80": 0.6666854656028852,
-      "ftr_at_80": 0.3566027811986864
+      "aurc": 0.6604809677157208,
+      "excess_aurc": 0.11779060299338567,
+      "risk_at_80": 0.6659198480692079,
+      "ftr_at_80": 0.36822448150924536
     },
     {
       "scenario": "leave_environment_out",
       "method": "platt_logistic",
       "information_set": "U_scalar_platt",
-      "aurc": 0.6517664035167989,
-      "excess_aurc": 0.12448597329226231,
-      "risk_at_80": 0.667554839252412,
-      "ftr_at_80": 0.3571236145320197
+      "aurc": 0.66606124100028,
+      "excess_aurc": 0.1233708762779448,
+      "risk_at_80": 0.6678881344563489,
+      "ftr_at_80": 0.37166651049475263
     },
     {
       "scenario": "leave_environment_out",
       "method": "ptl_rf",
       "information_set": "U+P+S+N+C",
-      "aurc": 0.6413583032980251,
-      "excess_aurc": 0.11407787307348852,
-      "risk_at_80": 0.6641747662881068,
-      "ftr_at_80": 0.3477088464696223
+      "aurc": 0.6496631843216537,
+      "excess_aurc": 0.10697281959931848,
+      "risk_at_80": 0.6624209664810385,
+      "ftr_at_80": 0.36578273363318337
     },
     {
       "scenario": "leave_environment_out",
       "method": "raw_normalized_uq",
       "information_set": "U_scalar_raw",
-      "aurc": 0.65399493096904,
-      "excess_aurc": 0.1267145007445034,
-      "risk_at_80": 0.6733563996310331,
-      "ftr_at_80": 0.364375513136289
+      "aurc": 0.6533510303491351,
+      "excess_aurc": 0.11066066562679991,
+      "risk_at_80": 0.6740889291174692,
+      "ftr_at_80": 0.3745595952023988
     },
     {
       "scenario": "leave_environment_out",
       "method": "u_only_rf",
       "information_set": "U",
-      "aurc": 0.6562297694695597,
-      "excess_aurc": 0.12894933924502305,
-      "risk_at_80": 0.6707995683053386,
-      "ftr_at_80": 0.36857938218390807
+      "aurc": 0.6689641300479952,
+      "excess_aurc": 0.12627376532565998,
+      "risk_at_80": 0.6689498184748603,
+      "ftr_at_80": 0.37962815467266364
     },
     {
       "scenario": "leave_environment_out",
       "method": "u_p_rf",
       "information_set": "U+P",
-      "aurc": 0.6426410555406946,
-      "excess_aurc": 0.11536062531615802,
-      "risk_at_80": 0.6667025321302502,
-      "ftr_at_80": 0.3509082512315271
+      "aurc": 0.6591896145815384,
+      "excess_aurc": 0.1164992498592031,
+      "risk_at_80": 0.6650659218360371,
+      "ftr_at_80": 0.3677754872563718
     },
     {
       "scenario": "leave_environment_out",
       "method": "u_ps_rf",
       "information_set": "U+P+S",
-      "aurc": 0.6434408997590351,
-      "excess_aurc": 0.11616046953449846,
-      "risk_at_80": 0.6659694344442221,
-      "ftr_at_80": 0.3493085488505747
+      "aurc": 0.6564082759437212,
+      "excess_aurc": 0.11371791122138596,
+      "risk_at_80": 0.6592617237455446,
+      "ftr_at_80": 0.36221420539730137
     },
     {
       "scenario": "leave_environment_out",
       "method": "u_psn_rf",
       "information_set": "U+P+S+N",
-      "aurc": 0.6424549003669785,
-      "excess_aurc": 0.11517447014244189,
-      "risk_at_80": 0.664349143607037,
-      "ftr_at_80": 0.34767292692939245
+      "aurc": 0.6571009522598901,
+      "excess_aurc": 0.11441058753755488,
+      "risk_at_80": 0.6592414076001181,
+      "ftr_at_80": 0.3587362568715642
     },
     {
       "scenario": "leave_predictor_out",
       "method": "best_scalar_uq",
       "information_set": "U_scalar_best_validation",
-      "aurc": 0.6515581658836499,
-      "excess_aurc": 0.10868001558605604,
-      "risk_at_80": 0.6725377763977015,
-      "ftr_at_80": 0.35762941135925
+      "aurc": 0.6574499842404911,
+      "excess_aurc": 0.09794281270689378,
+      "risk_at_80": 0.6741369160505467,
+      "ftr_at_80": 0.3676173394755384
     },
     {
       "scenario": "leave_predictor_out",
       "method": "isotonic",
       "information_set": "U_scalar_isotonic",
-      "aurc": 0.6611385990935773,
-      "excess_aurc": 0.11826044879598345,
-      "risk_at_80": 0.6712240817755871,
-      "ftr_at_80": 0.3561016335814723
+      "aurc": 0.6611092556554611,
+      "excess_aurc": 0.10160208412186379,
+      "risk_at_80": 0.6761203802150072,
+      "ftr_at_80": 0.3743801791348834
     },
     {
       "scenario": "leave_predictor_out",
       "method": "platt_logistic",
       "information_set": "U_scalar_platt",
-      "aurc": 0.6515581658836499,
-      "excess_aurc": 0.10868001558605604,
-      "risk_at_80": 0.6725377763977015,
-      "ftr_at_80": 0.35762941135925
+      "aurc": 0.6574499842404911,
+      "excess_aurc": 0.09794281270689378,
+      "risk_at_80": 0.6741369160505467,
+      "ftr_at_80": 0.3676173394755384
     },
     {
       "scenario": "leave_predictor_out",
       "method": "ptl_rf",
       "information_set": "U+P+S+N+C",
-      "aurc": 0.6378179216516664,
-      "excess_aurc": 0.0949397713540725,
-      "risk_at_80": 0.6688981511157911,
-      "ftr_at_80": 0.3575759925558312
+      "aurc": 0.6469733843212151,
+      "excess_aurc": 0.08746621278761778,
+      "risk_at_80": 0.6738159561249628,
+      "ftr_at_80": 0.3717305873387863
     },
     {
       "scenario": "leave_predictor_out",
       "method": "raw_normalized_uq",
       "information_set": "U_scalar_raw",
-      "aurc": 0.65953693897896,
-      "excess_aurc": 0.11665878868136621,
-      "risk_at_80": 0.6725211439888078,
-      "ftr_at_80": 0.3590010779493306
+      "aurc": 0.6602251097762738,
+      "excess_aurc": 0.10071793824267644,
+      "risk_at_80": 0.6725800945931039,
+      "ftr_at_80": 0.3635277854363876
     },
     {
       "scenario": "leave_predictor_out",
       "method": "u_only_rf",
       "information_set": "U",
-      "aurc": 0.6629588703648835,
-      "excess_aurc": 0.12008072006728973,
-      "risk_at_80": 0.6786354082566071,
-      "ftr_at_80": 0.36792468906044173
+      "aurc": 0.671876688810766,
+      "excess_aurc": 0.11236951727716876,
+      "risk_at_80": 0.6811129183616478,
+      "ftr_at_80": 0.3823612642833073
     },
     {
       "scenario": "leave_predictor_out",
       "method": "u_p_rf",
       "information_set": "U+P",
-      "aurc": 0.6468245925353884,
-      "excess_aurc": 0.10394644223779448,
-      "risk_at_80": 0.6765385185123298,
-      "ftr_at_80": 0.364407663970836
+      "aurc": 0.6551595361531656,
+      "excess_aurc": 0.09565236461956826,
+      "risk_at_80": 0.6783434811420159,
+      "ftr_at_80": 0.37834384477529637
     },
     {
       "scenario": "leave_predictor_out",
       "method": "u_ps_rf",
       "information_set": "U+P+S",
-      "aurc": 0.6453850111464987,
-      "excess_aurc": 0.10250686084890484,
-      "risk_at_80": 0.6716088970126187,
-      "ftr_at_80": 0.36023031354348556
+      "aurc": 0.6531226380927948,
+      "excess_aurc": 0.09361546655919747,
+      "risk_at_80": 0.6763891221707893,
+      "ftr_at_80": 0.37831713537358697
     },
     {
       "scenario": "leave_predictor_out",
       "method": "u_psn_rf",
       "information_set": "U+P+S+N",
-      "aurc": 0.64328607528978,
-      "excess_aurc": 0.10040792499218613,
-      "risk_at_80": 0.6720706093070026,
-      "ftr_at_80": 0.3617307883772937
+      "aurc": 0.6534247128280762,
+      "excess_aurc": 0.09391754129447893,
+      "risk_at_80": 0.6734290193430837,
+      "ftr_at_80": 0.37416975883037706
     }
   ],
   "path": "artifacts/manifests/formal_v2_information_ablation_metrics.csv"
