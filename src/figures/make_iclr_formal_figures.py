@@ -474,6 +474,7 @@ def main() -> int:
             "artifacts/manifests/formal_v2_multisplit_reliability_summary.json",
             "artifacts/manifests/formal_v2_systema_robustness.csv",
             "artifacts/manifests/formal_v2_reproducibility_stratified_reliability.csv",
+            "artifacts/manifests/formal_v2_reproducibility_reliability_shift.csv",
             "artifacts/manifests/formal_v2_predictor_metrics.csv",
             "artifacts/manifests/formal_v2_feature_transform_manifest.json",
         ],

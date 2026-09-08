@@ -21,5 +21,14 @@
   ],
   "output_path": "artifacts/manifests/formal_v2_reproducibility_stratified_reliability.csv",
   "relationship_path": "artifacts/manifests/formal_v2_reproducibility_risk_relationship.csv",
+  "reliability_shift_path": "artifacts/manifests/formal_v2_reproducibility_reliability_shift.csv",
+  "reliability_shift_columns": [
+    "difficulty_mean_risk",
+    "ranking_spearman_confidence_vs_negative_risk",
+    "ranking_kendall_confidence_vs_negative_risk",
+    "ranking_normalized_aurc",
+    "all_strata_conditional_contextual_grouping_loss",
+    "semantic_interaction_improvement"
+  ],
   "status": "formal_v2_reproducibility_stratified_reliability_executed"
 }
