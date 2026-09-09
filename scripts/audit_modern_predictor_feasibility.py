@@ -14,8 +14,10 @@ import csv
 import hashlib
 import importlib
 import importlib.metadata
+import importlib.util
 import json
 from pathlib import Path
+import subprocess
 import sys
 from typing import Any
 
@@ -36,14 +38,44 @@ def _version(package: str) -> str | None:
 
 def _probe_module(module_name: str) -> dict[str, Any]:
     try:
-        module = importlib.import_module(module_name)
-        return {"module_found": True, "import_status": "success", "import_error": "", "module_path": str(getattr(module, "__file__", ""))}
-    except ModuleNotFoundError as exc:
-        if exc.name == module_name:
-            return {"module_found": False, "import_status": "missing", "import_error": f"{type(exc).__name__}: {exc}", "module_path": ""}
-        return {"module_found": True, "import_status": "failed", "import_error": f"{type(exc).__name__}: {exc}", "module_path": ""}
+        spec = importlib.util.find_spec(module_name)
+    except Exception as exc:  # noqa: BLE001 - discovery failures are audit data
+        return {"module_found": False, "import_status": "discovery_failed", "import_error": f"{type(exc).__name__}: {exc}", "module_path": ""}
+    if spec is None:
+        return {"module_found": False, "import_status": "missing", "import_error": f"ModuleNotFoundError: {module_name}", "module_path": ""}
+    try:
+        probe = subprocess.run(
+            [sys.executable, "-c", f"import importlib; m=importlib.import_module({module_name!r}); print(getattr(m, '__file__', ''))"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        if probe.returncode == 0:
+            return {"module_found": True, "import_status": "success", "import_error": "", "module_path": probe.stdout.strip()}
+        error = (probe.stderr or probe.stdout).strip()
+        return {"module_found": True, "import_status": "failed", "import_error": error[-2000:], "module_path": str(spec.origin or "")}
+    except subprocess.TimeoutExpired as exc:
+        return {"module_found": True, "import_status": "timeout", "import_error": f"TimeoutExpired after {exc.timeout}s", "module_path": str(spec.origin or "")}
     except Exception as exc:  # noqa: BLE001 - the audit must record import failures
         return {"module_found": True, "import_status": "failed", "import_error": f"{type(exc).__name__}: {exc}", "module_path": ""}
+
+
+def _probe_wsl_scgpt() -> dict[str, Any]:
+    try:
+        result = subprocess.run(
+            ["wsl", "-d", "Ubuntu", "--", "python3", "-c", "import scgpt; print('scgpt_import=success')"],
+            capture_output=True,
+            timeout=20,
+            check=False,
+        )
+        stdout = result.stdout.decode("utf-8", errors="replace").replace("\x00", "").strip()
+        stderr = result.stderr.decode("utf-8", errors="replace").replace("\x00", "").strip()
+        return {"status": "success" if result.returncode == 0 else "failed", "returncode": int(result.returncode), "stdout": stdout[-1000:], "stderr": stderr[-1000:]}
+    except subprocess.TimeoutExpired:
+        return {"status": "timeout", "returncode": None, "stdout": "", "stderr": "TimeoutExpired after 20s"}
+    except Exception as exc:  # noqa: BLE001 - environment absence is an audit result
+        return {"status": "unavailable", "returncode": None, "stdout": "", "stderr": f"{type(exc).__name__}: {exc}"}
 
 
 def _file_record(path: Path) -> dict[str, Any]:
@@ -65,6 +97,7 @@ def collect(root: Path) -> dict[str, Any]:
         runtime["cuda_device_names"] = [torch.cuda.get_device_name(index) for index in range(torch.cuda.device_count())]
     except Exception as exc:  # noqa: BLE001
         runtime.update({"cuda_available": False, "cuda_device_count": 0, "cuda_device_names": [], "torch_error": f"{type(exc).__name__}: {exc}"})
+    runtime["scgpt_compatibility_attempt"] = _probe_wsl_scgpt()
     rows: list[dict[str, Any]] = []
     for model_id, module_name, requirement in MODELS:
         probe = _probe_module(module_name)
@@ -96,7 +129,7 @@ def collect(root: Path) -> dict[str, Any]:
             row["claim_lock_blocker"] = "existing GEARS runs are external-contract surfaces, not Frangieh Claim Lock frozen vectors"
         elif model_id == "scgpt" and probe["import_status"] != "success":
             row["claim_lock_blocker"] = "official scGPT package is installed but import fails before model construction"
-        elif model_id == "txpert" and not probe["module_found"]:
+        elif model_id == "txpert" and probe["import_status"] != "success":
             txpert_root = root / "third_party" / "TxPert"
             checkpoints = sorted((txpert_root / "cache" / "checkpoints").glob("*.ckpt"))
             data_files = sorted((txpert_root / "cache" / "K562_single_cell_line").glob("**/*"))
@@ -123,6 +156,13 @@ def collect(root: Path) -> dict[str, Any]:
                     },
                     "claim_lock_blocker": "official K562 single-cell-line inference is reproducible, but no frozen Nadig HepG2/Jurkat source-only vector is materialized",
                 })
+                from src.models.txpert_adapter import TxPertAdapter
+
+                adapter = TxPertAdapter(txpert_root)
+                row["adapter_contract"] = adapter.validate_source_only_claim_lock(
+                    source_context="nadig_hepg2",
+                    target_contexts=("nadig_jurkat",),
+                )
             else:
                 row["claim_lock_blocker"] = "no official TxPert checkout with cached checkpoint/data is available in the selected runtime"
         else:

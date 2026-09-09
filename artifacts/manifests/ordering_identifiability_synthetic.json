@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "status": "synthetic_ordering_estimand_validation_executed",
+  "seed": 20260909,
+  "trials_per_scenario": 4000,
+  "replicates_per_context": 12,
+  "pairs_per_trial": 32,
+  "population_identity": "0.5 * ||pi_left - pi_right||_2^2",
+  "finite_sample_null_expectation": "U-corrected delta is centered at zero; plug-in/V delta has positive finite-replicate bias",
+  "csv": "artifacts/manifests/ordering_identifiability_synthetic.csv",
+  "figure": null,
+  "rows": [
+    {
+      "scenario": "finite_null",
+      "population_delta": 0.0,
+      "population_cross": 0.5599999999999999,
+      "population_within_left": 0.5599999999999999,
+      "population_within_right": 0.5599999999999999,
+      "mean_plugin_delta": 0.04658610026041667,
+      "mean_u_delta": -7.619160353536164e-05,
+      "mean_max_floor_delta": -0.012326724273989932,
+      "plugin_bias": 0.04658610026041667,
+      "u_bias": -7.619160353536164e-05,
+      "trials": 4000,
+      "n_replicates": 12,
+      "n_pairs": 32
+    },
+    {
+      "scenario": "known_alternative",
+      "population_delta": 0.0074999999999999945,
+      "population_cross": 0.4800000000000001,
+      "population_within_left": 0.4600000000000001,
+      "population_within_right": 0.485,
+      "mean_plugin_delta": 0.046560546875000004,
+      "mean_u_delta": 0.007129981455176775,
+      "mean_max_floor_delta": -0.009521415325126284,
+      "plugin_bias": 0.03906054687500001,
+      "u_bias": -0.00037001854482321926,
+      "trials": 4000,
+      "n_replicates": 12,
+      "n_pairs": 32
+    }
+  ]
+}

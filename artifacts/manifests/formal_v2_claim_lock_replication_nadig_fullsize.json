@@ -269,6 +269,8 @@
   "metric_policy": "same labels, prediction vectors, panel, split seeds, and bootstrap unit across delta cosine, Systema, and effect-rank; no per-metric refit",
   "guide_semantics_policy": "guide_id remains an audit field; perturbations are scored at the exact perturbation-label level, not as single-sgRNA identities",
   "negative_result_audit": "any negative delta is interpreted only after checking source-frozen identity, held-out label folds, disjoint raw-cell halves, matched budgets, finite outputs, and metric equivalence",
+  "macro_path": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_macro.csv",
+  "macro_ci_method": "synchronized within-draw macro of row bootstrap draws",
   "parallel_merge_contract": {
     "worker_stems": [
       "formal_v2_claim_lock_replication_nadig_fullsize_part00",

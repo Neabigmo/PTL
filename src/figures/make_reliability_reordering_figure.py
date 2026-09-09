@@ -169,29 +169,25 @@ def make_figure() -> tuple[list[str], dict[str, object]]:
     ], fontsize=5.5, loc="lower right")
 
     ax = fig.add_subplot(grid[1, 0])
-    panel(ax, "c", "Cross-context shift meets noise components")
+    panel(ax, "c", "Pairwise order shift meets noise floors")
     metric_labels = {"delta_cosine": "delta\ncosine", "systema_centroid_accuracy": "Systema\ncentroid", "absolute_effect_rank_agreement": "absolute\neffect rank"}
     metric_order = list(metric_labels)
-    component_specs = [("cross_d", "cross", CORAL, -0.24), ("measurement_floor_d", "measurement", BLUE, -0.08), ("joint_floor_d", "joint", PURPLE, 0.08)]
+    component_specs = [("ordering_cross_disagreement", "cross", CORAL, -0.24), ("ordering_measurement_floor", "measurement", BLUE, -0.08), ("ordering_joint_floor", "joint", PURPLE, 0.08)]
     for metric_index, metric in enumerate(metric_order):
         rows = measurement.loc[measurement["metric"].eq(metric)].reset_index(drop=True)
         for key, label, color, offset in component_specs:
             values = rows[key].to_numpy(dtype=float)
             ax.scatter(np.full(len(values), metric_index + offset), values, s=11, alpha=0.25, color=color, edgecolor="white", linewidth=0.2)
             ax.plot([metric_index + offset - 0.07, metric_index + offset + 0.07], [np.mean(values), np.mean(values)], color=color, lw=2.0, solid_capstyle="round")
-        model_rows = noise_floor.loc[noise_floor["environment_id"].isin(rows["source_environment_id"])]
-        if not model_rows.empty:
-            ax.scatter(metric_index + 0.24, model_rows["normalized_rank_displacement_mean"].mean(), marker="D", s=22, color=GOLD, edgecolor="white", linewidth=0.35, zorder=4)
     ax.axhline(0, color=NAVY, lw=0.8)
     ax.set_xticks(np.arange(len(metric_order)), list(metric_labels.values()), fontsize=5.7)
-    ax.set_ylabel("rank displacement $D$")
-    ax.set_ylim(0, 0.38)
-    ax.legend(handles=[mpl.lines.Line2D([], [], marker="o", color=color, lw=2, markersize=3.5, label=label) for _, label, color, _ in component_specs] +
-              [mpl.lines.Line2D([], [], marker="D", color=GOLD, lw=0, markersize=4, label="model-only rank floor")], fontsize=5.0, loc="upper left", ncol=2)
-    ax.text(0.02, 0.04, "points = source/pair; bars = macro means · model floor is metric-agnostic rank noise", transform=ax.transAxes, fontsize=5.1, color=SLATE)
+    ax.set_ylabel("pairwise order disagreement")
+    ax.set_ylim(0, 1.0)
+    ax.legend(handles=[mpl.lines.Line2D([], [], marker="o", color=color, lw=2, markersize=3.5, label=label) for _, label, color, _ in component_specs], fontsize=5.0, loc="upper left", ncol=2)
+    ax.text(0.02, 0.04, "primary estimand: tie-aware pairwise order; U-statistic within floors", transform=ax.transAxes, fontsize=5.1, color=SLATE)
 
     ax = fig.add_subplot(grid[1, 1])
-    panel(ax, "d", "Joint-floor excess is not consistently positive")
+    panel(ax, "d", "Identifiable excess is metric-dependent")
     pair_keys = list(PAIR_LABELS)
     pair_short = [PAIR_LABELS[key].replace("frangieh_melanoma_", "") for key in pair_keys]
     metric_colors = {"delta_cosine": CORAL, "systema_centroid_accuracy": BLUE, "absolute_effect_rank_agreement": PURPLE}
@@ -205,15 +201,15 @@ def make_figure() -> tuple[list[str], dict[str, object]]:
                 & measurement["metric"].eq(metric)
             ]
             for _, row in rows.iterrows():
-                value = float(row["delta_joint"])
+                value = float(row["ordering_delta_joint_id"])
                 ax.errorbar(pair_index + offsets[metric], value,
-                            yerr=[[value - float(row["delta_joint_ci_low"])], [float(row["delta_joint_ci_high"]) - value]],
+                            yerr=[[value - float(row["ordering_delta_joint_id_ci_low"])], [float(row["ordering_delta_joint_id_ci_high"]) - value]],
                             fmt="o", ms=3.4, color=metric_colors[metric], ecolor=metric_colors[metric], elinewidth=0.65,
                             capsize=1.2, alpha=0.65, markeredgecolor="white", markeredgewidth=0.25)
     ax.axhline(0, color=NAVY, lw=0.9)
     ax.set_xticks(np.arange(len(pair_keys)), pair_short, rotation=22, ha="right", fontsize=5.5)
-    ax.set_ylabel(r"$Delta_{joint}$ = cross $D$ − joint-floor $D$")
-    ax.set_ylim(-0.12, 0.12)
+    ax.set_ylabel(r"ordering excess = cross − U-statistic joint floor")
+    ax.set_ylim(-0.5, 0.5)
     ax.legend(handles=[mpl.lines.Line2D([], [], marker="o", color=color, lw=0, markersize=4, label=metric_names[metric]) for metric, color in metric_colors.items()], fontsize=5.1, loc="upper left")
     ax.text(0.02, 0.04, "30 full-size raw-cell seeds · 2,000 paired label-bootstrap draws", transform=ax.transAxes, fontsize=5.2, color=SLATE)
 
@@ -222,7 +218,7 @@ def make_figure() -> tuple[list[str], dict[str, object]]:
     manifest = {
         "schema_version": 1,
         "figure": "formal_fig1_reliability_reordering",
-        "claim": "source-frozen predictors show cross-context rank displacement; full-size matched raw-cell joint-floor excess is metric-dependent and does not support a universal reordering claim",
+        "claim": "source-frozen predictors show cross-context rank displacement, while the primary pairwise-order excess is separated from secondary rank displacement and remains metric-dependent",
         "status": "claim_lock_frangieh_source_frozen_and_noise_audit",
         "source_data": [
             "artifacts/source_data/frangieh_source_frozen_predictions.npz",

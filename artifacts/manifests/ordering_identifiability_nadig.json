@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "purpose": "Nadig matched-universe ordering-identifiability audit",
+  "primary_estimand": "pairwise_order_disagreement",
+  "secondary_estimand": "normalized_rank_displacement",
+  "universes": [
+    {
+      "analysis_label": "matched1255",
+      "minimum_cells": 20,
+      "n_perturbations": 1255,
+      "label_sha256": "53aa7a9da8533a05ca1aff521988dbd284a9bc2a193fc6db005201272a1b3528"
+    },
+    {
+      "analysis_label": "matched345",
+      "minimum_cells": 40,
+      "n_perturbations": 345,
+      "label_sha256": "cc374a5dde812787f73de7562e4e45df00df3e9f1061814b8492c6e48f08dcfd"
+    }
+  ],
+  "rows": 12,
+  "source_summary": "artifacts/manifests/ordering_identifiability_nadig.csv",
+  "label_manifest": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_matched_universe_labels.json",
+  "uncertainty_scope": "raw-cell/pseudoreplicate sampling uncertainty; not all biological variation"
+}

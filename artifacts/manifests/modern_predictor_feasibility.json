@@ -8,7 +8,13 @@
     "cuda_device_count": 1,
     "cuda_device_names": [
       "NVIDIA GeForce RTX 4070 Laptop GPU"
-    ]
+    ],
+    "scgpt_compatibility_attempt": {
+      "status": "failed",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Ubuntu WSL attempt did not provide scGPT; observed WSL/Service/E_ACCESSDENIED and ModuleNotFoundError in fallback attempt."
+    }
   },
   "rows": [
     {

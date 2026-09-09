@@ -36,8 +36,11 @@ from scripts.run_formal_v2_claim_lock_measurement import (  # noqa: E402
     METRICS,
     MODEL_PAIRS,
     _bootstrap_floor,
-    _d,
+    _joint_ordering_components,
     _metric_risks_batch,
+    _ordering_components,
+    _rank_d,
+    _synchronized_macro_rows,
 )
 from scripts.run_formal_v2_predictors import (  # noqa: E402
     fit_ahlmann_eltze_bilinear_ridge,
@@ -543,7 +546,7 @@ def _run_thresholds(
     split_seeds: tuple[int, ...] = SPLIT_SEEDS,
     bootstrap_input_dir: Path | None = None,
     bootstrap_input_stem: str | None = None,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[tuple[int, str, str], list[dict[str, np.ndarray]]], list[dict[str, Any]]]:
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[tuple[int, str, str], list[dict[str, np.ndarray]]], list[dict[str, Any]], list[dict[str, Any]]]:
     floor_rows: list[dict[str, Any]] = []
     inputs: dict[tuple[int, str, str], list[dict[str, Any]]] = {
         (minimum, source, metric): []
@@ -552,6 +555,7 @@ def _run_thresholds(
         for metric in METRICS
     }
     stream_files: list[dict[str, Any]] = []
+    macro_draw_rows: list[dict[str, Any]] = []
     for start in range(0, len(split_seeds), max(1, int(seed_chunk))):
         selected_seeds = split_seeds[start:start + max(1, int(seed_chunk))]
         active_inputs = inputs if bootstrap_input_dir is None else {
@@ -608,9 +612,12 @@ def _run_thresholds(
                         mean_right = metric_risks[CONTEXTS[1]][0][metric]
                         member_left = metric_risks[CONTEXTS[0]][1][metric]
                         member_right = metric_risks[CONTEXTS[1]][1][metric]
-                        cross_d = 0.5 * (_d(mean_left[0], mean_right[0]) + _d(mean_left[1], mean_right[1]))
-                        meas_left = _d(mean_left[0], mean_left[1])
-                        meas_right = _d(mean_right[0], mean_right[1])
+                        cross_rank = 0.5 * (_rank_d(mean_left[0], mean_right[0]) + _rank_d(mean_left[1], mean_right[1]))
+                        meas_left_rank = _rank_d(mean_left[0], mean_left[1])
+                        meas_right_rank = _rank_d(mean_right[0], mean_right[1])
+                        ordering_components = _ordering_components(
+                            mean_left[0], mean_left[1], mean_right[0], mean_right[1]
+                        )
                         active_inputs[(minimum_cells, source, metric)].append({
                             "cross_left_a": mean_left[0],
                             "cross_right_a": mean_right[0],
@@ -627,12 +634,16 @@ def _run_thresholds(
                         })
                         for member_a, member_b in MODEL_PAIRS:
                             joint_left = 0.5 * (
-                                _d(member_left[0, member_a], member_left[1, member_b])
-                                + _d(member_left[0, member_b], member_left[1, member_a])
+                                _rank_d(member_left[0, member_a], member_left[1, member_b])
+                                + _rank_d(member_left[0, member_b], member_left[1, member_a])
                             )
                             joint_right = 0.5 * (
-                                _d(member_right[0, member_a], member_right[1, member_b])
-                                + _d(member_right[0, member_b], member_right[1, member_a])
+                                _rank_d(member_right[0, member_a], member_right[1, member_b])
+                                + _rank_d(member_right[0, member_b], member_right[1, member_a])
+                            )
+                            joint_ordering = _joint_ordering_components(
+                                member_left[0], member_left[1], member_right[0], member_right[1],
+                                member_a, member_b,
                             )
                             floor_rows.append({
                                 "candidate_id": CANDIDATE_ID,
@@ -646,15 +657,25 @@ def _run_thresholds(
                                 "member_pair": f"{member_a},{member_b}",
                                 "n_perturbations": int(len(indices)),
                                 "eligibility_min_cells": int(minimum_cells),
-                                "cross_d": cross_d,
-                                "measurement_left_d": meas_left,
-                                "measurement_right_d": meas_right,
-                                "measurement_floor_max_d": max(meas_left, meas_right),
-                                "joint_left_d": joint_left,
-                                "joint_right_d": joint_right,
-                                "joint_floor_max_d": max(joint_left, joint_right),
-                                "delta_meas": cross_d - max(meas_left, meas_right),
-                                "delta_joint": cross_d - max(joint_left, joint_right),
+                                "ordering_estimand": "pairwise_order_disagreement",
+                                "ordering_cross_disagreement": ordering_components["ordering_cross_disagreement"],
+                                "ordering_within_left_u": ordering_components["ordering_within_left_u"],
+                                "ordering_within_right_u": ordering_components["ordering_within_right_u"],
+                                "ordering_measurement_floor": ordering_components["ordering_measurement_floor"],
+                                "ordering_delta_meas_id": ordering_components["ordering_delta_meas_id"],
+                                "ordering_plugin_delta": ordering_components["ordering_plugin_delta"],
+                                "ordering_joint_floor": joint_ordering["ordering_joint_floor"],
+                                "ordering_delta_joint_id": ordering_components["ordering_cross_disagreement"] - joint_ordering["ordering_joint_floor"],
+                                "rank_displacement_estimand": "normalized_rank_displacement",
+                                "rank_displacement_cross": cross_rank,
+                                "rank_displacement_measurement_left": meas_left_rank,
+                                "rank_displacement_measurement_right": meas_right_rank,
+                                "rank_displacement_measurement_floor_max": max(meas_left_rank, meas_right_rank),
+                                "rank_displacement_joint_left": joint_left,
+                                "rank_displacement_joint_right": joint_right,
+                                "rank_displacement_joint_floor_max": max(joint_left, joint_right),
+                                "rank_displacement_delta_meas_max": cross_rank - max(meas_left_rank, meas_right_rank),
+                                "rank_displacement_delta_joint_max": cross_rank - max(joint_left, joint_right),
                                 "raw_split_contract": (
                                     "raw cells; independent full-size with-replacement pseudo-replicates within "
                                     "context×perturbation; controls resampled independently"
@@ -681,7 +702,7 @@ def _run_thresholds(
                 "keys": encoded_keys,
             })
     if bootstrap_input_dir is not None:
-        return [], floor_rows, {}, stream_files
+        return [], floor_rows, {}, stream_files, macro_draw_rows
     summary_rows: list[dict[str, Any]] = []
     for (minimum_cells, source, metric), values in inputs.items():
         if not values:
@@ -690,7 +711,14 @@ def _run_thresholds(
             values,
             seed=SPLIT_SEED + sum(ord(c) for c in f"nadig|{minimum_cells}|{source}|{metric}"),
             draws=BOOTSTRAP_DRAWS,
+            return_draws=True,
         )
+        macro_draw_rows.append({
+            "analysis_label": "sensitivity_min40" if minimum_cells == MIN_CELLS_SENSITIVITY else "primary_min20",
+            "source_context_id": source,
+            "metric": metric,
+            "draws": stats.pop("_draws"),
+        })
         summary_rows.append({
             "candidate_id": CANDIDATE_ID,
             "estimand": "matched_budget_source_frozen_replication",
@@ -710,12 +738,18 @@ def _run_thresholds(
                 if resampling_mode == "full_size_nonparametric"
                 else "fixed source-frozen mean prediction versus independent raw-cell half A/B truths"
             ),
-            "joint_definition": "source-frozen model member pair crossed with independent truth halves",
+            "joint_definition": (
+                "source-frozen model member pairs crossed with two independent full-size with-replacement truth pseudoreplicates"
+                if resampling_mode == "full_size_nonparametric"
+                else "source-frozen model member pairs crossed with two disjoint truth halves"
+            ),
+            "ordering_estimator": "pairwise-order disagreement with U-statistic within-context floors; plugin/V identity retained as a separate diagnostic",
+            "rank_displacement_estimator": "normalized rank displacement; secondary magnitude diagnostic only",
             "metric_entrypoint": "same delta cosine, pinned Systema centroid-accuracy, and absolute-effect-rank implementation as Frangieh Claim Lock",
             "refit_per_metric": 0,
             **stats,
         })
-    return summary_rows, floor_rows, inputs, stream_files
+    return summary_rows, floor_rows, inputs, stream_files, macro_draw_rows
 
 
 def _write_executed_boundary(
@@ -802,14 +836,52 @@ def run(
         if resampling_mode == "full_size_nonparametric"
         else "formal_v2_claim_lock_replication_nadig"
     )
-    full_profiles = {
-        context_id: _aggregate_full_profiles(contexts[context_id], labels, panel)
-        for context_id in CONTEXTS
-    }
-    print("[replication-lock] full profiles ready", flush=True)
     fold_ids = _fold_ids(labels)
-    predictions = _fit_source_predictions(labels, full_profiles, panel, fold_ids)
-    print("[replication-lock] source-frozen predictions ready", flush=True)
+    prediction_reused_from: str | None = None
+    predictions: np.ndarray | None = None
+    if resampling_mode == "split_half":
+        cache_candidates = (
+            source_dir / "formal_v2_claim_lock_replication_nadig_fullsize_part00_predictions.npz",
+            source_dir / "formal_v2_claim_lock_replication_nadig_fullsize_part01_predictions.npz",
+        )
+        for cache_path in cache_candidates:
+            report_path = output_dir / f"{cache_path.stem.removesuffix('_predictions')}.json"
+            try:
+                cache_report = json.loads(report_path.read_text(encoding="utf-8"))
+                with np.load(cache_path, allow_pickle=False) as payload:
+                    cached_labels = np.asarray(payload["perturbation_label"]).astype(str)
+                    cached_panel = np.asarray(payload["evaluation_gene_symbols"]).astype(str)
+                    cached_fold_ids = np.asarray(payload["fold_id"])
+                    cached_model_seeds = np.asarray(payload["model_seed"])
+                    candidate = np.asarray(payload["prediction"], dtype=np.float32)
+                checksums = cache_report.get("prediction_checksums_by_source", {})
+                checksum_ok = all(
+                    _checksum(candidate[index]) == checksums.get(CONTEXT_LABELS[context_id])
+                    for index, context_id in enumerate(CONTEXTS)
+                )
+                if (
+                    candidate.shape == (len(CONTEXTS), len(labels), len(MODEL_SEEDS), len(panel))
+                    and np.array_equal(cached_labels, np.asarray(labels, dtype=str))
+                    and np.array_equal(cached_panel, np.asarray(panel, dtype=str))
+                    and np.array_equal(cached_fold_ids, fold_ids)
+                    and np.array_equal(cached_model_seeds, np.asarray(MODEL_SEEDS, dtype=cached_model_seeds.dtype))
+                    and checksum_ok
+                    and np.isfinite(candidate).all()
+                ):
+                    predictions = candidate
+                    prediction_reused_from = cache_path.relative_to(root).as_posix()
+                    print(f"[replication-lock] reused verified source-frozen predictions from {prediction_reused_from}", flush=True)
+                    break
+            except (FileNotFoundError, KeyError, OSError, ValueError):
+                continue
+    if predictions is None:
+        full_profiles = {
+            context_id: _aggregate_full_profiles(contexts[context_id], labels, panel)
+            for context_id in CONTEXTS
+        }
+        print("[replication-lock] full profiles ready", flush=True)
+        predictions = _fit_source_predictions(labels, full_profiles, panel, fold_ids)
+        print("[replication-lock] source-frozen predictions ready", flush=True)
     budgets_by_minimum = {
         minimum: _budgets(contexts, labels, minimum, resampling_mode=resampling_mode)
         for minimum in (MIN_CELLS_PRIMARY, MIN_CELLS_SENSITIVITY)
@@ -823,7 +895,7 @@ def run(
         raise ValueError("matched controls do not satisfy the primary split-half budget")
     print(f"[replication-lock] budgets ready primary={len(budgets_by_minimum[MIN_CELLS_PRIMARY]) - 1}", flush=True)
     stream_bootstrap_inputs = bool(stream_bootstrap_inputs)
-    summary_rows, floor_rows, bootstrap_inputs, stream_files = _run_thresholds(
+    summary_rows, floor_rows, bootstrap_inputs, stream_files, macro_draw_rows = _run_thresholds(
         contexts,
         labels,
         panel,
@@ -855,6 +927,9 @@ def run(
     floor_path = output_dir / f"{stem}_floors.csv"
     pd.DataFrame(summary_rows).to_csv(summary_path, index=False)
     pd.DataFrame(floor_rows).to_csv(floor_path, index=False)
+    macro_path = output_dir / f"{stem}_macro.csv"
+    macro_rows = _synchronized_macro_rows(macro_draw_rows, group_columns=("analysis_label", "metric"))
+    pd.DataFrame(macro_rows).to_csv(macro_path, index=False)
     if stream_bootstrap_inputs:
         input_keys = sorted({key for item in stream_files for key in item["keys"]})
         serialized_stream_files = [
@@ -915,8 +990,11 @@ def run(
             CONTEXT_LABELS[source]: _checksum(predictions[index]) for index, source in enumerate(CONTEXTS)
         },
         "prediction_path": prediction_path.relative_to(root).as_posix(),
+        "prediction_reused_from": prediction_reused_from,
         "summary_path": summary_path.relative_to(root).as_posix(),
         "floor_path": floor_path.relative_to(root).as_posix(),
+        "macro_path": macro_path.relative_to(root).as_posix(),
+        "macro_ci_method": "synchronized within-draw macro of row bootstrap draws",
         "predictor": "Ahlmann-style strong linear bilinear ridge",
         "predictor_contract": "source context fit once per global 5-fold perturbation-label OOF assignment; the same prediction vectors are scored unchanged in both contexts",
         "folds": FOLDS,
@@ -939,10 +1017,14 @@ def run(
             if resampling_mode == "full_size_nonparametric"
             else "matched raw-cell split-half truth with fixed source-frozen prediction"
         ),
-        "joint_floor_definition": "fixed source-frozen model member pair crossed with matched independent truth halves",
+        "joint_floor_definition": (
+            "U-statistic within-context pairwise-order floor for source-frozen model member pairs crossed with matched full-size raw-cell pseudoreplicates"
+            if resampling_mode == "full_size_nonparametric"
+            else "U-statistic within-context pairwise-order floor for source-frozen model member pairs crossed with matched independent truth halves"
+        ),
         "metric_policy": "same labels, prediction vectors, panel, split seeds, and bootstrap unit across delta cosine, Systema, and effect-rank; no per-metric refit",
         "guide_semantics_policy": "guide_id remains an audit field; perturbations are scored at the exact perturbation-label level, not as single-sgRNA identities",
-        "negative_result_audit": "any negative delta is interpreted only after checking source-frozen identity, held-out label folds, disjoint raw-cell halves, matched budgets, finite outputs, and metric equivalence",
+        "negative_result_audit": "any negative delta is interpreted only after checking source-frozen identity, held-out label folds, matched raw-cell resampling, matched budgets, finite outputs, tie-aware ordering estimands, and metric equivalence",
     }
     report_path = output_dir / f"{stem}.json"
     report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n", encoding="utf-8")

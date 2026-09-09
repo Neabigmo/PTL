@@ -36,7 +36,9 @@ from src.evaluation.metrics import (  # noqa: E402
 from src.evaluation.reordering_inference import normalized_rank_displacement  # noqa: E402
 from src.evaluation.ordering_estimands import (  # noqa: E402
     crossfit_seed_stable_ordering_summary,
+    pairwise_disagreement_from_replicates,
     summarize_fixed_predictor_ordering,
+    within_disagreement_u_from_replicates,
 )
 from src.ptl.evaluation.fidelity import absolute_effect_rank_agreement  # noqa: E402
 
@@ -450,8 +452,62 @@ def _metric_risks_batch(prediction_members: np.ndarray, truths: np.ndarray) -> t
     return mean_risk, member_risks
 
 
-def _d(left: np.ndarray, right: np.ndarray) -> float:
+def _rank_d(left: np.ndarray, right: np.ndarray) -> float:
     return float(np.nanmean(normalized_rank_displacement(left, right)))
+
+
+def _ordering_components(
+    left_a: np.ndarray,
+    left_b: np.ndarray,
+    right_a: np.ndarray,
+    right_b: np.ndarray,
+) -> dict[str, float]:
+    """Compute the primary pairwise-order estimand and its U-corrected floors."""
+
+    left = np.stack((left_a, left_b))
+    right = np.stack((right_a, right_b))
+    cross = pairwise_disagreement_from_replicates(left, right)
+    within_left_u = within_disagreement_u_from_replicates(left)
+    within_right_u = within_disagreement_u_from_replicates(right)
+    # With exactly two replicates per context, the plug-in within term is
+    # half of the deterministic disagreement between the two replicate order
+    # vectors.  This preserves the diagnostic while avoiding a large
+    # pair-probability matrix inside every bootstrap draw.
+    plugin_delta = cross - 0.25 * (within_left_u + within_right_u)
+    return {
+        "ordering_cross_disagreement": float(cross),
+        "ordering_within_left_u": float(within_left_u),
+        "ordering_within_right_u": float(within_right_u),
+        "ordering_measurement_floor": float(0.5 * (within_left_u + within_right_u)),
+        "ordering_delta_meas_id": float(cross - 0.5 * (within_left_u + within_right_u)),
+        "ordering_plugin_delta": float(plugin_delta),
+    }
+
+
+def _joint_ordering_components(
+    left_a: np.ndarray,
+    left_b: np.ndarray,
+    right_a: np.ndarray,
+    right_b: np.ndarray,
+    member_a: int,
+    member_b: int,
+) -> dict[str, float]:
+    """Average the two crossed member/measurement orientations."""
+
+    orientations = []
+    for first, second in ((member_a, member_b), (member_b, member_a)):
+        orientations.append(_ordering_components(
+            left_a[first], left_b[second], right_a[first], right_b[second]
+        ))
+    return {
+        "ordering_cross_disagreement": float(np.mean([item["ordering_cross_disagreement"] for item in orientations])),
+        "ordering_within_left_u": float(np.mean([item["ordering_within_left_u"] for item in orientations])),
+        "ordering_within_right_u": float(np.mean([item["ordering_within_right_u"] for item in orientations])),
+        "ordering_joint_floor": float(np.mean([
+            0.5 * (item["ordering_within_left_u"] + item["ordering_within_right_u"])
+            for item in orientations
+        ])),
+    }
 
 
 def _rank_rows_average(values: np.ndarray) -> np.ndarray:
@@ -544,9 +600,10 @@ def _bootstrap_floor(
     *,
     seed: int,
     draws: int = 2000,
-) -> dict[str, float]:
+    return_draws: bool = False,
+) -> dict[str, Any]:
     if not inputs:
-        return {"cross_d": float("nan"), "measurement_floor_d": float("nan"), "joint_floor_d": float("nan"), "delta_meas": float("nan"), "delta_joint": float("nan")}
+        return {"ordering_cross_disagreement": float("nan"), "ordering_measurement_floor": float("nan"), "ordering_joint_floor": float("nan"), "ordering_delta_meas_id": float("nan"), "ordering_delta_joint_id": float("nan"), "rank_displacement_cross": float("nan"), "rank_displacement_measurement_floor_max": float("nan"), "rank_displacement_joint_floor_max": float("nan"), "rank_displacement_delta_meas_max": float("nan"), "rank_displacement_delta_joint_max": float("nan")}
     rng = np.random.default_rng(seed)
     n_draws = int(draws)
     selected_items = rng.integers(0, len(inputs), size=n_draws)
@@ -562,61 +619,171 @@ def _bootstrap_floor(
             result[mask] = np.asarray(values, dtype=np.float64)[selected_labels[mask]]
         return result
 
-    def batch_d(left: np.ndarray, right: np.ndarray) -> np.ndarray:
+    sampled = {
+        field: sampled_values(field)
+        for field in (
+            "cross_left_a", "cross_right_a", "cross_left_b", "cross_right_b",
+            "meas_left_a", "meas_left_b", "meas_right_a", "meas_right_b",
+        )
+    }
+    sampled_joint = {
+        field: [sampled_values(field, member) for member in range(len(MODEL_PAIRS))]
+        for field in ("joint_left_a", "joint_left_b", "joint_right_a", "joint_right_b")
+    }
+
+    def batch_rank_d(left: np.ndarray, right: np.ndarray) -> np.ndarray:
         left_rank = _rank_rows_average(left)
         right_rank = _rank_rows_average(right)
         return np.mean(np.abs(left_rank - right_rank), axis=1) / float(n - 1)
 
-    point_cross = 0.5 * (
-        batch_d(sampled_values("cross_left_a"), sampled_values("cross_right_a"))
-        + batch_d(sampled_values("cross_left_b"), sampled_values("cross_right_b"))
+    rank_cross = 0.5 * (
+        batch_rank_d(sampled["cross_left_a"], sampled["cross_right_a"])
+        + batch_rank_d(sampled["cross_left_b"], sampled["cross_right_b"])
     )
-    point_meas = np.maximum(
-        batch_d(sampled_values("meas_left_a"), sampled_values("meas_left_b")),
-        batch_d(sampled_values("meas_right_a"), sampled_values("meas_right_b")),
+    rank_meas = np.maximum(
+        batch_rank_d(sampled["meas_left_a"], sampled["meas_left_b"]),
+        batch_rank_d(sampled["meas_right_a"], sampled["meas_right_b"]),
     )
-    point_joint = np.empty(n_draws, dtype=float)
+    rank_joint = np.empty(n_draws, dtype=float)
     for model_choice, (member_a, member_b) in enumerate(MODEL_PAIRS):
         draw_mask = member_choices == model_choice
         joint_left = 0.5 * (
-            batch_d(sampled_values("joint_left_a", member_a)[draw_mask], sampled_values("joint_left_b", member_b)[draw_mask])
-            + batch_d(sampled_values("joint_left_a", member_b)[draw_mask], sampled_values("joint_left_b", member_a)[draw_mask])
+            batch_rank_d(sampled_joint["joint_left_a"][member_a][draw_mask], sampled_joint["joint_left_b"][member_b][draw_mask])
+            + batch_rank_d(sampled_joint["joint_left_a"][member_b][draw_mask], sampled_joint["joint_left_b"][member_a][draw_mask])
         )
         joint_right = 0.5 * (
-            batch_d(sampled_values("joint_right_a", member_a)[draw_mask], sampled_values("joint_right_b", member_b)[draw_mask])
-            + batch_d(sampled_values("joint_right_a", member_b)[draw_mask], sampled_values("joint_right_b", member_a)[draw_mask])
+            batch_rank_d(sampled_joint["joint_right_a"][member_a][draw_mask], sampled_joint["joint_right_b"][member_b][draw_mask])
+            + batch_rank_d(sampled_joint["joint_right_a"][member_b][draw_mask], sampled_joint["joint_right_b"][member_a][draw_mask])
         )
-        point_joint[draw_mask] = np.maximum(joint_left, joint_right)
-    delta_meas = point_cross - point_meas
-    delta_joint = point_cross - point_joint
+        rank_joint[draw_mask] = np.maximum(joint_left, joint_right)
+
+    ordering_cross = np.empty(n_draws, dtype=float)
+    ordering_meas = np.empty(n_draws, dtype=float)
+    ordering_joint = np.empty(n_draws, dtype=float)
+    for draw_index in range(n_draws):
+        cross = _ordering_components(
+            sampled["cross_left_a"][draw_index], sampled["cross_left_b"][draw_index],
+            sampled["cross_right_a"][draw_index], sampled["cross_right_b"][draw_index],
+        )
+        measurement_left = np.stack((sampled["meas_left_a"][draw_index], sampled["meas_left_b"][draw_index]))
+        measurement_right = np.stack((sampled["meas_right_a"][draw_index], sampled["meas_right_b"][draw_index]))
+        ordering_cross[draw_index] = cross["ordering_cross_disagreement"]
+        ordering_meas[draw_index] = 0.5 * (
+            within_disagreement_u_from_replicates(measurement_left)
+            + within_disagreement_u_from_replicates(measurement_right)
+        )
+        member_a, member_b = MODEL_PAIRS[int(member_choices[draw_index])]
+        joint = _joint_ordering_components(
+            np.stack([sampled_joint["joint_left_a"][member][draw_index] for member in range(len(MODEL_PAIRS))]),
+            np.stack([sampled_joint["joint_left_b"][member][draw_index] for member in range(len(MODEL_PAIRS))]),
+            np.stack([sampled_joint["joint_right_a"][member][draw_index] for member in range(len(MODEL_PAIRS))]),
+            np.stack([sampled_joint["joint_right_b"][member][draw_index] for member in range(len(MODEL_PAIRS))]),
+            member_a, member_b,
+        )
+        ordering_joint[draw_index] = joint["ordering_joint_floor"]
+    ordering_delta_meas = ordering_cross - ordering_meas
+    ordering_delta_joint = ordering_cross - ordering_joint
+    rank_delta_meas = rank_cross - rank_meas
+    rank_delta_joint = rank_cross - rank_joint
 
     def interval(values: list[float]) -> tuple[float, float]:
         return tuple(float(value) for value in np.quantile(np.asarray(values), [0.025, 0.975]))
 
-    cross_low, cross_high = interval(point_cross)
-    meas_low, meas_high = interval(point_meas)
-    joint_low, joint_high = interval(point_joint)
-    meas_delta_low, meas_delta_high = interval(delta_meas)
-    joint_delta_low, joint_delta_high = interval(delta_joint)
-    return {
-        "cross_d": float(np.mean(point_cross)),
-        "cross_d_ci_low": cross_low,
-        "cross_d_ci_high": cross_high,
-        "measurement_floor_d": float(np.mean(point_meas)),
-        "measurement_floor_d_ci_low": meas_low,
-        "measurement_floor_d_ci_high": meas_high,
-        "joint_floor_d": float(np.mean(point_joint)),
-        "joint_floor_d_ci_low": joint_low,
-        "joint_floor_d_ci_high": joint_high,
-        "delta_meas": float(np.mean(delta_meas)),
-        "delta_meas_ci_low": meas_delta_low,
-        "delta_meas_ci_high": meas_delta_high,
-        "delta_joint": float(np.mean(delta_joint)),
-        "delta_joint_ci_low": joint_delta_low,
-        "delta_joint_ci_high": joint_delta_high,
+    ordering_cross_low, ordering_cross_high = interval(ordering_cross)
+    ordering_meas_low, ordering_meas_high = interval(ordering_meas)
+    ordering_joint_low, ordering_joint_high = interval(ordering_joint)
+    ordering_meas_delta_low, ordering_meas_delta_high = interval(ordering_delta_meas)
+    ordering_joint_delta_low, ordering_joint_delta_high = interval(ordering_delta_joint)
+    rank_cross_low, rank_cross_high = interval(rank_cross)
+    rank_meas_low, rank_meas_high = interval(rank_meas)
+    rank_joint_low, rank_joint_high = interval(rank_joint)
+    rank_meas_delta_low, rank_meas_delta_high = interval(rank_delta_meas)
+    rank_joint_delta_low, rank_joint_delta_high = interval(rank_delta_joint)
+    result: dict[str, Any] = {
+        "ordering_cross_disagreement": float(np.mean(ordering_cross)),
+        "ordering_cross_disagreement_ci_low": ordering_cross_low,
+        "ordering_cross_disagreement_ci_high": ordering_cross_high,
+        "ordering_measurement_floor": float(np.mean(ordering_meas)),
+        "ordering_measurement_floor_ci_low": ordering_meas_low,
+        "ordering_measurement_floor_ci_high": ordering_meas_high,
+        "ordering_joint_floor": float(np.mean(ordering_joint)),
+        "ordering_joint_floor_ci_low": ordering_joint_low,
+        "ordering_joint_floor_ci_high": ordering_joint_high,
+        "ordering_delta_meas_id": float(np.mean(ordering_delta_meas)),
+        "ordering_delta_meas_id_ci_low": ordering_meas_delta_low,
+        "ordering_delta_meas_id_ci_high": ordering_meas_delta_high,
+        "ordering_delta_joint_id": float(np.mean(ordering_delta_joint)),
+        "ordering_delta_joint_id_ci_low": ordering_joint_delta_low,
+        "ordering_delta_joint_id_ci_high": ordering_joint_delta_high,
+        "rank_displacement_cross": float(np.mean(rank_cross)),
+        "rank_displacement_cross_ci_low": rank_cross_low,
+        "rank_displacement_cross_ci_high": rank_cross_high,
+        "rank_displacement_measurement_floor_max": float(np.mean(rank_meas)),
+        "rank_displacement_measurement_floor_max_ci_low": rank_meas_low,
+        "rank_displacement_measurement_floor_max_ci_high": rank_meas_high,
+        "rank_displacement_joint_floor_max": float(np.mean(rank_joint)),
+        "rank_displacement_joint_floor_max_ci_low": rank_joint_low,
+        "rank_displacement_joint_floor_max_ci_high": rank_joint_high,
+        "rank_displacement_delta_meas_max": float(np.mean(rank_delta_meas)),
+        "rank_displacement_delta_meas_max_ci_low": rank_meas_delta_low,
+        "rank_displacement_delta_meas_max_ci_high": rank_meas_delta_high,
+        "rank_displacement_delta_joint_max": float(np.mean(rank_delta_joint)),
+        "rank_displacement_delta_joint_max_ci_low": rank_joint_delta_low,
+        "rank_displacement_delta_joint_max_ci_high": rank_joint_delta_high,
         "bootstrap_draws": int(draws),
         "bootstrap_seed": int(seed),
     }
+    if return_draws:
+        result["_draws"] = {
+            "ordering_cross_disagreement": ordering_cross,
+            "ordering_measurement_floor": ordering_meas,
+            "ordering_joint_floor": ordering_joint,
+            "ordering_delta_meas_id": ordering_delta_meas,
+            "ordering_delta_joint_id": ordering_delta_joint,
+            "rank_displacement_cross": rank_cross,
+            "rank_displacement_measurement_floor_max": rank_meas,
+            "rank_displacement_joint_floor_max": rank_joint,
+            "rank_displacement_delta_meas_max": rank_delta_meas,
+            "rank_displacement_delta_joint_max": rank_delta_joint,
+        }
+    return result
+
+
+def _synchronized_macro_rows(
+    row_draws: list[dict[str, Any]],
+    *,
+    group_columns: tuple[str, ...],
+) -> list[dict[str, Any]]:
+    """Aggregate row bootstrap draws within draw, then form one macro CI.
+
+    Each row contributes one value at the same bootstrap draw index.  The
+    macro statistic is therefore computed on synchronized draws rather than
+    by averaging row-level confidence-interval endpoints.
+    """
+
+    if not row_draws:
+        return []
+    draw_fields = tuple(row_draws[0]["draws"])
+    grouped: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
+    for row in row_draws:
+        key = tuple(row.get(column, "") for column in group_columns)
+        grouped.setdefault(key, []).append(row)
+    output: list[dict[str, Any]] = []
+    for key, rows in grouped.items():
+        record = {column: value for column, value in zip(group_columns, key)}
+        for field in draw_fields:
+            arrays = [np.asarray(row["draws"][field], dtype=float) for row in rows]
+            if not arrays or len({array.shape for array in arrays}) != 1:
+                raise ValueError("synchronized macro rows require equal draw counts")
+            macro_draws = np.mean(np.stack(arrays, axis=0), axis=0)
+            record[f"{field}_macro"] = float(np.mean(macro_draws))
+            record[f"{field}_macro_ci_low"] = float(np.quantile(macro_draws, 0.025))
+            record[f"{field}_macro_ci_high"] = float(np.quantile(macro_draws, 0.975))
+        record["n_rows_aggregated"] = int(len(rows))
+        record["bootstrap_draws"] = int(len(np.asarray(rows[0]["draws"][draw_fields[0]])))
+        record["ci_method"] = "synchronized within-draw macro of row bootstrap draws"
+        output.append(record)
+    return output
 
 
 def _guide_coverage(metadata: pd.DataFrame, labels: list[str]) -> pd.DataFrame:
@@ -624,7 +791,7 @@ def _guide_coverage(metadata: pd.DataFrame, labels: list[str]) -> pd.DataFrame:
     for environment in ENVIRONMENTS:
         for label in labels:
             group = metadata.loc[(metadata["environment_key"].eq(environment)) & (metadata["perturbation_label"].eq(label))].copy()
-            guide = group["guide_id"].fillna("NA").astype(str)
+            guide = group["guide_id"].astype("string").fillna("NA").astype(str)
             counts = guide.value_counts()
             eligible = counts[counts >= 2]
             rows.append({
@@ -648,6 +815,8 @@ def run(
     minimum_cells: int = MIN_CELLS_PRIMARY,
     output_stem: str = "formal_v2_claim_lock_measurement",
     resampling_mode: str = "split_half",
+    split_seeds: tuple[int, ...] | None = None,
+    stream_bootstrap_inputs: bool = False,
 ) -> dict[str, Any]:
     root = root.resolve()
     if int(minimum_cells) < 1:
@@ -657,6 +826,9 @@ def run(
     if resampling_mode not in {"split_half", "full_size_nonparametric"}:
         raise ValueError("resampling_mode must be split_half or full_size_nonparametric")
     full_size = resampling_mode == "full_size_nonparametric"
+    selected_split_seeds = tuple(SPLIT_SEEDS if split_seeds is None else split_seeds)
+    if not selected_split_seeds or any(seed not in SPLIT_SEEDS for seed in selected_split_seeds):
+        raise ValueError("split_seeds must be a non-empty subset of the declared schedule")
     payload = np.load(root / PREDICTION_PATH.relative_to(ROOT), allow_pickle=False)
     labels = payload["perturbation_label"].astype(str).tolist()
     predictions = payload["prediction"].astype(np.float32, copy=False)
@@ -672,17 +844,19 @@ def run(
     if not budgets:
         raise ValueError("no primary matched-budget perturbation rows passed the minimum cell threshold")
     panel_positions = _load_panel_positions(root, panel)
-    guide_frame = _guide_coverage(metadata, labels)
     output_dir = root / "artifacts/manifests"
     output_dir.mkdir(parents=True, exist_ok=True)
     guide_suffix = "" if output_stem == "formal_v2_claim_lock_measurement" else output_stem.removeprefix("formal_v2_claim_lock_measurement")
     guide_path = output_dir / f"formal_v2_claim_lock_guide_composition_coverage{guide_suffix}.csv"
-    guide_frame.to_csv(guide_path, index=False)
+    if stream_bootstrap_inputs and output_stem.endswith(tuple(f"part{index:02d}" for index in range(1, 10))):
+        guide_path = None
+    else:
+        _guide_coverage(metadata, labels).to_csv(guide_path, index=False)
 
     seed_outputs: dict[int, dict[tuple[str, str, int, int], np.ndarray]] = {}
     with h5py.File(root / RAW_PATH.relative_to(ROOT), "r") as handle:
-        for start in range(0, len(SPLIT_SEEDS), max(1, int(seed_chunk))):
-            selected_seeds = SPLIT_SEEDS[start:start + max(1, int(seed_chunk))]
+        for start in range(0, len(selected_split_seeds), max(1, int(seed_chunk))):
+            selected_seeds = selected_split_seeds[start:start + max(1, int(seed_chunk))]
             plans = [
                 _seed_plan(groups, labels, budgets, seed, replacement=full_size)
                 for seed in selected_seeds
@@ -717,7 +891,7 @@ def run(
             for environment in (left, right):
                 for half in (0, 1):
                     per_seed: list[np.ndarray] = []
-                    for seed in SPLIT_SEEDS:
+                    for seed in selected_split_seeds:
                         profiles = seed_outputs[int(seed)]
                         budget = budgets[(left, right, eligible_labels[0])]
                         control_budget = budgets[(left, right, "control")]
@@ -751,7 +925,7 @@ def run(
                     batched_risks[(right, 0)][0][metric],
                     batched_risks[(right, 1)][0][metric],
                 ], axis=1)
-                if len(SPLIT_SEEDS) >= 4 and len(SPLIT_SEEDS) % 2 == 0:
+                if len(selected_split_seeds) >= 4 and len(selected_split_seeds) % 2 == 0:
                     crossfit_ordering = crossfit_seed_stable_ordering_summary(seed_left, seed_right)
                 else:
                     crossfit_ordering = {
@@ -761,16 +935,20 @@ def run(
                         "crossfit_within_seed_replicates": 2,
                     }
                 ordering_rows.append({
-                    "estimand": "measurement_corrected_pairwise_ordering",
+                    "estimand": "pairwise_order_disagreement",
                     "source_environment_id": source,
                     "left_target_environment_id": left,
                     "right_target_environment_id": right,
                     "metric": metric,
-                    "replicate_policy": "30 independent split seeds × two disjoint halves; fixed source-frozen mean prediction",
+                    "replicate_policy": (
+                        "30 independent seeds × two independent full-size with-replacement raw-cell pseudoreplicates; fixed source-frozen mean prediction"
+                        if full_size
+                        else "30 independent seeds × two disjoint raw-cell halves; fixed source-frozen mean prediction"
+                    ),
                     **ordering,
                     **crossfit_ordering,
                 })
-                for seed_index, seed in enumerate(SPLIT_SEEDS):
+                for seed_index, seed in enumerate(selected_split_seeds):
                     mean_left_a = batched_risks[(left, 0)][0][metric][seed_index]
                     mean_left_b = batched_risks[(left, 1)][0][metric][seed_index]
                     mean_right_a = batched_risks[(right, 0)][0][metric][seed_index]
@@ -779,9 +957,10 @@ def run(
                     member_left_b = batched_risks[(left, 1)][1][metric][seed_index]
                     member_right_a = batched_risks[(right, 0)][1][metric][seed_index]
                     member_right_b = batched_risks[(right, 1)][1][metric][seed_index]
-                    cross_d = 0.5 * (_d(mean_left_a, mean_right_a) + _d(mean_left_b, mean_right_b))
-                    meas_left = _d(mean_left_a, mean_left_b)
-                    meas_right = _d(mean_right_a, mean_right_b)
+                    cross_rank = 0.5 * (_rank_d(mean_left_a, mean_right_a) + _rank_d(mean_left_b, mean_right_b))
+                    meas_left_rank = _rank_d(mean_left_a, mean_left_b)
+                    meas_right_rank = _rank_d(mean_right_a, mean_right_b)
+                    ordering_components = _ordering_components(mean_left_a, mean_left_b, mean_right_a, mean_right_b)
                     inputs_by_metric[metric].append({
                         "cross_left_a": mean_left_a,
                         "cross_right_a": mean_right_a,
@@ -798,12 +977,16 @@ def run(
                     })
                     for member_a, member_b in MODEL_PAIRS:
                         joint_left = 0.5 * (
-                            _d(member_left_a[member_a], member_left_b[member_b])
-                            + _d(member_left_a[member_b], member_left_b[member_a])
+                            _rank_d(member_left_a[member_a], member_left_b[member_b])
+                            + _rank_d(member_left_a[member_b], member_left_b[member_a])
                         )
                         joint_right = 0.5 * (
-                            _d(member_right_a[member_a], member_right_b[member_b])
-                            + _d(member_right_a[member_b], member_right_b[member_a])
+                            _rank_d(member_right_a[member_a], member_right_b[member_b])
+                            + _rank_d(member_right_a[member_b], member_right_b[member_a])
+                        )
+                        joint_ordering = _joint_ordering_components(
+                            member_left_a, member_left_b, member_right_a, member_right_b,
+                            member_a, member_b,
                         )
                         floor_rows.append({
                             "estimand": "matched_budget_source_frozen",
@@ -817,15 +1000,25 @@ def run(
                             "min_cells_primary": MIN_CELLS_PRIMARY,
                             "eligibility_min_cells": int(minimum_cells),
                             "sensitivity_min_cells": MIN_CELLS_SENSITIVITY,
-                            "cross_d": cross_d,
-                            "measurement_left_d": meas_left,
-                            "measurement_right_d": meas_right,
-                            "measurement_floor_max_d": max(meas_left, meas_right),
-                            "joint_left_d": joint_left,
-                            "joint_right_d": joint_right,
-                            "joint_floor_max_d": max(joint_left, joint_right),
-                            "delta_meas": cross_d - max(meas_left, meas_right),
-                            "delta_joint": cross_d - max(joint_left, joint_right),
+                            "ordering_estimand": "pairwise_order_disagreement",
+                            "ordering_cross_disagreement": ordering_components["ordering_cross_disagreement"],
+                            "ordering_within_left_u": ordering_components["ordering_within_left_u"],
+                            "ordering_within_right_u": ordering_components["ordering_within_right_u"],
+                            "ordering_measurement_floor": ordering_components["ordering_measurement_floor"],
+                            "ordering_delta_meas_id": ordering_components["ordering_delta_meas_id"],
+                            "ordering_plugin_delta": ordering_components["ordering_plugin_delta"],
+                            "ordering_joint_floor": joint_ordering["ordering_joint_floor"],
+                            "ordering_delta_joint_id": ordering_components["ordering_cross_disagreement"] - joint_ordering["ordering_joint_floor"],
+                            "rank_displacement_estimand": "normalized_rank_displacement",
+                            "rank_displacement_cross": cross_rank,
+                            "rank_displacement_measurement_left": meas_left_rank,
+                            "rank_displacement_measurement_right": meas_right_rank,
+                            "rank_displacement_measurement_floor_max": max(meas_left_rank, meas_right_rank),
+                            "rank_displacement_joint_left": joint_left,
+                            "rank_displacement_joint_right": joint_right,
+                            "rank_displacement_joint_floor_max": max(joint_left, joint_right),
+                            "rank_displacement_delta_meas_max": cross_rank - max(meas_left_rank, meas_right_rank),
+                            "rank_displacement_delta_joint_max": cross_rank - max(joint_left, joint_right),
                             "raw_split_contract": (
                                 "QC-passed raw cells; independent with-replacement full-size A/B within environment×perturbation; controls resampled independently"
                                 if full_size
@@ -847,13 +1040,22 @@ def run(
     ordering_path = output_dir / f"{output_stem}_ordering.csv"
     pd.DataFrame(ordering_rows).to_csv(ordering_path, index=False)
     summary_rows: list[dict[str, Any]] = []
-    for key, inputs in bootstrap_inputs.items():
+    macro_draw_rows: list[dict[str, Any]] = []
+    for key, inputs in ({} if stream_bootstrap_inputs else bootstrap_inputs).items():
         source, left, right, metric = key
         stats = _bootstrap_floor(
             inputs,
             seed=SPLIT_SEED + sum(ord(c) for c in f"{source}|{left}|{right}|{metric}"),
             draws=draws,
+            return_draws=True,
         )
+        macro_draw_rows.append({
+            "source_environment_id": source,
+            "left_target_environment_id": left,
+            "right_target_environment_id": right,
+            "metric": metric,
+            "draws": stats.pop("_draws"),
+        })
         summary_rows.append({
             "estimand": "matched_budget_source_frozen",
             "source_environment_id": source,
@@ -867,8 +1069,18 @@ def run(
             "sensitivity_min_cells": MIN_CELLS_SENSITIVITY,
             **stats,
             "bootstrap_unit": "matched perturbation label; each draw also selects one of 30 measurement seeds and one unordered model-member pair",
-            "measurement_definition": "fixed source-frozen mean prediction versus half A/B truths within each target context",
-            "joint_definition": "source-frozen model member m1 with half A versus member m2 with half B, averaged over both orientations",
+            "measurement_definition": (
+                "fixed source-frozen mean prediction versus two independent full-size with-replacement raw-cell truth pseudoreplicates"
+                if resampling_mode == "full_size_nonparametric"
+                else "fixed source-frozen mean prediction versus two disjoint raw-cell half truths"
+            ),
+            "joint_definition": (
+                "source-frozen model member pairs crossed with two independent full-size with-replacement truth pseudoreplicates"
+                if resampling_mode == "full_size_nonparametric"
+                else "source-frozen model member pairs crossed with two disjoint truth halves"
+            ),
+            "ordering_estimator": "pairwise-order disagreement with U-statistic within-context floors; plugin/V identity retained as a separate diagnostic",
+            "rank_displacement_estimator": "normalized rank displacement; secondary magnitude diagnostic only",
             "metric_entrypoint": "delta_cosine; third_party/systema/evaluation/centroid_accuracy.py-equivalent chunked distance; absolute_effect_rank_agreement",
             "refit_per_metric": 0,
         })
@@ -878,6 +1090,28 @@ def run(
         else output_dir / f"{output_stem}_summary.csv"
     )
     pd.DataFrame(summary_rows).to_csv(summary_path, index=False)
+    bootstrap_input_path: Path | None = None
+    bootstrap_input_keys: list[str] = []
+    if stream_bootstrap_inputs:
+        bootstrap_input_path = output_dir / f"{output_stem}_bootstrap_inputs.npz"
+        input_arrays: dict[str, np.ndarray] = {}
+        input_fields = (
+            "cross_left_a", "cross_right_a", "cross_left_b", "cross_right_b",
+            "meas_left_a", "meas_left_b", "meas_right_a", "meas_right_b",
+            "joint_left_a", "joint_left_b", "joint_right_a", "joint_right_b",
+        )
+        for (source, left, right, metric), values in bootstrap_inputs.items():
+            if not values:
+                continue
+            encoded = f"{source}__{left}__{right}__{metric}"
+            bootstrap_input_keys.append(encoded)
+            for field in input_fields:
+                input_arrays[f"{encoded}__{field}"] = np.stack([value[field] for value in values]).astype(np.float32)
+        np.savez_compressed(bootstrap_input_path, **input_arrays)
+        bootstrap_input_keys.sort()
+    macro_path = output_dir / f"{output_stem}_macro.csv"
+    macro_rows = _synchronized_macro_rows(macro_draw_rows, group_columns=("metric",))
+    pd.DataFrame(macro_rows).to_csv(macro_path, index=False)
     report_path = output_dir / f"{output_stem}.json"
     report = {
         "schema_version": 1,
@@ -900,7 +1134,7 @@ def run(
         "raw_source": "data/raw/scperturb_v1.4/FrangiehIzar2021_RNA.h5ad",
         "raw_shape": [218331, 23712],
         "qc_contract": "existing Frangieh preprocessing contract: target_sum=10000, log1p, min_genes=700, min_counts=1500, percent_mito<=25, perturbation_2 conditions, fixed 8229-gene panel",
-        "split_seeds": list(SPLIT_SEEDS),
+        "split_seeds": list(selected_split_seeds),
         "min_cells_primary": MIN_CELLS_PRIMARY,
         "eligibility_min_cells": int(minimum_cells),
         "sensitivity_min_cells": MIN_CELLS_SENSITIVITY,
@@ -911,15 +1145,24 @@ def run(
             if full_size
             else "floor(min(n_p_e1,n_p_e2)/2) per half and per ordered target pair; controls matched analogously"
         ),
-        "measurement_floor_definition": "fixed prediction versus truth half A/B",
+        "measurement_floor_definition": (
+            "U-statistic within-context pairwise-order disagreement over independent full-size with-replacement raw-cell truth pseudoreplicates"
+            if full_size
+            else "U-statistic within-context pairwise-order disagreement over disjoint raw-cell truth halves"
+        ),
         "model_floor_definition": "existing formal_v2_controlled_shift_noise_floor.csv",
         "joint_floor_definition": "source-frozen member pair crossed with independent truth halves",
         "floor_rows": floor_path.relative_to(root).as_posix(),
         "ordering_rows": ordering_path.relative_to(root).as_posix(),
         "summary_rows": summary_path.relative_to(root).as_posix(),
-        "guide_coverage": guide_path.relative_to(root).as_posix(),
+        "bootstrap_input_path": bootstrap_input_path.relative_to(root).as_posix() if bootstrap_input_path else None,
+        "bootstrap_input_keys": bootstrap_input_keys,
+        "streamed_bootstrap_inputs": bool(stream_bootstrap_inputs),
+        "macro_rows": macro_path.relative_to(root).as_posix(),
+        "macro_ci_method": "synchronized within-draw macro of row bootstrap draws",
+        "guide_coverage": guide_path.relative_to(root).as_posix() if guide_path else None,
         "metric_policy": "three metrics only; same source-frozen prediction vectors, matched labels, truth halves, panel and bootstrap unit; no metric-specific refit",
-        "ordering_estimand": "tie-aware pairwise-order distribution; exact corrected divergence is separate from continuous normalized rank displacement",
+        "ordering_estimand": "tie-aware pairwise-order disagreement; primary corrected divergence uses U-statistic within floors, while the exact population/plugin identity and continuous normalized rank displacement are separate diagnostics",
         "status_note": (
             "full-size nonparametric bootstrap is the primary measurement estimator; the original split-half analysis remains a sensitivity audit."
             if full_size
@@ -946,7 +1189,13 @@ def main() -> int:
         choices=("split_half", "full_size_nonparametric"),
         default="split_half",
     )
+    parser.add_argument("--seed-start-index", type=int, default=0)
+    parser.add_argument("--seed-stop-index", type=int, default=None)
+    parser.add_argument("--stream-bootstrap-inputs", action="store_true")
     args = parser.parse_args()
+    seed_stop = len(SPLIT_SEEDS) if args.seed_stop_index is None else int(args.seed_stop_index)
+    if not 0 <= int(args.seed_start_index) < seed_stop <= len(SPLIT_SEEDS):
+        raise ValueError("seed index range must be within the declared 30-seed schedule")
     result = run(
         args.root.resolve(),
         seed_chunk=args.seed_chunk,
@@ -954,6 +1203,8 @@ def main() -> int:
         minimum_cells=args.min_cells,
         output_stem=args.output_stem,
         resampling_mode=args.resampling_mode,
+        split_seeds=tuple(SPLIT_SEEDS[int(args.seed_start_index):seed_stop]),
+        stream_bootstrap_inputs=args.stream_bootstrap_inputs,
     )
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0

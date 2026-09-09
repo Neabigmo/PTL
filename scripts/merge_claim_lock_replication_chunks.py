@@ -32,9 +32,9 @@ from scripts.run_formal_v2_claim_lock_replication import (
     SPLIT_SEED,
     _bootstrap_floor,
     _load_registry_decision,
+    _synchronized_macro_rows,
     _write_executed_boundary,
 )
-from scripts.run_formal_v2_claim_lock_measurement import MODEL_PAIRS, _rank_rows_average
 
 
 INPUT_FIELDS = (
@@ -80,96 +80,20 @@ def _stream_floor(
     *,
     seed: int,
     draws: int,
-) -> dict[str, float]:
-    """Reproduce ``_bootstrap_floor`` while loading one field at a time."""
+    ) -> dict[str, Any]:
+    """Reconstruct the bounded inputs and use the canonical estimator."""
 
-    first_path = root / records[0]["path"]
-    with np.load(first_path, allow_pickle=False) as archive:
-        first = np.asarray(archive[f"{encoded}__cross_left_a"])
-        n = int(first.shape[1])
-    n_items = int(sum(record["n_items"] for record in records))
-    rng = np.random.default_rng(seed)
-    selected_items = rng.integers(0, n_items, size=int(draws))
-    member_choices = rng.integers(0, len(MODEL_PAIRS), size=int(draws))
-    selected_labels = rng.integers(0, n, size=(int(draws), n))
-    sampled_cache: dict[tuple[str, int | None], np.ndarray] = {}
-
-    def sampled_values(field: str, member: int | None = None) -> np.ndarray:
-        cache_key = (field, member)
-        if cache_key in sampled_cache:
-            return sampled_cache[cache_key]
-        result = np.empty((int(draws), n), dtype=np.float64)
-        offset = 0
-        for record in records:
-            count = int(record["n_items"])
-            mask = (selected_items >= offset) & (selected_items < offset + count)
-            if mask.any():
-                with np.load(root / record["path"], allow_pickle=False) as archive:
-                    array = np.asarray(archive[f"{encoded}__{field}"])
-                local_items = selected_items[mask] - offset
-                values = array[local_items] if member is None else array[local_items, member]
-                label_indices = selected_labels[mask]
-                row_indices = np.arange(len(local_items), dtype=np.int64)[:, None]
-                result[mask] = np.asarray(values, dtype=np.float64)[row_indices, label_indices]
-            offset += count
-        sampled_cache[cache_key] = result
-        return result
-
-    def batch_d(left: np.ndarray, right: np.ndarray) -> np.ndarray:
-        left_rank = _rank_rows_average(left)
-        right_rank = _rank_rows_average(right)
-        return np.mean(np.abs(left_rank - right_rank), axis=1) / float(n - 1)
-
-    point_cross = 0.5 * (
-        batch_d(sampled_values("cross_left_a"), sampled_values("cross_right_a"))
-        + batch_d(sampled_values("cross_left_b"), sampled_values("cross_right_b"))
-    )
-    point_meas = np.maximum(
-        batch_d(sampled_values("meas_left_a"), sampled_values("meas_left_b")),
-        batch_d(sampled_values("meas_right_a"), sampled_values("meas_right_b")),
-    )
-    point_joint = np.empty(int(draws), dtype=float)
-    for model_choice, (member_a, member_b) in enumerate(MODEL_PAIRS):
-        draw_mask = member_choices == model_choice
-        joint_left = 0.5 * (
-            batch_d(sampled_values("joint_left_a", member_a)[draw_mask], sampled_values("joint_left_b", member_b)[draw_mask])
-            + batch_d(sampled_values("joint_left_a", member_b)[draw_mask], sampled_values("joint_left_b", member_a)[draw_mask])
-        )
-        joint_right = 0.5 * (
-            batch_d(sampled_values("joint_right_a", member_a)[draw_mask], sampled_values("joint_right_b", member_b)[draw_mask])
-            + batch_d(sampled_values("joint_right_a", member_b)[draw_mask], sampled_values("joint_right_b", member_a)[draw_mask])
-        )
-        point_joint[draw_mask] = np.maximum(joint_left, joint_right)
-    delta_meas = point_cross - point_meas
-    delta_joint = point_cross - point_joint
-
-    def interval(values: np.ndarray) -> tuple[float, float]:
-        return tuple(float(value) for value in np.quantile(values, [0.025, 0.975]))
-
-    cross_low, cross_high = interval(point_cross)
-    meas_low, meas_high = interval(point_meas)
-    joint_low, joint_high = interval(point_joint)
-    meas_delta_low, meas_delta_high = interval(delta_meas)
-    joint_delta_low, joint_delta_high = interval(delta_joint)
-    return {
-        "cross_d": float(np.mean(point_cross)),
-        "cross_d_ci_low": cross_low,
-        "cross_d_ci_high": cross_high,
-        "measurement_floor_d": float(np.mean(point_meas)),
-        "measurement_floor_d_ci_low": meas_low,
-        "measurement_floor_d_ci_high": meas_high,
-        "joint_floor_d": float(np.mean(point_joint)),
-        "joint_floor_d_ci_low": joint_low,
-        "joint_floor_d_ci_high": joint_high,
-        "delta_meas": float(np.mean(delta_meas)),
-        "delta_meas_ci_low": meas_delta_low,
-        "delta_meas_ci_high": meas_delta_high,
-        "delta_joint": float(np.mean(delta_joint)),
-        "delta_joint_ci_low": joint_delta_low,
-        "delta_joint_ci_high": joint_delta_high,
-        "bootstrap_draws": int(draws),
-        "bootstrap_seed": int(seed),
-    }
+    inputs: list[dict[str, np.ndarray]] = []
+    for record in records:
+        with np.load(root / record["path"], allow_pickle=False) as archive:
+            arrays = {field: np.asarray(archive[f"{encoded}__{field}"]) for field in INPUT_FIELDS}
+            n_items = int(arrays["cross_left_a"].shape[0])
+            inputs.extend(
+                [{field: arrays[field][index] for field in INPUT_FIELDS} for index in range(n_items)]
+            )
+    if not inputs:
+        raise ValueError(f"no bootstrap inputs found for {encoded}")
+    return _bootstrap_floor(inputs, seed=seed, draws=draws, return_draws=True)
 
 
 def _summary_from_inputs(
@@ -199,7 +123,7 @@ def _summary_from_inputs(
             "split_seed_end": int(SPLIT_SEEDS[-1]),
             "bootstrap_unit": "matched perturbation label; each draw selects one measurement seed and one unordered model-member pair",
             "measurement_definition": "fixed source-frozen mean prediction versus independent full-size with-replacement raw-cell pseudo-replicates",
-            "joint_definition": "source-frozen model member pair crossed with independent truth halves",
+            "joint_definition": "source-frozen model member pairs crossed with two independent full-size with-replacement truth pseudoreplicates",
             "metric_entrypoint": "same delta cosine, pinned Systema centroid-accuracy, and absolute-effect-rank implementation as Frangieh Claim Lock",
             "refit_per_metric": 0,
             **stats,
@@ -209,8 +133,9 @@ def _summary_from_inputs(
     return rows
 
 
-def _summary_from_stream(root: Path, records: list[dict[str, Any]], keys: list[str]) -> list[dict[str, Any]]:
+def _summary_from_stream(root: Path, records: list[dict[str, Any]], keys: list[str]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     rows: list[dict[str, Any]] = []
+    macro_draw_rows: list[dict[str, Any]] = []
     for encoded in sorted(keys):
         minimum_text, source, metric = encoded.split("__", 2)
         minimum_cells = int(minimum_text)
@@ -225,6 +150,12 @@ def _summary_from_stream(root: Path, records: list[dict[str, Any]], keys: list[s
             seed=SPLIT_SEED + sum(ord(char) for char in f"nadig|{minimum_cells}|{source}|{metric}"),
             draws=BOOTSTRAP_DRAWS,
         )
+        macro_draw_rows.append({
+            "analysis_label": "primary_min20",
+            "source_context_id": source,
+            "metric": metric,
+            "draws": stats.pop("_draws"),
+        })
         rows.append({
             "candidate_id": CANDIDATE_ID,
             "estimand": "matched_budget_source_frozen_replication",
@@ -248,7 +179,7 @@ def _summary_from_stream(root: Path, records: list[dict[str, Any]], keys: list[s
     expected = len(CONTEXTS) * len(METRICS)
     if len(rows) != expected:
         raise ValueError(f"expected {expected} primary summary rows, got {len(rows)}")
-    return rows
+    return rows, _synchronized_macro_rows(macro_draw_rows, group_columns=("analysis_label", "metric"))
 
 
 def _records_for_report(root: Path, report: dict[str, Any]) -> list[dict[str, Any]]:
@@ -313,7 +244,7 @@ def merge(root: Path, part_stems: list[str], output_stem: str) -> dict[str, Any]
     if len(key_sets) != 1:
         raise ValueError("bootstrap chunks do not share the same metric/source key set")
     keys = list(next(iter(key_sets)))
-    summary_rows = _summary_from_stream(root, input_records, keys)
+    summary_rows, macro_rows = _summary_from_stream(root, input_records, keys)
     floors = pd.concat(all_floor_frames, ignore_index=True)
     floors = floors.sort_values(["split_seed", "source_context_id", "metric", "member_pair"]).reset_index(drop=True)
     expected_floor_rows = len(expected_seeds) * len(CONTEXTS) * len(METRICS) * 3
@@ -323,9 +254,11 @@ def merge(root: Path, part_stems: list[str], output_stem: str) -> dict[str, Any]
         raise ValueError("merged floor table contains non-finite numeric values")
     output_summary = manifest_dir / f"{output_stem}.csv"
     output_floors = manifest_dir / f"{output_stem}_floors.csv"
+    output_macro = manifest_dir / f"{output_stem}_macro.csv"
     output_input_manifest = manifest_dir / f"{output_stem}_bootstrap_inputs.json"
     output_report = manifest_dir / f"{output_stem}.json"
     pd.DataFrame(summary_rows).to_csv(output_summary, index=False)
+    pd.DataFrame(macro_rows).to_csv(output_macro, index=False)
     floors.to_csv(output_floors, index=False)
     serialized_records = [
         {"path": record["path"], "split_seeds": record["split_seeds"], "keys": record["keys"]}
@@ -341,6 +274,8 @@ def merge(root: Path, part_stems: list[str], output_stem: str) -> dict[str, Any]
         "seed_range_indices": [0, len(expected_seeds)],
         "summary_path": output_summary.relative_to(root).as_posix(),
         "floor_path": output_floors.relative_to(root).as_posix(),
+        "macro_path": output_macro.relative_to(root).as_posix(),
+        "macro_ci_method": "synchronized within-draw macro of row bootstrap draws",
         "bootstrap_input_path": output_input_manifest.relative_to(root).as_posix(),
         "bootstrap_input_keys": keys,
         "bootstrap_input_files": serialized_records,

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "purpose": "Frangieh ordering-identifiability manifest",
+  "primary_estimand": "pairwise_order_disagreement",
+  "secondary_estimand": "normalized_rank_displacement",
+  "rows": 27,
+  "summary_path": "artifacts/manifests/ordering_identifiability_frangieh.csv",
+  "macro_path": "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_macro.csv",
+  "uncertainty_scope": "raw-cell/pseudoreplicate sampling uncertainty; not all biological variation"
+}

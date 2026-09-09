@@ -25,19 +25,22 @@ or hard after a biological change. We separate this observed ordering question
 from target refitting and from measurement noise. In a controlled Frangieh
 ladder, a source-context predictor is fit once per shared perturbation-label
 fold and scored unchanged against three target outcomes. The resulting
-source-frozen surface shows substantial pairwise rank displacement. We then
-define a tie-aware ordering distribution and an exact measurement-corrected
-divergence, and compare the observed cross-context disagreement with matched
-measurement, model-only and joint floors. The primary audit uses 30 independent
-full-size nonparametric raw-cell pseudo-replicates, with the original split-half
-analysis retained as sensitivity evidence. Across the nine directed
-source/target comparisons, macro $\Delta_{\mathrm{joint}}$ is $+0.036$ for
-delta cosine, $+0.018$ for Systema centroid accuracy and $-0.018$ for
-absolute-effect rank agreement; the corresponding means of pair-level 95\%
-bootstrap endpoints are $[+0.005,+0.066]$, $[+0.007,+0.031]$ and
-$[-0.047,+0.010]$. Thus corrected excess is metric-dependent rather than a
-universal reordering claim. An outcome-blind Nadig HepG2/Jurkat registry and
-independent Claim Lock replication reproduce the same identifiability boundary.
+source-frozen surface shows substantial continuous rank displacement, but rank
+displacement is kept secondary to a tie-aware pairwise ordering estimand. We
+compare cross-context order disagreement with matched measurement, model-only
+and joint floors; finite within-context floors use the leave-one-replicate-out
+U-statistic rather than a positively biased plug-in estimate. The primary audit
+uses 30 independent full-size nonparametric raw-cell pseudo-replicates, with
+the original split-half analysis retained as sensitivity evidence. Across the
+nine directed source/target comparisons, measurement-identifiable and
+joint-identifiable excesses are reported with synchronized macro bootstrap
+intervals, separately for each metric. The result is metric-dependent rather
+than a universal reordering claim: in the full-size Frangieh audit, the
+measurement-identifiable excess ranges from 0.0361 to 0.1178 and the
+joint-identifiable excess ranges from -0.0175 to 0.0702 across the three metrics.
+An outcome-blind Nadig HepG2/Jurkat registry
+and independent Claim Lock replication reproduce the same identifiability
+boundary.
 Monotonic recalibration is relegated to a supplementary lemma because it can
 change probability scale but not strict order. PTL is retained only as a
 deployment-side probe with heterogeneous, non-protective transport evidence.
@@ -93,8 +96,9 @@ probe rather than a universal reliability estimator.
   unchanged against target outcomes. (b) Matched perturbation ranks cross
   under one fixed source predictor. (c) Full-size raw-cell resampling separates
   cross-context disagreement from measurement and joint floors. (d) The
-  max-floor excess is metric-dependent; intervals shown are row-level paired
-  bootstrap intervals, not a pooled superiority test.}
+  U-corrected ordering excess is metric-dependent; intervals are synchronized
+  within-draw macro bootstrap intervals. Continuous rank displacement is shown
+  only as a secondary magnitude diagnostic.}
   \label{fig:hero}
 \end{figure*}
 
@@ -134,6 +138,18 @@ stress test used below,
 Consequently, a negative max-floor excess does not contradict a nonzero
 distributional difference in Eq.~\ref{eq:ordering_identity}.
 
+For finite replicate data, the primary within-context estimator is the
+leave-one-replicate-out U-statistic. If $(n_{-},n_{0},n_{+})$ are the counts of
+the three order outcomes over $n$ replicates, then
+\begin{equation}
+ \widehat D_{\mathrm{within}}^{U}
+ =1-\frac{n_{-}(n_{-}-1)+n_{0}(n_{0}-1)+n_{+}(n_{+}-1)}{n(n-1)}.
+ \label{eq:u_floor}
+\end{equation}
+The finite measurement-identifiable excess replaces the two within terms in
+Eq.~\ref{eq:ordering_identity} by Eq.~\ref{eq:u_floor}; the plug-in/V identity
+is retained only as an implementation diagnostic.
+
 We keep three estimands separate. The measurement-only floor fixes the
 predictor and resamples raw-cell outcomes. The model-only floor fixes the
 outcome and crosses independent model members. The joint floor crosses both
@@ -143,8 +159,9 @@ assumed to be the sum of its two components.
 For stable ordering, we also report
 $p_{c,e}=\Pr_r(Z_{c,e}^{(r)}=+1)$. Fifteen seeds are used for selection and
 fifteen disjoint seeds for evaluation; the two halves are swapped. A pair is
-called stable only when its 95\% Beta posterior interval lies entirely on one
-side of $0.5$. This procedure is a stability diagnostic, not an additional
+called stable only when its 95\% Beta posterior interval for the strict
+direction, conditional on non-ties, lies entirely on one side of $0.5$ and at
+least eight strict observations support that direction. This procedure is a stability diagnostic, not an additional
 selection of the headline metric.
 
 \section{Controlled Frangieh audit}
@@ -166,37 +183,39 @@ selection or target-outcome feature is introduced.
   \caption{\textbf{Full-size measurement lock.} The predictor and label
   contract are fixed while raw cells are resampled at their matched full
   sizes. The original split-half analysis is shown only as sensitivity
-  evidence. Points show source/pair-level results; the displayed macro values
-  are averages across those prespecified rows.}
+  evidence. Points show source/pair-level results; macro values and intervals
+  are computed within synchronized bootstrap draws over those prespecified
+  rows.}
   \label{fig:measurement}
 \end{figure*}
 
 \begin{table}[t]
 \centering
-\caption{Full-size primary measurement and joint-floor audit. The last column
-is the arithmetic mean of the row-level 95\% bootstrap endpoints across nine
-directed source/target rows; it is not a pooled interval.}
+\caption{Full-size primary ordering audit. $D_{\rm cross}$ is the observed
+tie-aware pairwise-order disagreement; the two excess columns use U-statistic
+within floors. Macro intervals are computed from synchronized within-draw
+bootstrap replicates, not by averaging row-level endpoints. Continuous rank
+displacement is a secondary diagnostic reported in the supplement.}
 \label{tab:claim-lock}
-\begin{tabular}{lrrrrc}
+\begin{tabular}{lrrrr}
 \toprule
-Metric & $D_{\rm cross}$ & $D_{\rm joint}$ & $\Delta_{\rm joint}$ & & 95\% endpoints \\
+Metric & $D_{\rm cross}$ & $D_{\rm meas\text{-}ID}$ & $D_{\rm joint\text{-}ID}$ & 95\% macro CI \\
 \midrule
-Delta cosine & 0.2359 & 0.1997 & +0.0362 & & [+0.0053,+0.0658] \\
-Systema centroid & 0.0770 & 0.0586 & +0.0185 & & [+0.0073,+0.0311] \\
-Absolute-effect rank & 0.2009 & 0.2191 & $-$0.0181 & & [$-$0.0472,+0.0095] \\
+Delta cosine & 0.3423 & 0.1178 & 0.0702 & [0.0581, 0.0827] \\
+Systema centroid & 0.1119 & 0.0361 & 0.0330 & [0.0270, 0.0392] \\
+Absolute-effect rank & 0.2867 & 0.0641 & -0.0175 & [-0.0302, -0.0051] \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The exact identity check in Eq.~\ref{eq:ordering_identity} has maximum
-absolute error $8.3\times10^{-17}$ across all ordering rows. This guards
-against interpreting a coding or aggregation mismatch as a biological result.
-The primary full-size macro values in Table~\ref{tab:claim-lock} show positive
-corrected excess for delta cosine and Systema, but not for absolute-effect
-rank. We therefore report metric-dependent evidence, not a universal
-context-dependent reordering claim. The max-floor test is intentionally
-conservative: its sign can remain negative when the ordering distributions
-differ, especially when the joint floors are asymmetric.
+The plug-in/V identity is checked in every ordering row with machine-precision
+error; this guards against interpreting a coding or aggregation mismatch as a
+biological result. The primary full-size macro values in Table~\ref{tab:claim-lock}
+are computed within synchronized draws. We therefore report metric-dependent
+evidence, not a universal context-dependent reordering claim. The max-floor
+stress test is intentionally conservative: its sign can remain negative when
+the ordering distributions differ, especially when the joint floors are
+asymmetric.
 
 The held-out stability audit gives a second guard against pairwise overreading.
 Across source/pair/metric surfaces, selection-stable fractions are recorded
@@ -235,16 +254,10 @@ Replogle K562-essential--RPE1 has 2,055 shared perturbations but is excluded
 because day-6 versus day-7 harvest is inseparable from the context comparison.
 The Claim Lock uses the same source-frozen strong-linear predictor, three model
 members, 30 seeds, 2,000 paired perturbation-bootstrap draws and both
-minimum-cell thresholds. In the full-size primary audit, macro
-$\Delta_{\rm joint}$ is $+0.095$, $+0.073$ and $+0.028$ for delta cosine,
-Systema and absolute-effect rank, respectively. The corresponding arithmetic
-means of the two row-level bootstrap endpoints are $[+0.081,+0.110]$,
-$[+0.048,+0.099]$ and $[+0.013,+0.045]$; these are descriptive macro summaries,
-not pooled intervals, and the Jurkat rank row still crosses zero. The original
-split-half sensitivity remains near zero (at $n\geq20$, macro $\Delta_{\rm joint}$
-is $+0.0055$, $+0.0027$ and $+0.0017$; at $n\geq40$ it is $+0.0002$,
-$-0.0008$ and $-0.0059$). This is one bounded replication, not universal
-transportability.
+minimum-cell thresholds. The full-size primary, matched-universe split-half
+($n=1255$), and $n\geq40$ ($n=345$) results are reported in the canonical
+claim table with synchronized macro intervals for the pairwise-order estimand.
+This is one bounded replication, not universal transportability.
 
 \begin{figure*}[t]
   \centering
@@ -308,9 +321,10 @@ The modern-model audit is intentionally a feasibility gate. The official
 outputs, but not a Frangieh or Nadig frozen prediction vector. The official
 TxPert checkout and cached K562 checkpoint reproduce its single-cell-line
 inference contract on the user-authorized CUDA environment, but they do not
-constitute a same-predictor HepG2/Jurkat vector. scGPT is installed but its
-Windows torchtext ABI fails before model construction. None of these external
-surfaces enters the headline Claim Lock; this prevents modern-model
+constitute a same-predictor HepG2/Jurkat vector. Its explicit adapter records
+this incompatibility and refuses Claim Lock promotion. scGPT is installed but
+its Windows torchtext ABI fails before model construction. None of these
+external surfaces enters the headline Claim Lock; this prevents modern-model
 availability, checkpoint success or GPU utilization from being mistaken for a
 cross-context scientific result. The shared 1,536-gene source-control panel is
 frozen for future same-contract adaptation and is not used to retrofit a
@@ -318,13 +332,15 @@ result into the current claim.
 
 \section{Discussion}
 The evidence supports a limitation-centered interpretation. Source-frozen
-orderings visibly change across matched biological settings, and Eq.~\ref{eq:ordering_identity}
-provides a nonnegative distributional measure of that change. The conservative
-joint-floor excess, however, is metric-dependent under the full-size primary
-audit: two metrics show positive macro excess while absolute-effect rank does
-not. The negative rank result is therefore not read as proof of no biology; it
-is a signal to inspect measurement, model-member disagreement, metric
-geometry, and implementation identity before assigning a mechanism.
+orderings visibly change across matched biological settings.
+Eq.~\ref{eq:ordering_identity} provides the population nonnegative
+distributional measure, while Eq.~\ref{eq:u_floor} provides the finite-sample
+estimator used for headline inference. The identifiable excess is
+metric-dependent under the full-size primary audit; continuous rank displacement
+is retained only as a secondary magnitude diagnostic. A negative result is not
+read as proof of no biology; it is a signal to inspect measurement,
+model-member disagreement, metric geometry and implementation identity before
+assigning a mechanism.
 
 The Nadig registry and replication protect against a different failure mode:
 choosing a favorable context pair after looking at risk. The result remains
@@ -349,7 +365,7 @@ explicit-ID-free, but the source gate retains negative transfers.
 
 All outputs are regenerated from fixed splits and native predictor spaces. The
 release contains source-frozen vectors, full-size and split-half raw-cell
-floors, tie-aware ordering rows, the complete outcome-blind registry, model
+floors, tie-aware ordering rows, synchronized macro bootstrap draws, the complete outcome-blind registry, model
 feasibility checks, transport matrices, bootstrap summaries, and editable
 vector figures. Claims are downgraded when interval support, stability or
 metric agreement is absent. The supplement provides the complete estimands,

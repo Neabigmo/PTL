@@ -21,7 +21,8 @@ source-frozen artifacts. The principal files are
 \texttt{formal\_v2\_claim\_lock\_measurement\_fullsize\_ordering.csv},
 \texttt{formal\_v2\_claim\_lock\_replication\_nadig\_fullsize.csv},
 \texttt{formal\_v2\_claim\_lock\_replication\_nadig.csv},
-\texttt{reordering\_replication\_candidate\_registry.csv}, and their JSON
+\texttt{reordering\_replication\_candidate\_registry.csv},
+\texttt{claim\_table.csv}, and their JSON
 reports. The original split-half files remain tracked as sensitivity audits;
 they are never silently substituted for the full-size primary analysis.
 
@@ -49,6 +50,16 @@ Expanding the squared distance gives the exact identity
 We call the left side the measurement-corrected ordering divergence. It is a
 distributional quantity, not a causal effect and not the same as the
 conservative max-floor excess used for operational stress testing.
+
+For finite replicate data, if $(n_{-},n_{0},n_{+})$ are the counts of the three
+order outcomes over $n$ replicates, the primary within-context estimate is
+\[
+ \widehat D_{\rm within}^{U}=1-
+ \frac{n_{-}(n_{-}-1)+n_{0}(n_{0}-1)+n_{+}(n_{+}-1)}{n(n-1)}.
+\]
+This leave-one-replicate-out U-statistic replaces the positively biased
+plug-in/V within estimate for finite-sample Claim Lock inference. The plug-in/V
+quantity is retained only to verify the population squared-distance identity.
 
 The legacy strict inversion statistic is retained only as a secondary
 descriptive summary:
@@ -92,10 +103,11 @@ source-frozen prediction checksum.
 \subsection{Stable-ordering cross-fit}
 For each pair and metric, $p_{c,e}=\Pr_r(Z_{c,e}^{(r)}=+1)$ is estimated on
 15 selection seeds and evaluated on 15 disjoint seeds. The two seed groups are
-swapped. A pair is selection-stable only when its 95\% Beta$(1,1)$ posterior
-interval lies entirely above or below $0.5$. We report selection-stable,
-held-out-evaluable and held-out-inversion fractions without using them to
-choose a metric or context pair.
+swapped. A pair is selection-stable only when its 95\% Beta$(n_{+}+1,n_{-}+1)$ posterior
+interval for the strict direction conditional on non-ties lies entirely above
+or below $0.5$ and at least eight strict observations are present. We report
+selection-stable, held-out-evaluable and held-out-inversion fractions without
+using them to choose a metric or context pair.
 
 \section{Controlled Frangieh Claim Lock}
 The shared source-frozen surface has 243 perturbation labels across control,
@@ -107,22 +119,23 @@ genes. The full-size summary contains 27 rows (three source contexts, three
 target pairs, three metrics) and the exact identity residual is below
 $8.4\times10^{-17}$ for every row.
 
-The primary macro summaries are:
+The primary macro summaries are generated from synchronized bootstrap draws;
+row-level endpoint averages are not used:
 \begin{center}
 \begin{tabular}{lrrrr}
 \toprule
-Metric & $D_{\rm cross}$ & $D_{\rm joint}$ & $\Delta_{\rm joint}$ & mean endpoint interval \\
+Metric & $D_{\rm cross}$ & $D_{\rm meas\text{-}ID}$ & $D_{\rm joint\text{-}ID}$ & synchronized macro CI \\
 \midrule
-Delta cosine & 0.2359 & 0.1997 & +0.0362 & [+0.0053,+0.0658] \\
-Systema centroid & 0.0770 & 0.0586 & +0.0185 & [+0.0073,+0.0311] \\
-Absolute-effect rank & 0.2009 & 0.2191 & $-$0.0181 & [$-$0.0472,+0.0095] \\
+Delta cosine & 0.3423 & 0.1178 & 0.0702 & [0.0581, 0.0827] \\
+Systema centroid & 0.1119 & 0.0361 & 0.0330 & [0.0270, 0.0392] \\
+Absolute-effect rank & 0.2867 & 0.0641 & -0.0175 & [-0.0302, -0.0051] \\
 \bottomrule
 \end{tabular}
 \end{center}
-The endpoint column averages the row-level paired-bootstrap endpoints and is
-not a pooled confidence interval. The result is therefore reported as
-metric-dependent corrected excess, not as a universal context-specific
-reordering effect.
+Full-size bootstrap uncertainty is raw-cell/pseudoreplicate sampling
+uncertainty; it does not represent all biological or laboratory variation. The
+result is therefore reported as metric-dependent identifiable excess, not as a
+universal context-specific reordering effect.
 
 \section{Outcome-blind replication registry}
 The candidate registry was frozen before prediction, risk or inversion
@@ -159,14 +172,12 @@ to the context comparison~\citep{replogle2022genome}.
 
 The Nadig primary uses full-size nonparametric raw-cell resampling: 30 split
 seeds, three model members, three metrics and 2,000 paired bootstrap draws,
-with $n\geq20$ primary eligibility. Its macro $\Delta_{\rm joint}$ values are
-$+0.095$, $+0.073$ and $+0.028$ for delta cosine, Systema and absolute-effect
-rank; the row-level Jurkat rank interval crosses zero, so the macro arithmetic
-mean is not a pooled superiority interval. The original fixed split-half audit
-is retained as sensitivity: at $n\geq20$ the macro values are $+0.0055$,
-$+0.0027$ and $+0.0017$, while at $n\geq40$ they are $+0.0002$, $-0.0008$
-and $-0.0059$, with every row-level interval crossing zero. No result from this
-pair is pooled with the Frangieh surface or promoted to universal transportability.
+with $n\geq20$ primary eligibility. The full-size and split-half sensitivity
+audits use matched perturbation universes of 2,086/1,255 labels at $n\geq20$
+and 345 labels at $n\geq40$, respectively. Their pairwise-order summaries and
+synchronized macro intervals are in the canonical claim table. No result from
+this pair is pooled with the Frangieh surface or promoted to universal
+transportability.
 
 \section{Recalibration lemma}
 Let $C$ be a calibration-side confidence score and let
@@ -212,8 +223,10 @@ $0.79968$ and test Pearson delta $0.59549$ over 38,475 perturbations. This is a
 successful external contract, not a HepG2/Jurkat Claim Lock. The installed
 scGPT package fails at Windows torchtext ABI loading before model construction.
 The feasibility manifest records these states, checkpoint/data hashes and
-explicit false Claim Lock flags. No modern result is included in the main
-scientific comparison.
+explicit false Claim Lock flags. The TxPert adapter materializes the
+checkpoint/data provenance and explicitly rejects promotion of its K562
+checkpoint to a Nadig source-only vector. No modern result is included in the
+main scientific comparison.
 
 \section{Secondary metrics and reproducibility}
 The broad benchmark reports environment-first macro averages, paired
@@ -225,7 +238,7 @@ training or pooled superiority claims.
 
 The release contains fixed split assignments, prediction contracts,
 outcome-free deployment features, transport matrices, source-frozen vectors,
-full-size and split-half measurement/joint floors, tie-aware ordering rows,
+full-size and matched-universe split-half measurement/joint floors, tie-aware ordering rows,
 registry and guide-coverage manifests, model feasibility checks and editable
 vector figures with source-data manifests. Large local NPZ files are retained
 for reproducibility but excluded from the remote repository when they exceed

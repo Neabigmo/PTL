@@ -5,11 +5,6 @@
   "analysis_label": "full_size_nonparametric",
   "resampling_mode": "full_size_nonparametric",
   "raw_source": "data/raw/scperturb_v1.4/FrangiehIzar2021_RNA.h5ad",
-  "raw_shape": [
-    218331,
-    23712
-  ],
-  "qc_contract": "existing Frangieh preprocessing contract: target_sum=10000, log1p, min_genes=700, min_counts=1500, percent_mito<=25, perturbation_2 conditions, fixed 8229-gene panel",
   "split_seeds": [
     20260908,
     20260909,
@@ -45,17 +40,23 @@
   "min_cells_primary": 20,
   "eligibility_min_cells": 20,
   "sensitivity_min_cells": 40,
-  "sensitivity_executed": false,
-  "common_perturbation_count": 243,
-  "primary_budget_definition": "min(n_p_e1,n_p_e2) cells per independent with-replacement full-size replicate and ordered target pair; controls matched analogously",
-  "measurement_floor_definition": "fixed prediction versus truth half A/B",
-  "model_floor_definition": "existing formal_v2_controlled_shift_noise_floor.csv",
-  "joint_floor_definition": "source-frozen member pair crossed with independent truth halves",
   "floor_rows": "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_floors.csv",
   "ordering_rows": "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_ordering.csv",
   "summary_rows": "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_summary.csv",
-  "guide_coverage": "artifacts/manifests/formal_v2_claim_lock_guide_composition_coverage_fullsize.csv",
-  "metric_policy": "three metrics only; same source-frozen prediction vectors, matched labels, truth halves, panel and bootstrap unit; no metric-specific refit",
-  "ordering_estimand": "tie-aware pairwise-order distribution; exact corrected divergence is separate from continuous normalized rank displacement",
-  "status_note": "full-size nonparametric bootstrap is the primary measurement estimator; the original split-half analysis remains a sensitivity audit."
+  "macro_rows": "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_macro.csv",
+  "macro_ci_method": "synchronized within-draw macro of row bootstrap draws",
+  "source_chunk_stems": [
+    "formal_v2_claim_lock_measurement_fullsize_part00",
+    "formal_v2_claim_lock_measurement_fullsize_part01",
+    "formal_v2_claim_lock_measurement_fullsize_part02",
+    "formal_v2_claim_lock_measurement_fullsize_part03",
+    "formal_v2_claim_lock_measurement_fullsize_part04",
+    "formal_v2_claim_lock_measurement_fullsize_part05",
+    "formal_v2_claim_lock_measurement_fullsize_part06",
+    "formal_v2_claim_lock_measurement_fullsize_part07",
+    "formal_v2_claim_lock_measurement_fullsize_part08",
+    "formal_v2_claim_lock_measurement_fullsize_part09"
+  ],
+  "ordering_estimand": "tie-aware pairwise-order disagreement; finite within floors use U-statistics",
+  "uncertainty_scope": "raw-cell/pseudoreplicate sampling uncertainty; not all biological variation"
 }
