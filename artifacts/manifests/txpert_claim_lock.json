@@ -1,0 +1,66 @@
+{
+  "predictor_id": "txpert",
+  "checkpoint_training_context": "K562",
+  "source_context": "nadig_hepg2",
+  "target_contexts": [
+    "nadig_hepg2",
+    "nadig_jurkat"
+  ],
+  "source_only_training_verified": false,
+  "heldout_prediction_vector_verified": false,
+  "target_outcome_blind_verified": false,
+  "claim_lock_eligible": false,
+  "claim_lock_blockers": [
+    "source_only_training_not_verified",
+    "heldout_prediction_vector_not_verified",
+    "target_outcome_blindness_not_verified",
+    "checkpoint_training_context_does_not_match_source_context"
+  ],
+  "asset_audit": {
+    "official_source_checkout": true,
+    "official_checkpoint_verified": true,
+    "official_checkpoint_files": [
+      {
+        "path": "H:/2026try/9.5PTL/third_party/TxPert/cache/checkpoints/K562_unseen_cell_gat.ckpt",
+        "bytes": 49748832,
+        "sha256": "22994e5097255f75fc4196bddea8e8227dd4c110694a7794f066e041fbf42763"
+      },
+      {
+        "path": "H:/2026try/9.5PTL/third_party/TxPert/cache/checkpoints/K562_unseen_pert_exphormer.ckpt",
+        "bytes": 87247090,
+        "sha256": "e73909069cd4d08db26a318ba573bac7ec8a3ca5937b9e5d18e554727326a504"
+      },
+      {
+        "path": "H:/2026try/9.5PTL/third_party/TxPert/cache/checkpoints/K562_unseen_pert_exphormer_mg.ckpt",
+        "bytes": 87250162,
+        "sha256": "63df6c18b150e918f359b666c82de9ad9826db8e5f1ed771839d18e5dbd6a11c"
+      },
+      {
+        "path": "H:/2026try/9.5PTL/third_party/TxPert/cache/checkpoints/K562_unseen_pert_gat.ckpt",
+        "bytes": 91038698,
+        "sha256": "f533fb0771b9b7eaa1989cc9a6d056d0c4a69700b33c3573ad84b6bc7268fabb"
+      }
+    ],
+    "cached_data_files": [
+      {
+        "path": "H:/2026try/9.5PTL/third_party/TxPert/cache/K562_single_cell_line/de_adata_test.h5ad",
+        "bytes": 2839201052,
+        "sha256": "d9a6e4ff52b97c97dfcaaf48869b0aa1476eb251fa427ee0240bd2dcee26da40"
+      },
+      {
+        "path": "H:/2026try/9.5PTL/third_party/TxPert/cache/K562_single_cell_line/splits/subgroup.pkl",
+        "bytes": 4756,
+        "sha256": "0fa7e8603a5563f2b58b0103feca5b6b6ed25884afb56bfe741864728f03287f"
+      },
+      {
+        "path": "H:/2026try/9.5PTL/third_party/TxPert/cache/K562_single_cell_line/splits/train_test_split.pkl",
+        "bytes": 14254,
+        "sha256": "d05a0fe13bf24a4892a54ed8840d67c0a8322456e8a7ba50625b3ab0dd6f464c"
+      }
+    ],
+    "upstream_training_context": "K562",
+    "upstream_cached_inference_is_external_contract": true
+  },
+  "prediction_vector": null,
+  "status": "blocked_external_contract"
+}

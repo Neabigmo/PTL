@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "status": "locked_to_master_table",
+  "selection_policy": "claim text may cite only rows with status available and a non-unavailable provenance/checksum",
+  "claims": [
+    {
+      "claim_id": "C1_transport_reordering_is_observed",
+      "claim": "Cross-context ordering disagreement is measurable under the prespecified pairwise-order estimand.",
+      "support_filter": {
+        "regime": "canonical_fullsize_claim_lock",
+        "status": "available"
+      },
+      "scope": "descriptive transportability claim; not a universal biological law"
+    },
+    {
+      "claim_id": "C2_measurement_depth_is_a_boundary",
+      "claim": "The identifiable component is reported only after subtracting U-statistic measurement floors, with depth-dependent resolution made explicit.",
+      "support_filter": {
+        "regime": "measurement_depth",
+        "status": "available"
+      },
+      "scope": "Frangieh source-frozen prediction and raw-cell contract"
+    },
+    {
+      "claim_id": "C3_decision_consequence_is_budget_specific",
+      "claim": "Transporting a source ordering has budget-specific retention and regret consequences; a global ordering statistic is not itself a deployment utility.",
+      "support_filter": {
+        "regime": "measurement_depth",
+        "status": "available"
+      },
+      "scope": "top-k budgets only; no decision claim outside evaluated universes"
+    },
+    {
+      "claim_id": "C4_near_chance_is_valid",
+      "claim": "Source-only predictability may remain weak after nested calibration; weak prediction is reported as a result rather than converted into a positive mechanistic claim.",
+      "support_filter": {
+        "regime": "prospective_source_only",
+        "status": "available"
+      },
+      "scope": "only if a source-only held-out manifest is present"
+    }
+  ]
+}

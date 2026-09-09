@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "status": "executed",
+  "evidence_tiers": {
+    "1": "raw-context verified common-core anchor",
+    "2": "raw-context verified context expansion or independent replication",
+    "3": "registered metadata surface not eligible for the primary claim lock"
+  },
+  "rows": 38,
+  "registry_rows": 8,
+  "tier_counts": {
+    "1": 2,
+    "2": 36
+  },
+  "availability_counts": {
+    "canonical_fullsize_claim_lock": 27,
+    "canonical_nadig_replication": 6,
+    "registered_metadata_only": 5
+  },
+  "unsupported_values_policy": "missing fields remain explicit unavailable values; no unsupported effect, CI, or predictor statistic is imputed",
+  "outcome_blindness": "atlas construction reads canonical frozen summaries and metadata only; target outcomes are not used to select rows",
+  "outputs": {
+    "registry": "artifacts/manifests/reliability_transport_atlas_registry.csv",
+    "atlas": "artifacts/manifests/reliability_transport_atlas.csv"
+  }
+}

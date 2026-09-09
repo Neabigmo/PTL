@@ -7,7 +7,7 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 
-\title{Measurement Reliability Limits Claims of Context-Dependent Reliability Reordering in Single-Cell Perturbation Prediction}
+\title{Reliability Transportability Has a Measurement and Decision Boundary in Single-Cell Perturbation Prediction}
 \author{Anonymous Authors}
 
 \newcommand{\ptl}{\textsc{PTL}}
@@ -90,15 +90,13 @@ probe rather than a universal reliability estimator.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig1_reliability_reordering.pdf}
-  \caption{\textbf{Observed reordering, measurement correction and joint
-  reproducibility.} (a) Source-context predictors are fit once and scored
-  unchanged against target outcomes. (b) Matched perturbation ranks cross
-  under one fixed source predictor. (c) Full-size raw-cell resampling separates
-  cross-context disagreement from measurement and joint floors. (d) The
-  U-corrected ordering excess is metric-dependent; intervals are synchronized
-  within-draw macro bootstrap intervals. Continuous rank displacement is shown
-  only as a secondary magnitude diagnostic.}
+  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig1_concept.pdf}
+  \caption{\textbf{Reliability transportability as an auditable sequence.}
+  The analysis moves from observed cross-context reordering to the
+  measurement-identifiable component, its context/metric structure, a
+  cell-depth boundary, budget-specific decisions and prospective source-only
+  predictability. Every transition preserves the source-frozen prediction and
+  target-outcome-blind selection contract.}
   \label{fig:hero}
 \end{figure*}
 
@@ -179,13 +177,12 @@ selection or target-outcome feature is introduced.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig2_measurement_reliability.pdf}
-  \caption{\textbf{Full-size measurement lock.} The predictor and label
-  contract are fixed while raw cells are resampled at their matched full
-  sizes. The original split-half analysis is shown only as sensitivity
-  evidence. Points show source/pair-level results; macro values and intervals
-  are computed within synchronized bootstrap draws over those prespecified
-  rows.}
+  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig2_forest.pdf}
+  \caption{\textbf{Observed transport reordering across the frozen atlas.}
+  Points show tie-aware cross-context disagreement with synchronized
+  uncertainty intervals for each source, target pair and metric. Evidence tier
+  and availability are reported separately, so a visible difference is not
+  silently promoted to an identifiable mechanism.}
   \label{fig:measurement}
 \end{figure*}
 
@@ -207,6 +204,54 @@ Absolute-effect rank & 0.2867 & 0.0641 & -0.0175 & [-0.0302, -0.0051] \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\section{Measurement depth and decision boundary}
+The full-size Claim Lock is complemented by a prespecified measurement-depth
+curve. We resample 10, 20, 40, 80 and 160 QC-passed raw cells per
+environment--perturbation pseudoreplicate, together with the matched full-size
+depth. The perturbation universe is re-evaluated at each budget, and its exact
+coverage and SHA256 fingerprint are recorded. Thus a change in the curve can
+be inspected as either a resolution effect or a matched-universe effect.
+
+For each depth, the same burden decomposition is applied at the perturbation
+level. The global value is the mean of the per-perturbation burdens, providing
+an exact audit identity rather than an approximate post hoc explanation. We
+define the 90\%-of-full resolution depth as the first fixed budget whose
+identifiable divergence lies within ten percent of the full-depth value. The
+detectability threshold is the first budget whose 90\% seed-bootstrap lower
+interval is above zero; when no budget passes, the threshold is explicitly
+unavailable. These rules make a negative result inspectable without changing
+the estimand after seeing the sign.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.92\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig3_measurement_depth.pdf}
+  \caption{\textbf{Cell-depth resolution boundary.} Curves use the same
+  source-frozen predictions and independent raw-cell pseudoreplicates at each
+  fixed depth. Ribbons are 90\% seed-level bootstrap intervals; coverage,
+  resolution and detectability are recorded in the manifest.}
+  \label{fig:depth}
+\end{figure*}
+
+The scientific estimand and the deployment consequence are kept distinct. At
+fixed decision budgets $k/n\in\{0.05,0.10,0.20,0.50\}$, we select the lowest
+source risk and evaluate it against the target risk. We report oracle overlap,
+target regret, normalized regret and boundary inversion. The boundary
+inversion $V_k$ is zero exactly when the strict top-$k$ sets agree; with $m$
+mis-selected items, the audit checks the finite bound
+$V_k\geq m^2/[k(n-k)]$ under strict tie handling. Measurement-floor and joint-
+floor excess regret are reported separately, so a low global ordering
+disagreement cannot be read as a deployment guarantee.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.92\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig4_decision_curves.pdf}
+  \caption{\textbf{Budget-specific decision consequences.} Retention and
+  excess regret are evaluated at fixed top-$k$ budgets. Measurement and joint
+  floors use independent within-context replicate pairs and are not inferred
+  from the cross-context curve.}
+  \label{fig:decision}
+\end{figure*}
 
 The plug-in/V identity is checked in every ordering row with machine-precision
 error; this guards against interpreting a coding or aggregation mismatch as a
@@ -261,7 +306,7 @@ This is one bounded replication, not universal transportability.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig3_replication_boundary.pdf}
+  \includegraphics[width=0.92\textwidth]{../../results/figures/iclr_formal/formal_fig3_replication_boundary.pdf}
   \caption{\textbf{Replication and model-scope boundary.} Outcome-blind
   eligibility precedes risk evaluation. Nadig is retained because its
   provenance supports an intended independent context; Replogle is excluded
@@ -292,18 +337,31 @@ Here $r_U$ is the uncertainty-only fallback. Across 280 source--target
 observations, the strict target-unseen source-ranking AUROC is 0.503 and
 ungated negative transfer is 36.4\%. The gate falls back in 10\% of 40
 target-by-split decisions; among non-fallback decisions, selected-source
-negative transfer is 41.7\%. These results make the gate an audit heuristic,
+negative transfer is 41.7\%. The gate is accepted only under a fixed
+validation-only acceptance criterion. These results make the gate an audit heuristic,
 not a demonstrated safeguard.
+
+\section{Perturbation heterogeneity and prospective predictability}
+The per-perturbation decomposition makes it possible to ask whether the
+transport boundary is concentrated in a small set of perturbations or broadly
+distributed. We treat this as a descriptive heterogeneity analysis. A
+source-U-only baseline and a low-capacity ridge model are fit with
+leave-one-perturbation-label-out folds using only frozen source descriptors,
+including prediction geometry and model-member uncertainty. Target risk and
+target response are evaluation-only. Held-out Spearman, high-identifiable
+AUROC and calibration error are reported only when the number of independent
+labels supports the fit; otherwise the cell is unavailable rather than
+precision-inflated.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig4_deployment_consequences.pdf}
-  \caption{\textbf{Prospective transport remains heterogeneous.} Source to
-  target gains vary in sign, target-unseen source selection is near chance,
-and the operational fallback remains uncertainty-only when the fixed
-validation-only acceptance criterion is not met. These panels are deployment consequences, not evidence
-  that PTL repairs the Claim Lock boundary.}
-  \label{fig:deployment}
+  \includegraphics[width=0.92\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig5_perturbation_drivers.pdf}
+  \caption{\textbf{Perturbation-level drivers are descriptive and
+  depth-sensitive.} Cross-context burden is decomposed into measurement and
+  identifiable components for individual perturbations. Source-only features
+  are kept separate from target outcomes; the figure therefore does not claim
+  a causal pathway.}
+  \label{fig:drivers}
 \end{figure*}
 
 \section{Benchmark, modern-model scope and robustness}

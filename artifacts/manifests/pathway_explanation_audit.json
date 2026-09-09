@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "status": "executed",
+  "resource": "data/external/gene_sets/transportability_gene_sets.json",
+  "resource_sha256": "c4a0af8fd40f447c599b08acb8661b40b75f7166374ce01d91115a34958e095c",
+  "pathway_count": 16,
+  "role": "explanation_only_not_primary_claim_lock",
+  "fdr_policy": "Benjamini-Hochberg applied within each declared pathway family; no pathway statistic can select a primary metric, context, or claim",
+  "gene_set_min_size": 9,
+  "gene_set_max_size": 20
+}

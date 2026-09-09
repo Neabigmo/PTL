@@ -536,3 +536,130 @@ def crossfit_seed_stable_ordering_summary(
     result["crossfit_eval_seeds"] = int(half)
     result["crossfit_within_seed_replicates"] = int(left.shape[1])
     return result
+
+
+def _per_item_ordering_burden(
+    left_replicates: np.ndarray,
+    right_replicates: np.ndarray,
+    *,
+    block_size: int = 512,
+) -> np.ndarray:
+    """Return the exact cross-context disagreement contribution of each item.
+
+    The returned vector averages, for each item ``p``, the tie-aware
+    disagreement of ``p`` versus every other item and every independent
+    replicate pair.  Computation is blockwise in the item dimension, so the
+    implementation never materializes a full ``n``-by-``n``-by-seed tensor.
+    """
+
+    left = _validate_replicates(left_replicates, "left_replicates")
+    right = _validate_replicates(right_replicates, "right_replicates")
+    if left.shape[1] != right.shape[1]:
+        raise ValueError("burden contexts must contain the same items")
+    if int(block_size) < 1:
+        raise ValueError("block_size must be positive")
+    n_items = left.shape[1]
+    burden = np.zeros(n_items, dtype=np.float64)
+    n_replicate_pairs = left.shape[0] * right.shape[0]
+    for start in range(0, n_items, int(block_size)):
+        stop = min(start + int(block_size), n_items)
+        block_sum = np.zeros(stop - start, dtype=np.float64)
+        for left_index in range(left.shape[0]):
+            left_sign = np.sign(left[left_index, start:stop, None] - left[left_index, None, :])
+            for right_index in range(right.shape[0]):
+                right_sign = np.sign(right[right_index, start:stop, None] - right[right_index, None, :])
+                block_sum += np.not_equal(left_sign, right_sign).sum(axis=1)
+        burden[start:stop] = block_sum / float(n_replicate_pairs * (n_items - 1))
+    return burden
+
+
+def _per_item_within_burden(replicates: np.ndarray, *, block_size: int = 512) -> np.ndarray:
+    """Return the exact leave-one-replicate-pair within burden per item."""
+
+    values = _validate_replicates(replicates, "replicates")
+    if values.shape[0] < 2:
+        raise ValueError("within burden needs at least two replicates")
+    n_items = values.shape[1]
+    burden = np.zeros(n_items, dtype=np.float64)
+    n_replicate_pairs = values.shape[0] * (values.shape[0] - 1) // 2
+    for start in range(0, n_items, int(block_size)):
+        stop = min(start + int(block_size), n_items)
+        block_sum = np.zeros(stop - start, dtype=np.float64)
+        for first in range(values.shape[0]):
+            first_sign = np.sign(values[first, start:stop, None] - values[first, None, :])
+            for second in range(first + 1, values.shape[0]):
+                second_sign = np.sign(values[second, start:stop, None] - values[second, None, :])
+                block_sum += np.not_equal(first_sign, second_sign).sum(axis=1)
+        burden[start:stop] = block_sum / float(n_replicate_pairs * (n_items - 1))
+    return burden
+
+
+def perturbation_reordering_burden(
+    left_replicates: np.ndarray,
+    right_replicates: np.ndarray,
+    *,
+    block_size: int = 512,
+) -> dict[str, Any]:
+    """Decompose global ordering disagreement into exact per-item burdens.
+
+    For item ``p``, ``cross_burden[p]`` is the average disagreement of all
+    pairwise comparisons involving ``p`` across independent left/right
+    replicates.  ``identifiable_burden`` subtracts the average of the two
+    within-context burdens.  Consequently, the mean of each vector equals the
+    corresponding global estimand exactly (up to floating-point roundoff).
+    """
+
+    left = _validate_replicates(left_replicates, "left_replicates")
+    right = _validate_replicates(right_replicates, "right_replicates")
+    cross = _per_item_ordering_burden(left, right, block_size=block_size)
+    within_left = _per_item_within_burden(left, block_size=block_size)
+    within_right = _per_item_within_burden(right, block_size=block_size)
+    identifiable = cross - 0.5 * (within_left + within_right)
+    cross_global = float(np.mean(cross))
+    within_left_global = float(np.mean(within_left))
+    within_right_global = float(np.mean(within_right))
+    identifiable_global = float(np.mean(identifiable))
+    expected_cross = pairwise_disagreement_from_replicates(left, right)
+    expected_within_left = within_disagreement_u_from_replicates(left)
+    expected_within_right = within_disagreement_u_from_replicates(right)
+    if not np.allclose(cross_global, expected_cross, atol=1e-12):
+        raise AssertionError("mean perturbation cross burden does not equal global disagreement")
+    if not np.allclose(within_left_global, expected_within_left, atol=1e-12):
+        raise AssertionError("mean left perturbation burden does not equal the U floor")
+    if not np.allclose(within_right_global, expected_within_right, atol=1e-12):
+        raise AssertionError("mean right perturbation burden does not equal the U floor")
+    return {
+        "cross_burden": cross,
+        "within_burden_left": within_left,
+        "within_burden_right": within_right,
+        "identifiable_burden": identifiable,
+        "cross_disagreement": cross_global,
+        "within_disagreement_left": within_left_global,
+        "within_disagreement_right": within_right_global,
+        "identifiable_divergence": identifiable_global,
+        "cross_identity_error": float(cross_global - expected_cross),
+        "identifiable_identity_error": float(
+            identifiable_global - (expected_cross - 0.5 * (expected_within_left + expected_within_right))
+        ),
+        "n_items": int(left.shape[1]),
+        "n_pairs": int(left.shape[1] * (left.shape[1] - 1) // 2),
+        "block_size": int(block_size),
+    }
+
+
+def perturbation_identifiable_burden(
+    left_replicates: np.ndarray,
+    right_replicates: np.ndarray,
+    *,
+    block_size: int = 512,
+) -> np.ndarray:
+    """Convenience wrapper returning only the measurement-identifiable burden."""
+
+    return np.asarray(
+        perturbation_reordering_burden(
+            left_replicates,
+            right_replicates,
+            block_size=block_size,
+        )["identifiable_burden"],
+        dtype=np.float64,
+    )

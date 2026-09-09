@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "executed",
+  "source_only_feature_policy": "features are frozen from the source context; target outcomes are never model inputs",
+  "models": [
+    "source_u_only",
+    "ridge_source_features"
+  ],
+  "crossfit": "leave-one-perturbation-label-out",
+  "outputs": {
+    "summary": "artifacts/manifests/reliability_transport_heterogeneity.csv",
+    "coefficients": "artifacts/manifests/reliability_transport_heterogeneity_coefficients.csv"
+  },
+  "rows": 326,
+  "coefficient_rows": 1141
+}

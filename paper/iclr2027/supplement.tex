@@ -7,7 +7,7 @@
 \usepackage{hyperref}
 \usepackage{url}
 
-\title{Supplement to ``Measurement Reliability Limits Claims of Context-Dependent Reliability Reordering in Single-Cell Perturbation Prediction''}
+\title{Supplement to ``Reliability Transportability Has a Measurement and Decision Boundary in Single-Cell Perturbation Prediction''}
 \author{Anonymous Authors}
 
 \begin{document}
@@ -227,6 +227,47 @@ explicit false Claim Lock flags. The TxPert adapter materializes the
 checkpoint/data provenance and explicitly rejects promotion of its K562
 checkpoint to a Nadig source-only vector. No modern result is included in the
 main scientific comparison.
+
+\section{Measurement-depth and decision manifests}
+The depth manifest fixes cell budgets at 10, 20, 40, 80 and 160 cells per
+pseudoreplicate and adds a full matched-depth endpoint. For every target pair,
+the coverage table records the number of labels passing in both target
+contexts, the control eligibility decision and the SHA256 fingerprint of the
+matched universe. The summary table first averages perturbation burdens within
+each seed and only then bootstraps seeds. The resolution table defines the
+first budget within ten percent of full-depth identifiable divergence and the
+first budget with a positive 90\% lower interval; null thresholds are valid
+outputs, not missing analysis.
+
+Decision rows use top-$k$ budgets of 5, 10, 20 and 50 percent. The selected
+set is formed from source risk with deterministic index tie-breaking and is
+evaluated using target risk. Retention, target regret, normalized regret,
+boundary inversion and the finite inversion bound are stored for each seed and
+depth. Measurement floors use off-diagonal within-context replicate pairs;
+joint floors use the six source-frozen member/measurement combinations. No
+decision quantity is substituted for the global ordering estimand.
+
+\section{Perturbation heterogeneity and source-only predictability}
+The heterogeneity and predictability manifests use source prediction geometry
+and member uncertainty as features. The target burden is used only as a held-
+out evaluation value. A source-U-only baseline and low-capacity ridge model
+are evaluated by leave-one-perturbation-label-out cross-fitting. Spearman,
+high-identifiable AUROC, Brier calibration error and mean absolute error are
+reported only for groups with enough independent labels. Coefficients are
+descriptive; they are not pathway effects. The corresponding pathway layer,
+when used, is explanation-only, uses the frozen gene-set checksum and applies
+FDR without entering the primary Claim Lock.
+
+\section{Master table and final lock}
+The canonical \texttt{reliability\_transport\_master.csv} is the only table
+permitted to supply paper numbers after final regeneration. It stores dataset,
+evidence tier, source/target pair, predictor and regime, metric, cell budget,
+label-universe size, observed disagreement, measurement and joint excesses,
+stable ordering, decision retention/regret fields, checksums and provenance.
+\texttt{story\_claims.json} maps each narrative claim to a support filter and
+records its scope. The final scientific lock report answers the eight release
+questions and keeps incomplete modern-model contracts, unresolved registry
+cells and negative excess estimates explicit.
 
 \section{Secondary metrics and reproducibility}
 The broad benchmark reports environment-first macro averages, paired

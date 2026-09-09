@@ -32,6 +32,22 @@
 # Local QA/cache trees and compiled documents.
 /.cache/
 /tmp/
+/.pytest-final.*
+/.pytest-full-*
+/.pytest-tmp-*/
+/_pandas3_runtime_*/
+**/*.stderr.log
+**/*.stdout.log
+artifacts/manifests/*_part[0-9][0-9].*
+artifacts/manifests/*_part[0-9][0-9]_*.*
+artifacts/manifests/reliability_transport_measurement_depth_parts/
+artifacts/manifests/_depth_direct_smoke/
+artifacts/manifests/_depth_label_smoke/
+# Full item-level depth material is reproducible from the canonical summary,
+# decision, coverage and resolution tables but is too large for the repository.
+/artifacts/manifests/reliability_transport_measurement_depth_items.csv
+# Local CUDA/QA probes are not claim inputs.
+/artifacts/manifests/formal_v2_claim_lock_guide_composition_coverage_cuda_check*.csv
 **/*.pdf
 
 # Submission bundles and generated publication outputs.

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "status": "executed",
+  "ranking_unit": "full-depth mean per-perturbation identifiable burden",
+  "top_k_fraction": 0.2,
+  "transition_state_definition": "negative/positive sign; zero unresolved",
+  "outputs": {
+    "pairwise": "artifacts/manifests/reliability_transport_metric_dependence.csv",
+    "transitions": "artifacts/manifests/reliability_transport_metric_transitions.csv"
+  },
+  "pairwise_rows": 27,
+  "transition_rows": 486
+}

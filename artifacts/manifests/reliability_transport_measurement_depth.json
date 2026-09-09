@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "status": "executed",
+  "analysis": "measurement_depth_identifiability",
+  "source_frozen_prediction": "artifacts/source_data/frangieh_source_frozen_predictions.npz",
+  "raw_source": "data/raw/scperturb_v1.4/FrangiehIzar2021_RNA.h5ad",
+  "split_seeds": [
+    20260908,
+    20260909,
+    20260910,
+    20260911,
+    20260912,
+    20260913,
+    20260914,
+    20260915,
+    20260916,
+    20260917,
+    20260918,
+    20260919,
+    20260920,
+    20260921,
+    20260922,
+    20260923,
+    20260924,
+    20260925,
+    20260926,
+    20260927,
+    20260928,
+    20260929,
+    20260930,
+    20260931,
+    20260932,
+    20260933,
+    20260934,
+    20260935,
+    20260936,
+    20260937
+  ],
+  "fixed_cell_budgets": [
+    10,
+    20,
+    40,
+    80,
+    160
+  ],
+  "full_depth_label": "full",
+  "full_depth_contract": "per-label matched target cell count, independently sampled with replacement",
+  "decision_budgets": [
+    0.05,
+    0.1,
+    0.2,
+    0.5
+  ],
+  "bootstrap_draws": 2000,
+  "bootstrap_unit": "measurement seed after perturbation-level exact burden aggregation",
+  "metrics": [
+    "absolute_effect_rank_agreement",
+    "delta_cosine",
+    "systema_centroid_accuracy"
+  ],
+  "outputs": {
+    "items": "artifacts/manifests/reliability_transport_measurement_depth_items.csv",
+    "summary": "artifacts/manifests/reliability_transport_measurement_depth_summary.csv",
+    "decision": "artifacts/manifests/reliability_transport_measurement_depth_decision.csv",
+    "coverage": "artifacts/manifests/reliability_transport_measurement_depth_coverage.csv",
+    "resolution": "artifacts/manifests/reliability_transport_measurement_depth_resolution.csv"
+  },
+  "checks": {
+    "part_directories": 6,
+    "depth_labels": [
+      "10",
+      "160",
+      "20",
+      "40",
+      "80",
+      "full"
+    ],
+    "item_rows": 1060020,
+    "summary_rows": 162,
+    "decision_rows": 19440,
+    "coverage_rows": 18,
+    "resolution_rows": 27,
+    "item_key_sha256": "4cc7b33e74ae02e0137673735a8592b801e6f2161475e177f1fa0a61cd2884fb",
+    "no_prediction_refit": true,
+    "target_outcomes_not_used": true
+  }
+}

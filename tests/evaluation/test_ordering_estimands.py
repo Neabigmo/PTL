@@ -137,3 +137,20 @@ def test_seed_crossfit_keeps_within_seed_replicates_together():
     assert summary["crossfit_fit_seeds"] == 2
     assert summary["crossfit_eval_seeds"] == 2
     assert summary["crossfit_within_seed_replicates"] == 2
+
+
+def test_perturbation_burden_has_exact_global_identity_and_handles_ties():
+    from src.evaluation.ordering_estimands import perturbation_reordering_burden
+
+    left = np.asarray([[0.0, 1.0, 2.0, 2.0], [0.0, 2.0, 1.0, 2.0]])
+    right = np.asarray([[0.0, 2.0, 1.0, 2.0], [0.0, 1.0, 2.0, 2.0]])
+    result = perturbation_reordering_burden(left, right, block_size=2)
+    assert np.isclose(np.mean(result["cross_burden"]), result["cross_disagreement"])
+    assert np.isclose(np.mean(result["within_burden_left"]), result["within_disagreement_left"])
+    assert np.isclose(np.mean(result["within_burden_right"]), result["within_disagreement_right"])
+    assert np.isclose(
+        np.mean(result["identifiable_burden"]),
+        result["cross_disagreement"]
+        - 0.5 * (result["within_disagreement_left"] + result["within_disagreement_right"]),
+    )
+    assert result["cross_identity_error"] == 0.0

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "predictor_id": "scGPT",
+  "status": "bounded_package_available_but_not_claim_lock_run",
+  "module_origin": "E:\\anaconda3\\envs\\pytorch-clean\\Lib\\site-packages\\scgpt\\__init__.py",
+  "bounded_attempt": true,
+  "common_gene_panel_size": 1536,
+  "claim_lock_eligible": false,
+  "claim_lock_blockers": [
+    "no_verified_source_only_training_and_heldout_vectors"
+  ]
+}

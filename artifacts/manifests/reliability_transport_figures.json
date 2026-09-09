@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "status": "executed",
+  "figure_count": 5,
+  "formats": [
+    "png",
+    "pdf",
+    "svg",
+    "tiff"
+  ],
+  "color_policy": "colorblind-safe Okabe-Ito-inspired palette with explicit axis labels and confidence ribbons",
+  "outputs": {
+    "fig1": {
+      "files": [
+        "reliability_transportability_fig1_concept.png",
+        "reliability_transportability_fig1_concept.pdf",
+        "reliability_transportability_fig1_concept.svg",
+        "reliability_transportability_fig1_concept.tiff"
+      ],
+      "source": "results/figures/reliability_transportability/fig1_source.csv",
+      "rows": 6
+    },
+    "fig2": {
+      "files": [
+        "reliability_transportability_fig2_forest.png",
+        "reliability_transportability_fig2_forest.pdf",
+        "reliability_transportability_fig2_forest.svg",
+        "reliability_transportability_fig2_forest.tiff"
+      ],
+      "source": "results/figures/reliability_transportability/fig2_source.csv",
+      "rows": 33
+    },
+    "fig3": {
+      "files": [
+        "reliability_transportability_fig3_measurement_depth.png",
+        "reliability_transportability_fig3_measurement_depth.pdf",
+        "reliability_transportability_fig3_measurement_depth.svg",
+        "reliability_transportability_fig3_measurement_depth.tiff"
+      ],
+      "source": "results/figures/reliability_transportability/fig3_source.csv",
+      "rows": 18
+    },
+    "fig4": {
+      "files": [
+        "reliability_transportability_fig4_decision_curves.png",
+        "reliability_transportability_fig4_decision_curves.pdf",
+        "reliability_transportability_fig4_decision_curves.svg",
+        "reliability_transportability_fig4_decision_curves.tiff"
+      ],
+      "source": "results/figures/reliability_transportability/fig4_source.csv",
+      "rows": 72
+    },
+    "fig5": {
+      "files": [
+        "reliability_transportability_fig5_perturbation_drivers.png",
+        "reliability_transportability_fig5_perturbation_drivers.pdf",
+        "reliability_transportability_fig5_perturbation_drivers.svg",
+        "reliability_transportability_fig5_perturbation_drivers.tiff"
+      ],
+      "source": "results/figures/reliability_transportability/fig5_source.csv",
+      "rows": 21
+    }
+  }
+}

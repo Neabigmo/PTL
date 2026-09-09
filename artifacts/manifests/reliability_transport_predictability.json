@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "status": "executed",
+  "outer_split": "leave-one-perturbation-label-out",
+  "models": [
+    "source_u_only",
+    "linear_source_features"
+  ],
+  "target_outcome_blindness": "all target risk/burden values are held out evaluation targets and never feature columns",
+  "output": "artifacts/manifests/reliability_transport_predictability.csv",
+  "rows": 326
+}
