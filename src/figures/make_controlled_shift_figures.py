@@ -189,7 +189,7 @@ def make_measurement_figure() -> tuple[list[str], dict[str, object]]:
 
 
 def make_replication_boundary_figure() -> tuple[list[str], dict[str, object]]:
-    """Show the pre-outcome replication registry and its explicit boundary."""
+    """Show the outcome-blind registry, selected replication and its boundary."""
 
     registry = pd.read_csv(ROOT / "artifacts/manifests/reordering_replication_candidate_registry.csv")
     report = json.loads((ROOT / "artifacts/manifests/reordering_replication_candidate_registry.json").read_text(encoding="utf-8"))
@@ -201,7 +201,7 @@ def make_replication_boundary_figure() -> tuple[list[str], dict[str, object]]:
     ax = fig.add_subplot(grid[0, 0])
     panel(ax, "a", "Replication selection is frozen before risk")
     ax.axis("off")
-    stages = [(0.06, "metadata\nscan", f"{report['candidate_count']} pairs", BLUE), (0.37, "eligibility\ngate", f"{report['eligible_candidate_count']} pass", CORAL), (0.68, "risk /\ninversion", "not run", SLATE)]
+    stages = [(0.06, "metadata\nscan", f"{report['candidate_count']} pairs", BLUE), (0.37, "eligibility\ngate", f"{report['eligible_candidate_count']} pass", TEAL), (0.68, "Claim Lock\nrisk", "Nadig · once", CORAL)]
     for index, (x, title, detail, color) in enumerate(stages):
         ax.add_patch(mpl.patches.FancyBboxPatch((x, 0.50), 0.24, 0.25, boxstyle="round,pad=0.02,rounding_size=0.025", facecolor=color, edgecolor="white", linewidth=1.0, transform=ax.transAxes))
         ax.text(x + 0.12, 0.64, title, transform=ax.transAxes, ha="center", va="center", color="white", fontsize=7.0, fontweight="bold")
@@ -212,11 +212,12 @@ def make_replication_boundary_figure() -> tuple[list[str], dict[str, object]]:
     ax.text(0.5, 0.07, "No target predictions, risks or inversions entered candidate selection.", transform=ax.transAxes, ha="center", va="center", fontsize=5.9, color=SLATE)
 
     ax = fig.add_subplot(grid[0, 1])
-    panel(ax, "b", "Promising overlaps fail only the provenance gate")
+    panel(ax, "b", "One provenance-supported overlap is audited")
     available = registry.loc[registry["file_a_available"] & registry["file_b_available"]].copy().sort_values("exact_shared_perturbation_count", ascending=False).head(10)
     if not available.empty:
         y = np.arange(len(available))
-        ax.barh(y, available["exact_shared_perturbation_count"], color=[TEAL if value else CORAL for value in available["eligible"]], alpha=0.88)
+        status_colors = {"supported_independent_context": TEAL, "confounded": GOLD, "unresolved": CORAL}
+        ax.barh(y, available["exact_shared_perturbation_count"], color=[status_colors.get(str(value), SLATE) for value in available["batch_context_status"]], alpha=0.88)
         ax.axvline(200, color=NAVY, ls="--", lw=0.8, label="shared-label threshold")
         def short_candidate(value: object) -> str:
             text = str(value).replace("local_", "")
@@ -233,8 +234,12 @@ def make_replication_boundary_figure() -> tuple[list[str], dict[str, object]]:
         ax.set_yticks(y, labels, fontsize=4.8)
         ax.invert_yaxis()
         ax.set_xlabel("exact shared perturbations")
-        ax.legend(fontsize=5.2, loc="lower right")
-        ax.text(0.02, 0.96, "green = eligibility pass; metadata-complete candidates remain excluded if batch/context provenance is unresolved", transform=ax.transAxes, va="top", fontsize=5.0, color=SLATE)
+        ax.legend(handles=[mpl.patches.Patch(color=TEAL, label="supported; selected"), mpl.patches.Patch(color=GOLD, label="confounded"), mpl.patches.Patch(color=CORAL, label="unresolved")], fontsize=5.0, loc="upper right", bbox_to_anchor=(1.0, 0.90))
+        selected_row = registry.loc[registry["candidate_id"].eq(report.get("selected_candidate"))]
+        if not selected_row.empty:
+            shared = int(selected_row.iloc[0]["exact_shared_perturbation_count"])
+            ax.text(0.02, 0.96, f"selected Nadig HepG2 ↔ Jurkat: {shared:,} shared labels\nClaim Lock: 1,255 (n≥20) / 345 (n≥40)", transform=ax.transAxes, va="top", fontsize=5.2, color=NAVY, bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.84, "pad": 1.8})
+        ax.text(0.02, 0.02, "colors encode predeclared provenance; no risk entered selection", transform=ax.transAxes, va="bottom", fontsize=5.0, color=SLATE)
     else:
         ax.text(0.5, 0.5, "No metadata-complete pair", ha="center", va="center", color=SLATE)
         ax.axis("off")
@@ -269,17 +274,19 @@ def make_replication_boundary_figure() -> tuple[list[str], dict[str, object]]:
     ax.text(0.02, 0.78, "all 45 groups = 0", transform=ax.transAxes, fontsize=8.0, fontweight="bold", color=NAVY)
     ax.text(0.02, 0.62, "monotonic Platt maps can improve Brier\nbut cannot repair reordered reliability", transform=ax.transAxes, fontsize=5.8, color=SLATE, linespacing=1.35)
 
-    fig.suptitle("Replication boundary: audit what can be claimed before testing more outcomes", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
+    fig.suptitle("One bounded replication: provenance first, floors before interpretation", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
     outputs = save_figure(fig, ROOT / "results/figures/iclr_formal/formal_fig3_replication_boundary")
     manifest = {
         "schema_version": 1,
         "figure": "formal_fig3_replication_boundary",
-        "claim": "no independent matched-context replication was evaluated because the outcome-blind registry found no candidate with demonstrably resolved batch/context provenance; guide semantics and recalibration boundaries are explicit",
+        "claim": "the outcome-blind registry selected the Nadig HepG2/Jurkat pair with supported independent-context provenance; one fixed Claim Lock was executed and remains bounded by raw-cell measurement and joint floors",
         "source_data": [
             "artifacts/manifests/reordering_replication_candidate_registry.csv",
             "artifacts/manifests/reordering_replication_candidate_registry.json",
             "artifacts/manifests/formal_v2_claim_lock_guide_id_semantics.json",
             "artifacts/manifests/formal_v2_recalibration_counterfactual.csv",
+            "artifacts/manifests/formal_v2_claim_lock_replication_nadig.csv",
+            "artifacts/manifests/formal_v2_claim_lock_replication_nadig_floors.csv",
         ],
         "outputs": outputs,
     }

@@ -1,9 +1,10 @@
 """Build an outcome-blind registry of candidate matched-context replications.
 
-Only H5AD observation/variable metadata are inspected.  No predictions,
-responses, risks, inversion statistics, or target outcomes are loaded.  The
-registry is deliberately conservative: a context-separated export without
-documented cross-context batch provenance cannot pass the replication gate.
+Only H5AD observation/variable metadata and predeclared study-design evidence
+are inspected.  No predictions, responses, risks, inversion statistics, or
+target outcomes are loaded.  Batch/context provenance is an evidence-driven
+three-state decision, rather than a default rejection of every
+context-separated export.
 """
 
 from __future__ import annotations
@@ -26,6 +27,68 @@ MIN_SHARED_PERTURBATIONS = 200
 MIN_CELLS_PER_PERTURBATION = 20
 MIN_GUIDE_SIGNATURE_FRACTION = 0.95
 CONTROL_ALIASES = {"control", "ctrl", "non-targeting", "non-targeting control", "ntc"}
+PROVENANCE_STATUSES = {
+    "supported_independent_context",
+    "unresolved",
+    "confounded",
+}
+
+
+# These are outcome-blind study-design audits.  They are deliberately kept
+# separate from the H5AD outcome metadata so that a candidate can only become
+# eligible after the experimental provenance has been checked, never because
+# its prediction or risk result looks attractive.
+PROVENANCE_AUDITS: dict[str, dict[str, Any]] = {
+    "nadig_hepg2_vs_jurkat": {
+        "batch_context_status": "supported_independent_context",
+        "evidence_source": (
+            "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE264667"
+        ),
+        "evidence_type": "GEO series design and sample metadata",
+        "batch_id_context_mapping": (
+            "H5AD batch/gem-group IDs are context-local; the GEO design states "
+            "that Jurkat and HepG2 screens were conducted in parallel."
+        ),
+        "batch_nested_in_context": True,
+        "technical_replicates_exist": True,
+        "technical_replicate_definition": "multiple context-indexed 10x/sample batch units",
+        "context_is_intended_biological_factor": True,
+        "context_comparison_in_original_study_design": True,
+        "audit_notes": (
+            "GEO describes two parallel pooled CRISPR screens with scRNA-seq "
+            "readout, the same dual-sgRNA library family, low infection rate, "
+            "day-7 harvest, and 10x Genomics Chromium 3-prime v3. The local "
+            "exports contain one cell line per file and 56/55 context-local "
+            "batch IDs; repeated numeric IDs are not treated as shared physical "
+            "batches."
+        ),
+    },
+    "replogle_k562_essential_vs_rpe1": {
+        "batch_context_status": "confounded",
+        "evidence_source": (
+            "https://plus.figshare.com/articles/dataset/"
+            "_Mapping_information-rich_genotype-phenotype_landscapes_with_genome-scale_Perturb-seq_Replogle_et_al_2022_processed_Perturb-seq_datasets/20029387"
+        ),
+        "evidence_type": "Figshare dataset design and associated Cell study",
+        "batch_id_context_mapping": (
+            "The public dataset identifies K562 essential as day 6 and RPE1 "
+            "essential as day 7 post-transduction; the timepoint is inseparable "
+            "from the context comparison in these exports."
+        ),
+        "batch_nested_in_context": False,
+        "technical_replicates_exist": True,
+        "technical_replicate_definition": "multiple gem-group/sample batch units",
+        "context_is_intended_biological_factor": True,
+        "context_comparison_in_original_study_design": True,
+        "audit_notes": (
+            "Same study/platform and CRISPRi Perturb-seq family, but the public "
+            "processed data explicitly uses different harvest days (K562 day 6, "
+            "RPE1 day 7). Without an additional matched-timepoint audit this is "
+            "an irreducible context/time confound, so it cannot be headline "
+            "replication evidence."
+        ),
+    },
+}
 
 
 CANDIDATES: tuple[dict[str, Any], ...] = (
@@ -39,7 +102,7 @@ CANDIDATES: tuple[dict[str, Any], ...] = (
         "perturbation_modality_expected": "CRISPR",
         "readout_modality_expected": "RNA",
         "same_library_claim": "same study family; exact guide signatures audited from obs metadata",
-        "batch_context_evidence": "context-specific H5AD exports; no explicit cross-context batch provenance in obs metadata",
+        "batch_context_evidence": "see predeclared GEO study-design audit",
     },
     {
         "candidate_id": "replogle_k562_essential_vs_rpe1",
@@ -51,7 +114,7 @@ CANDIDATES: tuple[dict[str, Any], ...] = (
         "perturbation_modality_expected": "CRISPR",
         "readout_modality_expected": "RNA",
         "same_library_claim": "same study family; exact guide signatures audited from obs metadata",
-        "batch_context_evidence": "context-specific H5AD exports; no explicit cross-context batch provenance in obs metadata",
+        "batch_context_evidence": "see predeclared Figshare study-design audit",
     },
     {
         "candidate_id": "drepanos_k562_vs_a549",
@@ -137,6 +200,7 @@ def _load_context(path: Path) -> dict[str, Any]:
 
 
 def _empty_pair_record(candidate: dict[str, Any], reason: str) -> dict[str, Any]:
+    provenance = _provenance_details(candidate)
     readout_a = candidate.get("readout_modality_a", candidate.get("readout_modality_expected", "unknown"))
     readout_b = candidate.get("readout_modality_b", candidate.get("readout_modality_expected", "unknown"))
     return {
@@ -165,8 +229,17 @@ def _empty_pair_record(candidate: dict[str, Any], reason: str) -> dict[str, Any]
         "same_library_evidence": False,
         "exact_guide_signature_fraction": np.nan,
         "batch_id_overlap_count": 0,
-        "obvious_batch_context_confound": True,
+        "obvious_batch_context_confound": provenance["batch_context_status"] == "confounded",
+        "batch_context_status": provenance["batch_context_status"],
         "batch_context_evidence": candidate["batch_context_evidence"],
+        "provenance_evidence_source": provenance["evidence_source"],
+        "provenance_evidence_type": provenance["evidence_type"],
+        "batch_id_context_mapping": provenance["batch_id_context_mapping"],
+        "batch_nested_in_context": provenance["batch_nested_in_context"],
+        "technical_replicates_exist": provenance["technical_replicates_exist"],
+        "context_is_intended_biological_factor": provenance["context_is_intended_biological_factor"],
+        "context_comparison_in_original_study_design": provenance["context_comparison_in_original_study_design"],
+        "provenance_audit_notes": provenance["audit_notes"],
         "outcome_blind": True,
         "prediction_evaluated": False,
         "risk_evaluated": False,
@@ -176,6 +249,7 @@ def _empty_pair_record(candidate: dict[str, Any], reason: str) -> dict[str, Any]
 
 
 def _pair_record(candidate: dict[str, Any], left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any]:
+    provenance = _provenance_details(candidate)
     left_targets = set(left["target_counts"])
     right_targets = set(right["target_counts"])
     shared = sorted(left_targets & right_targets)
@@ -195,10 +269,10 @@ def _pair_record(candidate: dict[str, Any], left: dict[str, Any], right: dict[st
     signature_fraction = float(np.mean(signature_matches)) if signature_matches else np.nan
     same_library = bool(np.isfinite(signature_fraction) and signature_fraction >= MIN_GUIDE_SIGNATURE_FRACTION)
     batch_overlap = len(set(left["batch_values"]) & set(right["batch_values"]))
-    # Numeric batch labels recurring in two independently exported H5AD files
-    # do not establish a shared physical batch.  Without explicit provenance,
-    # the context/batch separation remains a conservative exclusion.
-    batch_confound = True
+    batch_context_status = provenance["batch_context_status"]
+    if batch_context_status not in PROVENANCE_STATUSES:
+        raise ValueError(f"unknown batch/context provenance status: {batch_context_status!r}")
+    batch_confound = batch_context_status == "confounded"
     eligible = bool(
         len(shared) >= MIN_SHARED_PERTURBATIONS
         and left["control_cell_count"] > 0
@@ -207,7 +281,7 @@ def _pair_record(candidate: dict[str, Any], left: dict[str, Any], right: dict[st
         and same_readout
         and same_library
         and float(np.median(minimum_counts)) >= MIN_CELLS_PER_PERTURBATION
-        and not batch_confound
+        and batch_context_status == "supported_independent_context"
     )
     reasons = []
     if len(shared) < MIN_SHARED_PERTURBATIONS:
@@ -222,8 +296,10 @@ def _pair_record(candidate: dict[str, Any], left: dict[str, Any], right: dict[st
         reasons.append("exact guide-signature evidence is below threshold")
     if not shared or float(np.median(minimum_counts)) < MIN_CELLS_PER_PERTURBATION:
         reasons.append("median matched cell count is below threshold")
-    if batch_confound:
-        reasons.append("batch/context provenance is unresolved in context-separated exports")
+    if batch_context_status == "unresolved":
+        reasons.append("batch/context provenance is unresolved")
+    elif batch_context_status == "confounded":
+        reasons.append("batch/context provenance is confounded with the intended context")
     return {
         "candidate_id": candidate["candidate_id"],
         "study": candidate["study"],
@@ -251,12 +327,45 @@ def _pair_record(candidate: dict[str, Any], left: dict[str, Any], right: dict[st
         "exact_guide_signature_fraction": signature_fraction,
         "batch_id_overlap_count": batch_overlap,
         "obvious_batch_context_confound": batch_confound,
+        "batch_context_status": batch_context_status,
         "batch_context_evidence": candidate["batch_context_evidence"],
+        "provenance_evidence_source": provenance["evidence_source"],
+        "provenance_evidence_type": provenance["evidence_type"],
+        "batch_id_context_mapping": provenance["batch_id_context_mapping"],
+        "batch_nested_in_context": provenance["batch_nested_in_context"],
+        "technical_replicates_exist": provenance["technical_replicates_exist"],
+        "context_is_intended_biological_factor": provenance["context_is_intended_biological_factor"],
+        "context_comparison_in_original_study_design": provenance["context_comparison_in_original_study_design"],
+        "provenance_audit_notes": provenance["audit_notes"],
         "outcome_blind": True,
         "prediction_evaluated": False,
         "risk_evaluated": False,
         "eligible": eligible,
         "reason": "eligible by metadata gate" if eligible else "; ".join(reasons),
+    }
+
+
+def _provenance_details(candidate: dict[str, Any]) -> dict[str, Any]:
+    """Return a predeclared outcome-blind provenance decision.
+
+    Missing external evidence is ``unresolved``.  It is never silently
+    promoted to ``confounded`` and never allowed into headline replication.
+    """
+
+    audit = PROVENANCE_AUDITS.get(str(candidate.get("candidate_id", "")), {})
+    status = str(audit.get("batch_context_status", "unresolved"))
+    if status not in PROVENANCE_STATUSES:
+        raise ValueError(f"unknown batch/context provenance status: {status!r}")
+    return {
+        "batch_context_status": status,
+        "evidence_source": str(audit.get("evidence_source", "not audited")),
+        "evidence_type": str(audit.get("evidence_type", "no external provenance audit")),
+        "batch_id_context_mapping": str(audit.get("batch_id_context_mapping", "not established")),
+        "batch_nested_in_context": audit.get("batch_nested_in_context"),
+        "technical_replicates_exist": audit.get("technical_replicates_exist"),
+        "context_is_intended_biological_factor": audit.get("context_is_intended_biological_factor"),
+        "context_comparison_in_original_study_design": audit.get("context_comparison_in_original_study_design"),
+        "audit_notes": str(audit.get("audit_notes", "No predeclared study-design evidence was found.")),
     }
 
 
@@ -341,7 +450,8 @@ def build_registry(root: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
     candidate_columns = [
         "candidate_id", "eligible", "exact_shared_perturbation_count",
         "median_min_cells_per_shared_perturbation", "same_library_evidence",
-        "same_readout_modality", "obvious_batch_context_confound", "reason",
+        "same_readout_modality", "batch_context_status",
+        "obvious_batch_context_confound", "provenance_evidence_source", "reason",
     ]
     candidate_summary = frame[candidate_columns].astype(object).where(pd.notna(frame[candidate_columns]), None)
     report = {
@@ -368,6 +478,9 @@ def build_registry(root: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
         "local_h5ad_inventory": all_local_h5ad,
         "registry_csv": "artifacts/manifests/reordering_replication_candidate_registry.csv",
         "candidate_summary": candidate_summary.to_dict("records"),
+        "provenance_audits": {
+            candidate_id: audit for candidate_id, audit in PROVENANCE_AUDITS.items()
+        },
     }
     return frame, report
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 
@@ -152,7 +153,6 @@ def test_claim_lock_source_frozen_and_measurement_artifacts_are_materialized() -
     assert int(source["evaluation_gene_count"]) == 8229
     npz_path = ROOT / source["prediction_npz"]
     assert npz_path.is_file()
-    import numpy as np
     with np.load(npz_path, allow_pickle=False) as payload:
         assert payload["prediction"].shape == (3, 243, 3, 8229)
         assert payload["fold_id"].shape == (243,)
@@ -171,7 +171,26 @@ def test_claim_lock_source_frozen_and_measurement_artifacts_are_materialized() -
     assert set(summary["n_split_seeds"]) == {30}
     assert summary[["cross_d", "measurement_floor_d", "joint_floor_d", "delta_joint"]].notna().all().all()
     boundary = json.loads((MANIFESTS / "formal_v2_claim_lock_replication_boundary.json").read_text(encoding="utf-8"))
-    assert boundary["status"] == "no_valid_independent_matched_context_replication_available"
+    assert boundary["status"] == "independent_replication_claim_lock_executed"
+    assert boundary["selected_candidate"] == "nadig_hepg2_vs_jurkat"
+    assert boundary["prediction_evaluated"] is True
+    assert boundary["risk_evaluated"] is True
+    replication = json.loads((MANIFESTS / "formal_v2_claim_lock_replication_nadig.json").read_text(encoding="utf-8"))
+    assert replication["status"] == "independent_replication_claim_lock_executed"
+    assert replication["candidate_id"] == "nadig_hepg2_vs_jurkat"
+    assert int(replication["common_perturbation_count"]) == 2392
+    assert int(replication["evaluation_gene_count"]) == 6606
+    replication_summary = pd.read_csv(MANIFESTS / "formal_v2_claim_lock_replication_nadig.csv")
+    replication_floors = pd.read_csv(MANIFESTS / "formal_v2_claim_lock_replication_nadig_floors.csv")
+    assert len(replication_summary) == 12
+    assert len(replication_floors) == 1080
+    assert set(replication_summary["n_split_seeds"]) == {30}
+    assert set(replication_summary["bootstrap_draws"]) == {2000}
+    assert replication_summary[["cross_d", "measurement_floor_d", "joint_floor_d", "delta_joint"]].notna().all().all()
+    assert np.isfinite(replication_floors.select_dtypes(include=["number"]).to_numpy()).all()
+    with np.load(ROOT / replication["prediction_path"], allow_pickle=False) as payload:
+        assert payload["prediction"].shape == (2, 2392, 3, 6606)
+        assert np.isfinite(payload["prediction"]).all()
     sensitivity = json.loads((MANIFESTS / "formal_v2_claim_lock_measurement_sensitivity40.json").read_text(encoding="utf-8"))
     assert sensitivity["status"] == "matched_budget_measurement_and_joint_floors_sensitivity40_executed"
     assert sensitivity["sensitivity_executed"] is True

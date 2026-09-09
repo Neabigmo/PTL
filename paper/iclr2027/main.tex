@@ -267,13 +267,17 @@ that every perturbation model is uncalibratable.
 An outcome-blind registry scanned 33 local same-study file pairs, including
 Nadig HepG2--Jurkat and Replogle K562--RPE1/GWPS overlaps. Four pairs were
 metadata-complete and had at least 200 exact shared perturbations, matched
-controls, the same RNA readout and strong guide-signature agreement. All four
-were conservatively excluded because the context-separated exports do not
-document cross-context batch provenance; no risk or inversion statistic was
-used in this selection. Drepanos K562--A549 and knockout--interference files
-were not present locally. The registry therefore defines an explicit boundary:
-the Frangieh result is not promoted to an independent same-predictor replication
-claim. The guide audit also shows that $\texttt{guide\_id}$ contains combinatorial
+controls, the same RNA readout and strong guide-signature agreement. GEO
+describes Nadig as parallel HepG2/Jurkat screens using the same dual-sgRNA
+library family, day-7 harvest and 10x 3' v3 readout; batch IDs are therefore
+context-local. Replogle K562-essential--RPE1 is confounded by inseparable day-6
+versus day-7 harvest. No risk or inversion entered selection. The exact Claim
+Lock was executed once on Nadig: 2,392 shared perturbations, 6,606 genes, 30
+raw-cell splits and 2,000 paired bootstrap draws, retaining 1,255 labels at
+$n\geq20$ and 345 at $n\geq40$. This is a bounded audit, not a universal
+transport claim. Drepanos K562--A549 and knockout--interference files were
+not present locally.
+The guide audit also shows that $\texttt{guide\_id}$ contains combinatorial
 multi-token strings (median 47 unique strings per perturbation group), so it is
 not interpreted as a single-sgRNA identity or used as a primary split key.
 
@@ -463,10 +467,10 @@ displacement with the larger of the two target-context floors. None of the
 three metrics has a consistently positive macro delta over the joint floor.
 This is the appropriate boundary for the present evidence: context-dependent
 reordering is observable, but its excess over measurement plus model noise is
-not established. No valid independent same-predictor matched-context source
-was available; Tian has only one shared label and the head-to-head resource is
-an evaluation-only persistence baseline, so we do not convert either into a
-replication claim.
+not established: all three primary and sensitivity joint-floor intervals cross
+zero. Nadig is therefore one bounded same-predictor audit, not universal
+transportability. Tian has only one shared label and the head-to-head resource
+is an evaluation-only persistence baseline, so neither is a replication claim.
 
 The five-seed stability atlas is used to characterize, rather than tune,
 transport. Across the same 56 off-diagonal pairs per baseline, the mean
@@ -543,11 +547,10 @@ outcome-free source selection with explicit transport descriptors, and retain
 negative transfer instead of presenting PTL as a new uncertainty estimator.
 
 \section{Limitations and reproducibility}
-The present claim is bounded by the eight-environment headline surface and the
-predictor families for which a common validation/test contract is available.
-The source-frozen Frangieh Claim Lock is a primary within-study diagnostic,
-not an independent replication: no legal matched source-predictor outcome
-surface was available beyond the stated Tian and head-to-head boundaries.
+The present claim is bounded by the eight-environment headline surface, one
+Nadig matched-context Claim Lock audit, and predictor families with a common
+validation/test contract. Frangieh remains a primary within-study diagnostic;
+Nadig is one bounded same-predictor audit, not a universal replication.
 The official \gears{} execution is separately audited with a condition-disjoint
 split, a dataset-native gene panel and persisted validation predictions for
 Norman and RPE1; GWPS remains test-only. The audit is not used to manufacture a

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "benchmark_id": "ptl_context_v2_outcome_blind_replication_registry_v1",
-  "status": "no_candidate_passed_outcome_blind_metadata_gate",
+  "status": "eligible_candidate_found",
   "outcome_blind": true,
   "prediction_evaluated": false,
   "risk_evaluated": false,
@@ -17,8 +17,8 @@
     "obvious_batch_context_confound_allowed": false
   },
   "candidate_count": 33,
-  "eligible_candidate_count": 0,
-  "selected_candidate": null,
+  "eligible_candidate_count": 1,
+  "selected_candidate": "nadig_hepg2_vs_jurkat",
   "local_h5ad_inventory": [
     "data/raw/scperturb_v1.4/AdamsonWeissman2016_GSM2406675_10X001.h5ad",
     "data/raw/scperturb_v1.4/AdamsonWeissman2016_GSM2406677_10X005.h5ad",
@@ -79,13 +79,15 @@
   "candidate_summary": [
     {
       "candidate_id": "nadig_hepg2_vs_jurkat",
-      "eligible": false,
+      "eligible": true,
       "exact_shared_perturbation_count": 2392,
       "median_min_cells_per_shared_perturbation": 41.0,
       "same_library_evidence": true,
       "same_readout_modality": true,
-      "obvious_batch_context_confound": true,
-      "reason": "batch/context provenance is unresolved in context-separated exports"
+      "batch_context_status": "supported_independent_context",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE264667",
+      "reason": "eligible by metadata gate"
     },
     {
       "candidate_id": "replogle_k562_essential_vs_rpe1",
@@ -94,8 +96,10 @@
       "median_min_cells_per_shared_perturbation": 61.0,
       "same_library_evidence": true,
       "same_readout_modality": true,
+      "batch_context_status": "confounded",
       "obvious_batch_context_confound": true,
-      "reason": "batch/context provenance is unresolved in context-separated exports"
+      "provenance_evidence_source": "https://plus.figshare.com/articles/dataset/_Mapping_information-rich_genotype-phenotype_landscapes_with_genome-scale_Perturb-seq_Replogle_et_al_2022_processed_Perturb-seq_datasets/20029387",
+      "reason": "batch/context provenance is confounded with the intended context"
     },
     {
       "candidate_id": "drepanos_k562_vs_a549",
@@ -104,7 +108,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata files unavailable: None, None"
     },
     {
@@ -114,7 +120,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata files unavailable: None, None"
     },
     {
@@ -124,7 +132,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: AdamsonWeissman2016_GSM2406675_10X001.h5ad is missing metadata columns: ['batch', 'guide_id']"
     },
     {
@@ -134,7 +144,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: AdamsonWeissman2016_GSM2406681_10X010.h5ad is missing metadata columns: ['batch', 'guide_id']"
     },
     {
@@ -144,7 +156,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: AdamsonWeissman2016_GSM2406677_10X005.h5ad is missing metadata columns: ['batch', 'guide_id']"
     },
     {
@@ -154,7 +168,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: DixitRegev2016_K562_TFs_13_days.h5ad is missing metadata columns: ['batch']"
     },
     {
@@ -164,7 +180,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: DixitRegev2016_K562_TFs_High_MOI.h5ad is missing metadata columns: ['batch']"
     },
     {
@@ -174,7 +192,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: DixitRegev2016_K562_TFs_7_days.h5ad is missing metadata columns: ['batch']"
     },
     {
@@ -184,7 +204,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: FrangiehIzar2021_protein.h5ad is missing metadata columns: ['batch', 'cell_line']"
     },
     {
@@ -194,7 +216,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: GasperiniShendure2019_atscale.h5ad is missing metadata columns: ['batch', 'guide_id']"
     },
     {
@@ -204,7 +228,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: GasperiniShendure2019_lowMOI.h5ad is missing metadata columns: ['batch', 'guide_id']"
     },
     {
@@ -214,7 +240,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: GasperiniShendure2019_highMOI.h5ad is missing metadata columns: ['batch', 'guide_id']"
     },
     {
@@ -224,7 +252,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: JoungZhang2023_atlas.h5ad is missing metadata columns: ['guide_id']"
     },
     {
@@ -234,7 +264,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: LaraAstiasoHuntly2023_exvivo.h5ad is missing metadata columns: ['batch', 'cell_line']"
     },
     {
@@ -244,7 +276,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: LaraAstiasoHuntly2023_leukemia.h5ad is missing metadata columns: ['batch', 'cell_line']"
     },
     {
@@ -254,7 +288,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: LaraAstiasoHuntly2023_invivo.h5ad is missing metadata columns: ['batch', 'cell_line']"
     },
     {
@@ -264,7 +300,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: PapalexiSatija2021_eccite_arrayed_protein.h5ad is missing metadata columns: ['batch']"
     },
     {
@@ -274,7 +312,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: PapalexiSatija2021_eccite_protein.h5ad is missing metadata columns: ['batch']"
     },
     {
@@ -284,7 +324,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: PapalexiSatija2021_eccite_RNA.h5ad is missing metadata columns: ['batch']"
     },
     {
@@ -294,7 +336,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: PapalexiSatija2021_eccite_arrayed_RNA.h5ad is missing metadata columns: ['batch']"
     },
     {
@@ -304,7 +348,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete in one or both files"
     },
     {
@@ -314,7 +360,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete in one or both files"
     },
     {
@@ -324,8 +372,10 @@
       "median_min_cells_per_shared_perturbation": 110.0,
       "same_library_evidence": true,
       "same_readout_modality": true,
-      "obvious_batch_context_confound": true,
-      "reason": "batch/context provenance is unresolved in context-separated exports"
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
+      "reason": "batch/context provenance is unresolved"
     },
     {
       "candidate_id": "local_replogleweissman2022_replogleweissman2022_k562_gwps_replogleweissman2022_rpe1",
@@ -334,8 +384,10 @@
       "median_min_cells_per_shared_perturbation": 67.0,
       "same_library_evidence": true,
       "same_readout_modality": true,
-      "obvious_batch_context_confound": true,
-      "reason": "batch/context provenance is unresolved in context-separated exports"
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
+      "reason": "batch/context provenance is unresolved"
     },
     {
       "candidate_id": "local_schiebingerlander2019_schiebingerlander2019_gse106340_schiebingerlander2019_gse115943",
@@ -344,7 +396,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: SchiebingerLander2019_GSE106340.h5ad is missing metadata columns: ['batch', 'cell_line', 'guide_id']"
     },
     {
@@ -354,7 +408,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: SchraivogelSteinmetz2020_TAP_SCREEN__chromosome_11_screen.h5ad is missing metadata columns: ['batch', 'guide_id']"
     },
     {
@@ -364,7 +420,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: SrivatsanTrapnell2020_sciplex2.h5ad is missing metadata columns: ['batch', 'guide_id']"
     },
     {
@@ -374,7 +432,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: SrivatsanTrapnell2020_sciplex4.h5ad is missing metadata columns: ['batch', 'guide_id']"
     },
     {
@@ -384,7 +444,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: SrivatsanTrapnell2020_sciplex3.h5ad is missing metadata columns: ['batch', 'guide_id']"
     },
     {
@@ -394,7 +456,9 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: TianKampmann2019_day7neuron.h5ad is missing metadata columns: ['cell_line']"
     },
     {
@@ -404,11 +468,39 @@
       "median_min_cells_per_shared_perturbation": null,
       "same_library_evidence": false,
       "same_readout_modality": false,
-      "obvious_batch_context_confound": true,
+      "batch_context_status": "unresolved",
+      "obvious_batch_context_confound": false,
+      "provenance_evidence_source": "not audited",
       "reason": "local metadata unavailable or incomplete: TianKampmann2021_CRISPRa.h5ad is missing metadata columns: ['cell_line']"
     }
   ],
-  "registry_sha256": "f550e2bdd12060ef81f4cf4710d7c1398aa952d681d9349960c1526b84d8e56b",
+  "provenance_audits": {
+    "nadig_hepg2_vs_jurkat": {
+      "batch_context_status": "supported_independent_context",
+      "evidence_source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE264667",
+      "evidence_type": "GEO series design and sample metadata",
+      "batch_id_context_mapping": "H5AD batch/gem-group IDs are context-local; the GEO design states that Jurkat and HepG2 screens were conducted in parallel.",
+      "batch_nested_in_context": true,
+      "technical_replicates_exist": true,
+      "technical_replicate_definition": "multiple context-indexed 10x/sample batch units",
+      "context_is_intended_biological_factor": true,
+      "context_comparison_in_original_study_design": true,
+      "audit_notes": "GEO describes two parallel pooled CRISPR screens with scRNA-seq readout, the same dual-sgRNA library family, low infection rate, day-7 harvest, and 10x Genomics Chromium 3-prime v3. The local exports contain one cell line per file and 56/55 context-local batch IDs; repeated numeric IDs are not treated as shared physical batches."
+    },
+    "replogle_k562_essential_vs_rpe1": {
+      "batch_context_status": "confounded",
+      "evidence_source": "https://plus.figshare.com/articles/dataset/_Mapping_information-rich_genotype-phenotype_landscapes_with_genome-scale_Perturb-seq_Replogle_et_al_2022_processed_Perturb-seq_datasets/20029387",
+      "evidence_type": "Figshare dataset design and associated Cell study",
+      "batch_id_context_mapping": "The public dataset identifies K562 essential as day 6 and RPE1 essential as day 7 post-transduction; the timepoint is inseparable from the context comparison in these exports.",
+      "batch_nested_in_context": false,
+      "technical_replicates_exist": true,
+      "technical_replicate_definition": "multiple gem-group/sample batch units",
+      "context_is_intended_biological_factor": true,
+      "context_comparison_in_original_study_design": true,
+      "audit_notes": "Same study/platform and CRISPRi Perturb-seq family, but the public processed data explicitly uses different harvest days (K562 day 6, RPE1 day 7). Without an additional matched-timepoint audit this is an irreducible context/time confound, so it cannot be headline replication evidence."
+    }
+  },
+  "registry_sha256": "0c21ee8cbc39e39d7100876dfd58b781bc3757c361422031bf137abb15fb9cb1",
   "registry_json": "artifacts/manifests/reordering_replication_candidate_registry.json",
   "boundary_json": "artifacts/manifests/formal_v2_claim_lock_replication_boundary.json"
 }

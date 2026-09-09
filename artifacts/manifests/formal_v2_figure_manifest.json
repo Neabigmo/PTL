@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "backend": "python_matplotlib",
-  "core_conclusion": "Source-frozen biological conditions show substantial observed rank displacement, but matched raw-cell measurement-plus-model noise does not identify a stable context-specific excess; replication eligibility is bounded before risk evaluation, guide semantics are explicit, monotonic recalibration cannot repair the ordering, and prospective transfer remains heterogeneous",
+  "core_conclusion": "Source-frozen biological conditions show substantial observed rank displacement, but matched raw-cell measurement-plus-model noise does not identify a stable context-specific excess; one outcome-blind Nadig matched-context Claim Lock is completed without supporting a universal transport claim, guide semantics are explicit, monotonic recalibration cannot repair the ordering, and prospective transfer remains heterogeneous",
   "source_provenance": {
     "primary_trained_predictor_evidence": "Frangieh condition ladder with formal out-of-fold predictor evaluation",
     "orthogonal_external_extension": "matched CRISPRko/CRISPRi guide-level SCEPTRE effects evaluated with a source-response persistence baseline; not pooled with the formal predictor benchmark"
@@ -55,6 +55,10 @@
     "artifacts/manifests/reordering_replication_candidate_registry.csv",
     "artifacts/manifests/reordering_replication_candidate_registry.json",
     "artifacts/manifests/formal_v2_claim_lock_replication_boundary.json",
+    "artifacts/source_data/formal_v2_claim_lock_replication_nadig_predictions.npz",
+    "artifacts/manifests/formal_v2_claim_lock_replication_nadig.json",
+    "artifacts/manifests/formal_v2_claim_lock_replication_nadig.csv",
+    "artifacts/manifests/formal_v2_claim_lock_replication_nadig_floors.csv",
     "artifacts/manifests/head_to_head_controlled_shift_ladder.csv",
     "artifacts/manifests/head_to_head_controlled_shift_ladder_summary.csv",
     "artifacts/manifests/head_to_head_controlled_shift_ladder_summary.json"

@@ -1,13 +1,54 @@
 {
   "schema_version": 1,
   "benchmark_id": "ptl_context_v2_frangieh_claim_lock_v1",
-  "status": "no_valid_independent_matched_context_replication_available",
-  "boundary": "the outcome-blind registry found no local candidate passing the exact shared-perturbation, raw-cell, matched-control, modality, library and batch/context provenance gate; no independent replication claim is made",
-  "policy": "do not force a replication claim; report the boundary explicitly and do not claim universality",
+  "status": "independent_replication_claim_lock_executed",
+  "boundary": "the outcome-blind registry selected one supported independent-context pair and the exact Claim Lock was executed once; the result is bounded to the Nadig HepG2/Jurkat contexts and does not establish universality or a causal biological mechanism",
+  "policy": "report the selected replication and its floors without promoting a universal transport claim",
   "registry": "artifacts/manifests/reordering_replication_candidate_registry.json",
-  "registry_sha256": "f550e2bdd12060ef81f4cf4710d7c1398aa952d681d9349960c1526b84d8e56b",
-  "selected_candidate": null,
-  "prediction_evaluated": false,
-  "risk_evaluated": false,
+  "registry_sha256": "0c21ee8cbc39e39d7100876dfd58b781bc3757c361422031bf137abb15fb9cb1",
+  "selected_candidate": "nadig_hepg2_vs_jurkat",
+  "prediction_evaluated": true,
+  "risk_evaluated": true,
+  "selection_materialized_before_risk_evaluation": true,
+  "provenance_status": "supported_independent_context",
+  "provenance_evidence_source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE264667",
+  "registry_selection_reasons": {
+    "candidate_count": 33,
+    "eligible_candidate_count": 1,
+    "selected_exact_shared_perturbation_count": 2392,
+    "selected_median_min_cells_per_shared_perturbation": 41.0,
+    "selected_batch_context_status": "supported_independent_context",
+    "selected_reason": "eligible by metadata gate",
+    "provenance_audits": {
+      "nadig_hepg2_vs_jurkat": {
+        "batch_context_status": "supported_independent_context",
+        "evidence_source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE264667",
+        "evidence_type": "GEO series design and sample metadata",
+        "batch_id_context_mapping": "H5AD batch/gem-group IDs are context-local; the GEO design states that Jurkat and HepG2 screens were conducted in parallel.",
+        "batch_nested_in_context": true,
+        "technical_replicates_exist": true,
+        "technical_replicate_definition": "multiple context-indexed 10x/sample batch units",
+        "context_is_intended_biological_factor": true,
+        "context_comparison_in_original_study_design": true,
+        "audit_notes": "GEO describes two parallel pooled CRISPR screens with scRNA-seq readout, the same dual-sgRNA library family, low infection rate, day-7 harvest, and 10x Genomics Chromium 3-prime v3. The local exports contain one cell line per file and 56/55 context-local batch IDs; repeated numeric IDs are not treated as shared physical batches."
+      },
+      "replogle_k562_essential_vs_rpe1": {
+        "batch_context_status": "confounded",
+        "evidence_source": "https://plus.figshare.com/articles/dataset/_Mapping_information-rich_genotype-phenotype_landscapes_with_genome-scale_Perturb-seq_Replogle_et_al_2022_processed_Perturb-seq_datasets/20029387",
+        "evidence_type": "Figshare dataset design and associated Cell study",
+        "batch_id_context_mapping": "The public dataset identifies K562 essential as day 6 and RPE1 essential as day 7 post-transduction; the timepoint is inseparable from the context comparison in these exports.",
+        "batch_nested_in_context": false,
+        "technical_replicates_exist": true,
+        "technical_replicate_definition": "multiple gem-group/sample batch units",
+        "context_is_intended_biological_factor": true,
+        "context_comparison_in_original_study_design": true,
+        "audit_notes": "Same study/platform and CRISPRi Perturb-seq family, but the public processed data explicitly uses different harvest days (K562 day 6, RPE1 day 7). Without an additional matched-timepoint audit this is an irreducible context/time confound, so it cannot be headline replication evidence."
+      }
+    }
+  },
+  "replication_report": "artifacts/manifests/formal_v2_claim_lock_replication_nadig.json",
+  "replication_summary": "artifacts/manifests/formal_v2_claim_lock_replication_nadig.csv",
+  "replication_floors": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_floors.csv",
+  "negative_result_audit": "any negative delta is interpreted only after checking source-frozen identity, held-out label folds, disjoint raw-cell halves, matched budgets, finite outputs, and metric equivalence",
   "optional_candidate": "GEARS remains optional only if a legal same-predictor/source-outcome contract is established; no new model training was introduced"
 }
