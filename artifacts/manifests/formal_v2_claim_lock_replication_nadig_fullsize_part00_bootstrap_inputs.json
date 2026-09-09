@@ -1,0 +1,92 @@
+{
+  "files": [
+    {
+      "path": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_part00_bootstrap_chunk_20260908_20260910.npz",
+      "split_seeds": [
+        20260908,
+        20260909,
+        20260910
+      ],
+      "keys": [
+        "20__nadig_hepg2__absolute_effect_rank_agreement",
+        "20__nadig_hepg2__delta_cosine",
+        "20__nadig_hepg2__systema_centroid_accuracy",
+        "20__nadig_jurkat__absolute_effect_rank_agreement",
+        "20__nadig_jurkat__delta_cosine",
+        "20__nadig_jurkat__systema_centroid_accuracy"
+      ]
+    },
+    {
+      "path": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_part00_bootstrap_chunk_20260911_20260913.npz",
+      "split_seeds": [
+        20260911,
+        20260912,
+        20260913
+      ],
+      "keys": [
+        "20__nadig_hepg2__absolute_effect_rank_agreement",
+        "20__nadig_hepg2__delta_cosine",
+        "20__nadig_hepg2__systema_centroid_accuracy",
+        "20__nadig_jurkat__absolute_effect_rank_agreement",
+        "20__nadig_jurkat__delta_cosine",
+        "20__nadig_jurkat__systema_centroid_accuracy"
+      ]
+    },
+    {
+      "path": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_part00_bootstrap_chunk_20260914_20260916.npz",
+      "split_seeds": [
+        20260914,
+        20260915,
+        20260916
+      ],
+      "keys": [
+        "20__nadig_hepg2__absolute_effect_rank_agreement",
+        "20__nadig_hepg2__delta_cosine",
+        "20__nadig_hepg2__systema_centroid_accuracy",
+        "20__nadig_jurkat__absolute_effect_rank_agreement",
+        "20__nadig_jurkat__delta_cosine",
+        "20__nadig_jurkat__systema_centroid_accuracy"
+      ]
+    },
+    {
+      "path": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_part00_bootstrap_chunk_20260917_20260919.npz",
+      "split_seeds": [
+        20260917,
+        20260918,
+        20260919
+      ],
+      "keys": [
+        "20__nadig_hepg2__absolute_effect_rank_agreement",
+        "20__nadig_hepg2__delta_cosine",
+        "20__nadig_hepg2__systema_centroid_accuracy",
+        "20__nadig_jurkat__absolute_effect_rank_agreement",
+        "20__nadig_jurkat__delta_cosine",
+        "20__nadig_jurkat__systema_centroid_accuracy"
+      ]
+    },
+    {
+      "path": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_part00_bootstrap_chunk_20260920_20260922.npz",
+      "split_seeds": [
+        20260920,
+        20260921,
+        20260922
+      ],
+      "keys": [
+        "20__nadig_hepg2__absolute_effect_rank_agreement",
+        "20__nadig_hepg2__delta_cosine",
+        "20__nadig_hepg2__systema_centroid_accuracy",
+        "20__nadig_jurkat__absolute_effect_rank_agreement",
+        "20__nadig_jurkat__delta_cosine",
+        "20__nadig_jurkat__systema_centroid_accuracy"
+      ]
+    }
+  ],
+  "keys": [
+    "20__nadig_hepg2__absolute_effect_rank_agreement",
+    "20__nadig_hepg2__delta_cosine",
+    "20__nadig_hepg2__systema_centroid_accuracy",
+    "20__nadig_jurkat__absolute_effect_rank_agreement",
+    "20__nadig_jurkat__delta_cosine",
+    "20__nadig_jurkat__systema_centroid_accuracy"
+  ]
+}

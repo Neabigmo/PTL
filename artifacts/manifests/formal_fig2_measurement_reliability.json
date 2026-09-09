@@ -1,11 +1,12 @@
 {
   "schema_version": 1,
   "figure": "formal_fig2_measurement_reliability",
-  "claim": "matched raw-cell measurement and joint floors are explicitly separated, and the non-positive macro excess survives the executed min-40 sensitivity",
+  "claim": "matched raw-cell measurement and joint floors are explicitly separated; full-size nonparametric resampling is primary and the original split-half audit is sensitivity evidence",
   "source_data": [
+    "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_summary.csv",
+    "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_ordering.csv",
     "artifacts/manifests/formal_v2_claim_lock_measurement_summary.csv",
-    "artifacts/manifests/formal_v2_claim_lock_measurement_sensitivity40.csv",
-    "artifacts/manifests/formal_v2_claim_lock_measurement.json"
+    "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize.json"
   ],
   "outputs": [
     "results/figures/iclr_formal/formal_fig2_measurement_reliability.svg",

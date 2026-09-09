@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "benchmark_id": "ptl_context_v2_independent_replication_claim_lock_v1",
+  "status": "independent_replication_claim_lock_executed",
+  "resampling_mode": "full_size_nonparametric",
+  "candidate_id": "nadig_hepg2_vs_jurkat",
+  "study": "NadigOConner2024",
+  "contexts": [
+    "Hep-G2",
+    "Jurkat"
+  ],
+  "raw_sources": [
+    "data/raw/scperturb_v1.4/NadigOConner2024_hepg2.h5ad",
+    "data/raw/scperturb_v1.4/NadigOConner2024_jurkat.h5ad"
+  ],
+  "raw_shapes": {
+    "Hep-G2": [
+      145473,
+      9624
+    ],
+    "Jurkat": [
+      262956,
+      8882
+    ]
+  },
+  "registry_json": "artifacts/manifests/reordering_replication_candidate_registry.json",
+  "registry_sha256": "0c21ee8cbc39e39d7100876dfd58b781bc3757c361422031bf137abb15fb9cb1",
+  "selection_materialized_before_risk_evaluation": true,
+  "provenance_status": "supported_independent_context",
+  "provenance_evidence_source": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE264667",
+  "outcome_blind_selection": true,
+  "prediction_evaluated_after_selection": true,
+  "risk_evaluated_after_selection": true,
+  "common_perturbation_count": 2392,
+  "evaluation_gene_count": 6606,
+  "evaluation_gene_checksum_sha256": "3343c65db9030316b9274c58f96250041aa3943669f86b5ab7407fe5565b7613",
+  "prediction_checksums_by_source": {
+    "Hep-G2": "dce47a3b4710cc41e4212a84dc706a804ddeed7181bfd082c5cdd66c650d626a",
+    "Jurkat": "a802be064deecc8b08d814e7b91efa7be9ce783a75c9a75295b6f247f4081cd4"
+  },
+  "prediction_path": "artifacts/source_data/formal_v2_claim_lock_replication_nadig_fullsize_part00_predictions.npz",
+  "summary_path": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_part00.csv",
+  "floor_path": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_part00_floors.csv",
+  "predictor": "Ahlmann-style strong linear bilinear ridge",
+  "predictor_contract": "source context fit once per global 5-fold perturbation-label OOF assignment; the same prediction vectors are scored unchanged in both contexts",
+  "folds": 5,
+  "fold_seed": 20260908,
+  "model_seeds": [
+    0,
+    1,
+    2
+  ],
+  "split_seeds": [
+    20260908,
+    20260909,
+    20260910,
+    20260911,
+    20260912,
+    20260913,
+    20260914,
+    20260915,
+    20260916,
+    20260917,
+    20260918,
+    20260919,
+    20260920,
+    20260921,
+    20260922
+  ],
+  "seed_range_indices": [
+    0,
+    15
+  ],
+  "bootstrap_input_path": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_part00_bootstrap_inputs.json",
+  "bootstrap_input_keys": [
+    "20__nadig_hepg2__absolute_effect_rank_agreement",
+    "20__nadig_hepg2__delta_cosine",
+    "20__nadig_hepg2__systema_centroid_accuracy",
+    "20__nadig_jurkat__absolute_effect_rank_agreement",
+    "20__nadig_jurkat__delta_cosine",
+    "20__nadig_jurkat__systema_centroid_accuracy"
+  ],
+  "bootstrap_input_files": [
+    {
+      "path": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_part00_bootstrap_chunk_20260908_20260910.npz",
+      "split_seeds": [
+        20260908,
+        20260909,
+        20260910
+      ],
+      "keys": [
+        "20__nadig_hepg2__absolute_effect_rank_agreement",
+        "20__nadig_hepg2__delta_cosine",
+        "20__nadig_hepg2__systema_centroid_accuracy",
+        "20__nadig_jurkat__absolute_effect_rank_agreement",
+        "20__nadig_jurkat__delta_cosine",
+        "20__nadig_jurkat__systema_centroid_accuracy"
+      ]
+    },
+    {
+      "path": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_part00_bootstrap_chunk_20260911_20260913.npz",
+      "split_seeds": [
+        20260911,
+        20260912,
+        20260913
+      ],
+      "keys": [
+        "20__nadig_hepg2__absolute_effect_rank_agreement",
+        "20__nadig_hepg2__delta_cosine",
+        "20__nadig_hepg2__systema_centroid_accuracy",
+        "20__nadig_jurkat__absolute_effect_rank_agreement",
+        "20__nadig_jurkat__delta_cosine",
+        "20__nadig_jurkat__systema_centroid_accuracy"
+      ]
+    },
+    {
+      "path": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_part00_bootstrap_chunk_20260914_20260916.npz",
+      "split_seeds": [
+        20260914,
+        20260915,
+        20260916
+      ],
+      "keys": [
+        "20__nadig_hepg2__absolute_effect_rank_agreement",
+        "20__nadig_hepg2__delta_cosine",
+        "20__nadig_hepg2__systema_centroid_accuracy",
+        "20__nadig_jurkat__absolute_effect_rank_agreement",
+        "20__nadig_jurkat__delta_cosine",
+        "20__nadig_jurkat__systema_centroid_accuracy"
+      ]
+    },
+    {
+      "path": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_part00_bootstrap_chunk_20260917_20260919.npz",
+      "split_seeds": [
+        20260917,
+        20260918,
+        20260919
+      ],
+      "keys": [
+        "20__nadig_hepg2__absolute_effect_rank_agreement",
+        "20__nadig_hepg2__delta_cosine",
+        "20__nadig_hepg2__systema_centroid_accuracy",
+        "20__nadig_jurkat__absolute_effect_rank_agreement",
+        "20__nadig_jurkat__delta_cosine",
+        "20__nadig_jurkat__systema_centroid_accuracy"
+      ]
+    },
+    {
+      "path": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_part00_bootstrap_chunk_20260920_20260922.npz",
+      "split_seeds": [
+        20260920,
+        20260921,
+        20260922
+      ],
+      "keys": [
+        "20__nadig_hepg2__absolute_effect_rank_agreement",
+        "20__nadig_hepg2__delta_cosine",
+        "20__nadig_hepg2__systema_centroid_accuracy",
+        "20__nadig_jurkat__absolute_effect_rank_agreement",
+        "20__nadig_jurkat__delta_cosine",
+        "20__nadig_jurkat__systema_centroid_accuracy"
+      ]
+    }
+  ],
+  "streamed_bootstrap_inputs": true,
+  "bootstrap_draws": 2000,
+  "thresholds": {
+    "primary_min20": 2086,
+    "sensitivity_min40": 345
+  },
+  "sensitivity_report": "artifacts/manifests/formal_v2_claim_lock_replication_nadig.csv",
+  "measurement_floor_definition": "matched full-size nonparametric raw-cell truth with fixed source-frozen prediction",
+  "joint_floor_definition": "fixed source-frozen model member pair crossed with matched independent truth halves",
+  "metric_policy": "same labels, prediction vectors, panel, split seeds, and bootstrap unit across delta cosine, Systema, and effect-rank; no per-metric refit",
+  "guide_semantics_policy": "guide_id remains an audit field; perturbations are scored at the exact perturbation-label level, not as single-sgRNA identities",
+  "negative_result_audit": "any negative delta is interpreted only after checking source-frozen identity, held-out label folds, disjoint raw-cell halves, matched budgets, finite outputs, and metric equivalence"
+}

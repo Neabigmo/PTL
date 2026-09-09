@@ -117,7 +117,7 @@ def _primary_pair_predictions(left: str, right: str) -> pd.DataFrame:
 def make_figure() -> tuple[list[str], dict[str, object]]:
     noise_floor = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_controlled_shift_noise_floor.csv")
     source_frozen = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_claim_lock_source_frozen_reordering.csv")
-    measurement = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_claim_lock_measurement_summary.csv")
+    measurement = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_summary.csv")
 
     fig = plt.figure(figsize=(7.25, 6.35))
     grid = fig.add_gridspec(2, 2, width_ratios=[1.0, 1.05], height_ratios=[1.0, 1.05], hspace=0.55, wspace=0.40)
@@ -213,22 +213,22 @@ def make_figure() -> tuple[list[str], dict[str, object]]:
     ax.axhline(0, color=NAVY, lw=0.9)
     ax.set_xticks(np.arange(len(pair_keys)), pair_short, rotation=22, ha="right", fontsize=5.5)
     ax.set_ylabel(r"$Delta_{joint}$ = cross $D$ − joint-floor $D$")
-    ax.set_ylim(-0.12, 0.08)
+    ax.set_ylim(-0.12, 0.12)
     ax.legend(handles=[mpl.lines.Line2D([], [], marker="o", color=color, lw=0, markersize=4, label=metric_names[metric]) for metric, color in metric_colors.items()], fontsize=5.1, loc="upper left")
-    ax.text(0.02, 0.04, "30 raw-cell split seeds · 2,000 paired label-bootstrap draws", transform=ax.transAxes, fontsize=5.2, color=SLATE)
+    ax.text(0.02, 0.04, "30 full-size raw-cell seeds · 2,000 paired label-bootstrap draws", transform=ax.transAxes, fontsize=5.2, color=SLATE)
 
     fig.suptitle("Measurement reliability limits claims of context-dependent reordering", x=0.03, y=1.015, ha="left", fontsize=11.2, fontweight="bold", color=NAVY)
     outputs = save_figure(fig, ROOT / "results/figures/iclr_formal/formal_fig1_reliability_reordering")
     manifest = {
         "schema_version": 1,
         "figure": "formal_fig1_reliability_reordering",
-        "claim": "source-frozen predictors show cross-context rank displacement, while matched raw-cell joint-noise deltas do not support a stable excess beyond measurement plus model noise",
+        "claim": "source-frozen predictors show cross-context rank displacement; full-size matched raw-cell joint-floor excess is metric-dependent and does not support a universal reordering claim",
         "status": "claim_lock_frangieh_source_frozen_and_noise_audit",
         "source_data": [
             "artifacts/source_data/frangieh_source_frozen_predictions.npz",
             "artifacts/manifests/formal_v2_claim_lock_source_frozen_reordering.csv",
-            "artifacts/manifests/formal_v2_claim_lock_measurement_summary.csv",
-            "artifacts/manifests/formal_v2_claim_lock_measurement_sensitivity40.csv",
+            "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_summary.csv",
+            "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_ordering.csv",
             "artifacts/manifests/formal_v2_controlled_shift_noise_floor.csv",
             "artifacts/manifests/reordering_replication_candidate_registry.json",
             "artifacts/manifests/formal_v2_claim_lock_guide_id_semantics.json",

@@ -34,6 +34,10 @@ from src.evaluation.metrics import (  # noqa: E402
     safe_rowwise_cosine,
 )
 from src.evaluation.reordering_inference import normalized_rank_displacement  # noqa: E402
+from src.evaluation.ordering_estimands import (  # noqa: E402
+    crossfit_seed_stable_ordering_summary,
+    summarize_fixed_predictor_ordering,
+)
 from src.ptl.evaluation.fidelity import absolute_effect_rank_agreement  # noqa: E402
 
 
@@ -131,11 +135,29 @@ def _cell_budgets(groups: dict[tuple[str, str], np.ndarray], labels: list[str], 
     return budgets
 
 
+def _cell_budgets_full_size(
+    groups: dict[tuple[str, str], np.ndarray],
+    labels: list[str],
+    minimum: int = MIN_CELLS_PRIMARY,
+) -> dict[tuple[str, str, str], int]:
+    """Return matched budgets without halving the observed cell count."""
+
+    budgets: dict[tuple[str, str, str], int] = {}
+    for left, right in PAIR_ORDER:
+        for label in [*labels, "control"]:
+            count = min(len(groups[(left, label)]), len(groups[(right, label)]))
+            if count >= int(minimum):
+                budgets[(left, right, label)] = int(count)
+    return budgets
+
+
 def _seed_plan(
     groups: dict[tuple[str, str], np.ndarray],
     labels: list[str],
     budgets: dict[tuple[str, str, str], int],
     seed: int,
+    *,
+    replacement: bool = False,
 ) -> dict[str, Any]:
     """Create independent half assignments plus virtual budget groups."""
 
@@ -153,16 +175,32 @@ def _seed_plan(
             if not requested:
                 continue
             source_rows = groups[(environment, label)]
-            permutation = np.random.default_rng(_stable_seed(seed, environment_index, environment, label)).permutation(source_rows)
-            halves = np.array_split(permutation, 2)
-            for half in (0, 1):
+            if replacement:
                 for budget in requested:
-                    chosen = halves[half][:budget]
-                    if len(chosen) != budget:
-                        raise ValueError("a matched raw-cell budget exceeds one assigned split half")
-                    virtual_keys.append((environment, label, half, int(budget)))
-                    selected_rows.append(chosen.astype(np.int64, copy=False))
-                    counts.append(int(budget))
+                    halves = tuple(
+                        np.random.default_rng(
+                            _stable_seed(seed, environment_index, environment, label, half, budget, "full_size")
+                        ).choice(source_rows, size=budget, replace=True)
+                        for half in (0, 1)
+                    )
+                    for half in (0, 1):
+                        chosen = halves[half]
+                        if len(chosen) != budget:
+                            raise ValueError("a full-size matched budget was not sampled exactly")
+                        virtual_keys.append((environment, label, half, int(budget)))
+                        selected_rows.append(chosen.astype(np.int64, copy=False))
+                        counts.append(int(budget))
+            else:
+                permutation = np.random.default_rng(_stable_seed(seed, environment_index, environment, label)).permutation(source_rows)
+                halves = np.array_split(permutation, 2)
+                for half in (0, 1):
+                    for budget in requested:
+                        chosen = halves[half][:budget]
+                        if len(chosen) != budget:
+                            raise ValueError("a matched raw-cell budget exceeds one assigned split half")
+                        virtual_keys.append((environment, label, half, int(budget)))
+                        selected_rows.append(chosen.astype(np.int64, copy=False))
+                        counts.append(int(budget))
     if not selected_rows:
         raise ValueError("no primary matched cell budgets were available")
     return {
@@ -305,6 +343,7 @@ def _systema_risk_batch(prediction_versions: np.ndarray, truths: np.ndarray) -> 
     # The distance comparison is exactly the pinned Systema definition.  CuPy
     # is used when the configured CUDA device is available; all persisted
     # outputs are copied back to NumPy before any rank/bootstrap operation.
+    cp = None
     try:
         import cupy as cp
         xp = cp
@@ -319,8 +358,14 @@ def _systema_risk_batch(prediction_versions: np.ndarray, truths: np.ndarray) -> 
         label_index = xp.arange(n_labels)
         comparison[:, :, label_index, label_index] = False
         accuracy = comparison.sum(axis=-1) / float(n_labels - 1)
-        return cp.asnumpy(1.0 - accuracy)
-    except (ImportError, RuntimeError):
+        result = cp.asnumpy(1.0 - accuracy)
+        cp.get_default_memory_pool().free_all_blocks()
+        cp.get_default_pinned_memory_pool().free_all_blocks()
+        return result
+    except (ImportError, RuntimeError, MemoryError):
+        if cp is not None:
+            cp.get_default_memory_pool().free_all_blocks()
+            cp.get_default_pinned_memory_pool().free_all_blocks()
         pred_flat = prediction_versions.reshape(n_versions * n_labels, n_genes)
         truth_flat = truths.reshape(n_seeds * n_labels, n_genes)
         pred_norm = np.einsum("ij,ij->i", pred_flat, pred_flat)
@@ -478,6 +523,11 @@ def _gpu_rank_rows_average(values: np.ndarray) -> np.ndarray:
         cp.get_default_memory_pool().free_all_blocks()
         return result
     except (ImportError, RuntimeError, MemoryError):
+        try:
+            cp.get_default_memory_pool().free_all_blocks()
+            cp.get_default_pinned_memory_pool().free_all_blocks()
+        except (AttributeError, NameError):
+            pass
         return _rank_rows_average(values)
 
 
@@ -597,12 +647,16 @@ def run(
     draws: int = 2000,
     minimum_cells: int = MIN_CELLS_PRIMARY,
     output_stem: str = "formal_v2_claim_lock_measurement",
+    resampling_mode: str = "split_half",
 ) -> dict[str, Any]:
     root = root.resolve()
     if int(minimum_cells) < 1:
         raise ValueError("minimum_cells must be positive")
     if not output_stem or Path(output_stem).name != output_stem:
         raise ValueError("output_stem must be a simple file stem")
+    if resampling_mode not in {"split_half", "full_size_nonparametric"}:
+        raise ValueError("resampling_mode must be split_half or full_size_nonparametric")
+    full_size = resampling_mode == "full_size_nonparametric"
     payload = np.load(root / PREDICTION_PATH.relative_to(ROOT), allow_pickle=False)
     labels = payload["perturbation_label"].astype(str).tolist()
     predictions = payload["prediction"].astype(np.float32, copy=False)
@@ -610,7 +664,11 @@ def run(
     metadata = _load_metadata(root, labels)
     metadata_by_row = metadata.set_index("row_index")
     groups = _groups(metadata, labels)
-    budgets = _cell_budgets(groups, labels, minimum=int(minimum_cells))
+    budgets = (
+        _cell_budgets_full_size(groups, labels, minimum=int(minimum_cells))
+        if full_size
+        else _cell_budgets(groups, labels, minimum=int(minimum_cells))
+    )
     if not budgets:
         raise ValueError("no primary matched-budget perturbation rows passed the minimum cell threshold")
     panel_positions = _load_panel_positions(root, panel)
@@ -625,7 +683,10 @@ def run(
     with h5py.File(root / RAW_PATH.relative_to(ROOT), "r") as handle:
         for start in range(0, len(SPLIT_SEEDS), max(1, int(seed_chunk))):
             selected_seeds = SPLIT_SEEDS[start:start + max(1, int(seed_chunk))]
-            plans = [_seed_plan(groups, labels, budgets, seed) for seed in selected_seeds]
+            plans = [
+                _seed_plan(groups, labels, budgets, seed, replacement=full_size)
+                for seed in selected_seeds
+            ]
             outputs = _aggregate_seed_plans(
                 handle,
                 plans,
@@ -638,6 +699,7 @@ def run(
             print(f"[measurement-lock] completed seeds {selected_seeds[0]}-{selected_seeds[-1]}", flush=True)
 
     floor_rows: list[dict[str, Any]] = []
+    ordering_rows: list[dict[str, Any]] = []
     bootstrap_inputs: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
     label_to_index = {label: index for index, label in enumerate(labels)}
     for source_index, source in enumerate(ENVIRONMENTS):
@@ -672,6 +734,42 @@ def run(
                         source_members[indices], truths[(environment, half)]
                     )
             for metric in METRICS:
+                fixed_left = np.concatenate(
+                    [batched_risks[(left, half)][0][metric] for half in (0, 1)],
+                    axis=0,
+                )
+                fixed_right = np.concatenate(
+                    [batched_risks[(right, half)][0][metric] for half in (0, 1)],
+                    axis=0,
+                )
+                ordering = summarize_fixed_predictor_ordering(fixed_left, fixed_right)
+                seed_left = np.stack([
+                    batched_risks[(left, 0)][0][metric],
+                    batched_risks[(left, 1)][0][metric],
+                ], axis=1)
+                seed_right = np.stack([
+                    batched_risks[(right, 0)][0][metric],
+                    batched_risks[(right, 1)][0][metric],
+                ], axis=1)
+                if len(SPLIT_SEEDS) >= 4 and len(SPLIT_SEEDS) % 2 == 0:
+                    crossfit_ordering = crossfit_seed_stable_ordering_summary(seed_left, seed_right)
+                else:
+                    crossfit_ordering = {
+                        "crossfit_status": "not_executed_insufficient_seed_count",
+                        "crossfit_fit_seeds": float("nan"),
+                        "crossfit_eval_seeds": float("nan"),
+                        "crossfit_within_seed_replicates": 2,
+                    }
+                ordering_rows.append({
+                    "estimand": "measurement_corrected_pairwise_ordering",
+                    "source_environment_id": source,
+                    "left_target_environment_id": left,
+                    "right_target_environment_id": right,
+                    "metric": metric,
+                    "replicate_policy": "30 independent split seeds × two disjoint halves; fixed source-frozen mean prediction",
+                    **ordering,
+                    **crossfit_ordering,
+                })
                 for seed_index, seed in enumerate(SPLIT_SEEDS):
                     mean_left_a = batched_risks[(left, 0)][0][metric][seed_index]
                     mean_left_b = batched_risks[(left, 1)][0][metric][seed_index]
@@ -728,8 +826,16 @@ def run(
                             "joint_floor_max_d": max(joint_left, joint_right),
                             "delta_meas": cross_d - max(meas_left, meas_right),
                             "delta_joint": cross_d - max(joint_left, joint_right),
-                            "raw_split_contract": "QC-passed raw cells; independent half A/B within environment×perturbation; controls split independently",
-                            "budget_contract": "floor(min(n_left,n_right)/2) cells per half per ordered pair",
+                            "raw_split_contract": (
+                                "QC-passed raw cells; independent with-replacement full-size A/B within environment×perturbation; controls resampled independently"
+                                if full_size
+                                else "QC-passed raw cells; independent half A/B within environment×perturbation; controls split independently"
+                            ),
+                            "budget_contract": (
+                                "min(n_left,n_right) cells per full-size replicate per ordered pair, sampled with replacement"
+                                if full_size
+                                else "floor(min(n_left,n_right)/2) cells per half per ordered pair"
+                            ),
                             "refit_per_metric": 0,
                         })
             for metric in METRICS:
@@ -738,6 +844,8 @@ def run(
 
     floor_path = output_dir / f"{output_stem}_floors.csv"
     pd.DataFrame(floor_rows).to_csv(floor_path, index=False)
+    ordering_path = output_dir / f"{output_stem}_ordering.csv"
+    pd.DataFrame(ordering_rows).to_csv(ordering_path, index=False)
     summary_rows: list[dict[str, Any]] = []
     for key, inputs in bootstrap_inputs.items():
         source, left, right, metric = key
@@ -775,11 +883,20 @@ def run(
         "schema_version": 1,
         "benchmark_id": "ptl_context_v2_frangieh_claim_lock_measurement_v1",
         "status": (
-            "matched_budget_measurement_and_joint_floors_sensitivity40_executed"
-            if int(minimum_cells) == MIN_CELLS_SENSITIVITY
-            else "matched_budget_measurement_and_joint_floors_executed"
+            "full_size_nonparametric_measurement_and_joint_floors_executed"
+            if full_size
+            else (
+                "matched_budget_measurement_and_joint_floors_sensitivity40_executed"
+                if int(minimum_cells) == MIN_CELLS_SENSITIVITY
+                else "matched_budget_measurement_and_joint_floors_executed"
+            )
         ),
-        "analysis_label": "sensitivity_min40" if int(minimum_cells) == MIN_CELLS_SENSITIVITY else "primary_min20",
+        "analysis_label": (
+            "full_size_nonparametric"
+            if full_size
+            else ("sensitivity_min40" if int(minimum_cells) == MIN_CELLS_SENSITIVITY else "primary_min20")
+        ),
+        "resampling_mode": resampling_mode,
         "raw_source": "data/raw/scperturb_v1.4/FrangiehIzar2021_RNA.h5ad",
         "raw_shape": [218331, 23712],
         "qc_contract": "existing Frangieh preprocessing contract: target_sum=10000, log1p, min_genes=700, min_counts=1500, percent_mito<=25, perturbation_2 conditions, fixed 8229-gene panel",
@@ -789,18 +906,28 @@ def run(
         "sensitivity_min_cells": MIN_CELLS_SENSITIVITY,
         "sensitivity_executed": bool(int(minimum_cells) == MIN_CELLS_SENSITIVITY),
         "common_perturbation_count": len(labels),
-        "primary_budget_definition": "floor(min(n_p_e1,n_p_e2)/2) per half and per ordered target pair; controls matched analogously",
+        "primary_budget_definition": (
+            "min(n_p_e1,n_p_e2) cells per independent with-replacement full-size replicate and ordered target pair; controls matched analogously"
+            if full_size
+            else "floor(min(n_p_e1,n_p_e2)/2) per half and per ordered target pair; controls matched analogously"
+        ),
         "measurement_floor_definition": "fixed prediction versus truth half A/B",
         "model_floor_definition": "existing formal_v2_controlled_shift_noise_floor.csv",
         "joint_floor_definition": "source-frozen member pair crossed with independent truth halves",
         "floor_rows": floor_path.relative_to(root).as_posix(),
+        "ordering_rows": ordering_path.relative_to(root).as_posix(),
         "summary_rows": summary_path.relative_to(root).as_posix(),
         "guide_coverage": guide_path.relative_to(root).as_posix(),
         "metric_policy": "three metrics only; same source-frozen prediction vectors, matched labels, truth halves, panel and bootstrap unit; no metric-specific refit",
+        "ordering_estimand": "tie-aware pairwise-order distribution; exact corrected divergence is separate from continuous normalized rank displacement",
         "status_note": (
-            "n>=40 matched-budget sensitivity uses the same source-frozen predictions, split seeds, metrics and paired bootstrap; it is secondary."
-            if int(minimum_cells) == MIN_CELLS_SENSITIVITY
-            else "full-size optional sensitivity was not used as a headline and does not block the matched-budget primary lock"
+            "full-size nonparametric bootstrap is the primary measurement estimator; the original split-half analysis remains a sensitivity audit."
+            if full_size
+            else (
+                "n>=40 matched-budget sensitivity uses the same source-frozen predictions, split seeds, metrics and paired bootstrap; it is secondary."
+                if int(minimum_cells) == MIN_CELLS_SENSITIVITY
+                else "full-size nonparametric measurement was not used in this split-half run"
+            )
         ),
     }
     report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -814,6 +941,11 @@ def main() -> int:
     parser.add_argument("--draws", type=int, default=2000)
     parser.add_argument("--min-cells", type=int, default=MIN_CELLS_PRIMARY)
     parser.add_argument("--output-stem", default="formal_v2_claim_lock_measurement")
+    parser.add_argument(
+        "--resampling-mode",
+        choices=("split_half", "full_size_nonparametric"),
+        default="split_half",
+    )
     args = parser.parse_args()
     result = run(
         args.root.resolve(),
@@ -821,6 +953,7 @@ def main() -> int:
         draws=args.draws,
         minimum_cells=args.min_cells,
         output_stem=args.output_stem,
+        resampling_mode=args.resampling_mode,
     )
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0

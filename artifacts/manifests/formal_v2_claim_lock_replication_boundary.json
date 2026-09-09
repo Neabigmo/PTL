@@ -46,9 +46,9 @@
       }
     }
   },
-  "replication_report": "artifacts/manifests/formal_v2_claim_lock_replication_nadig.json",
-  "replication_summary": "artifacts/manifests/formal_v2_claim_lock_replication_nadig.csv",
-  "replication_floors": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_floors.csv",
+  "replication_report": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize.json",
+  "replication_summary": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize.csv",
+  "replication_floors": "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize_floors.csv",
   "negative_result_audit": "any negative delta is interpreted only after checking source-frozen identity, held-out label folds, disjoint raw-cell halves, matched budgets, finite outputs, and metric equivalence",
   "optional_candidate": "GEARS remains optional only if a legal same-predictor/source-outcome contract is established; no new model training was introduced"
 }

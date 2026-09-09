@@ -35,6 +35,25 @@ def test_seed_plan_keeps_each_half_disjoint_and_budgeted() -> None:
             assert set(left).isdisjoint(set(right))
 
 
+def test_full_size_seed_plan_uses_independent_with_replacement_replicates() -> None:
+    context = {
+        "groups": {
+            "A": np.arange(30, dtype=np.int64),
+            "control": np.arange(30, 60, dtype=np.int64),
+        }
+    }
+    budgets = {20: {"A": 30, "control": 30}, 40: {}}
+    first = _seed_plan(context, ["A"], budgets, 20260908, "synthetic", resampling_mode="full_size_nonparametric")
+    second = _seed_plan(context, ["A"], budgets, 20260908, "synthetic", resampling_mode="full_size_nonparametric")
+    assert all(np.array_equal(left, right) for left, right in zip(first["selected_rows"], second["selected_rows"]))
+    by_key = dict(zip(first["virtual_keys"], first["selected_rows"]))
+    for label, lower, upper in (("A", 0, 30), ("control", 30, 60)):
+        for half in (0, 1):
+            selected = by_key[(20, label, half, 30)]
+            assert len(selected) == 30
+            assert np.all((selected >= lower) & (selected < upper))
+
+
 def test_truth_lookup_is_indexed_by_the_requested_minimum() -> None:
     labels = ["A"]
     lookup = {}

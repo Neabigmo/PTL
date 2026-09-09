@@ -212,15 +212,19 @@ def test_claim_lock_source_frozen_and_measurement_artifacts_are_materialized() -
 
 def test_nadig_figure_and_paper_lock_match_replication_artifacts() -> None:
     figure = json.loads((MANIFESTS / "formal_fig3_replication_boundary.json").read_text(encoding="utf-8"))
-    assert "formal_v2_claim_lock_replication_nadig.csv" in " ".join(figure["source_data"])
+    figure_sources = " ".join(figure["source_data"])
+    assert "formal_v2_claim_lock_replication_nadig_fullsize.csv" in figure_sources
+    assert "formal_v2_claim_lock_replication_nadig_floors.csv" in figure_sources
     assert "formal_v2_claim_lock_replication_nadig_floors.csv" in " ".join(figure["source_data"])
     assert "formal_v2_claim_lock_guide_id_semantics.json" not in " ".join(figure["source_data"])
     assert "supported independent-context provenance" in figure["claim"]
 
     paper = (ROOT / "paper/iclr2027/main.tex").read_text(encoding="utf-8")
     assert "supported independent-context" in paper
-    assert "fail the" not in paper[paper.index("\\caption{\\textbf{Outcome-blind replication"):paper.index("\\label{fig:replication}")]
-    assert "no stable excess above matched" in paper
+    caption_start = paper.index("\\caption{\\textbf{Replication and model-scope boundary")
+    assert "fail the" not in paper[caption_start:paper.index("\\label{fig:replication}", caption_start)]
+    assert "metric-dependent" in paper
+    assert "universal reordering claim" in paper
 
     summary = pd.read_csv(MANIFESTS / "formal_v2_claim_lock_replication_nadig.csv")
     primary = summary.loc[summary["analysis_label"].eq("primary_min20")]

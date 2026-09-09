@@ -2,6 +2,8 @@
 \usepackage{../../third_party/iclr2027/iclr2027_conference,times}
 \input{../../third_party/iclr2027/math_commands.tex}
 \usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
 \usepackage{hyperref}
 \usepackage{url}
 
@@ -12,123 +14,223 @@
 \maketitle
 
 \section{Scope and artifact map}
-This supplement records the definitions and secondary diagnostics compressed out
-of the nine-page main text. It is an audit companion, not a second analysis
-surface: every number is generated from the same fixed splits, native predictor
-spaces and source-frozen artifacts. The canonical files are
-\texttt{artifacts/manifests/formal\_v2\_claim\_lock\_replication\_nadig.csv},
-\texttt{formal\_v2\_claim\_lock\_replication\_nadig\_floors.csv},
-\texttt{reordering\_replication\_candidate\_registry.json}, and the
-corresponding figure manifests.
+This supplement is an audit companion, not a second analysis surface. Every
+number is generated from the same fixed splits, native predictor spaces and
+source-frozen artifacts. The principal files are
+\texttt{artifacts/manifests/formal\_v2\_claim\_lock\_measurement\_fullsize\_floors.csv},
+\texttt{formal\_v2\_claim\_lock\_measurement\_fullsize\_ordering.csv},
+\texttt{formal\_v2\_claim\_lock\_replication\_nadig\_fullsize.csv},
+\texttt{formal\_v2\_claim\_lock\_replication\_nadig.csv},
+\texttt{reordering\_replication\_candidate\_registry.csv}, and their JSON
+reports. The original split-half files remain tracked as sensitivity audits;
+they are never silently substituted for the full-size primary analysis.
 
-\section{Confidence conditioning and grouping loss}
-For each predictor--environment surface, confidence bins are learned from
-calibration rows only and applied unchanged to the held-out test rows. Let
-$B(c)$ be a confidence bin, $R_i$ the held-out continuous risk, and $E_i$ the
-environment. The conditional contextual grouping loss is the confidence-bin
-weighted absolute deviation of environment means from the global bin mean,
+\section{Ordering estimands}
+For perturbation pair $c=(p,q)$, context $e$, and measurement replicate $r$,
+the fixed-predictor risk difference defines
 \[
- L_{\mathrm{group}} = \sum_b w_b\sum_e w_{e\mid b}
- \left|\bar R_{e,b}-\bar R_b\right|.
+ Z_{c,e}^{(r)}=\operatorname{sign}(R_{p,e}^{(r)}-R_{q,e}^{(r)})
+ \in\{-1,0,+1\}.
 \]
-Matched-confidence pairs are formed from the bin assignment alone. Same- and
-cross-environment risk gaps are computed only after pairing, and uncertainty
-uses a hierarchical environment--biological-instance bootstrap. The
-confidence-permutation null preserves the bin counts while permuting confidence
-labels within the held-out evaluation surface. This prevents target outcomes
-from becoming deployment features and avoids recomputing the statistic on an
-unconditioned frame.
-
-\section{Controlled Frangieh Claim Lock}
-For shared perturbations $p,q$ in environments $e_1,e_2$, the primary strict
-inversion estimand is
+The probability vector
 \[
- D_{\mathrm{rank}} =
- \frac{\#\{(p,q):\operatorname{sign}(R_{p,e_1}-R_{q,e_1})
- \ne\operatorname{sign}(R_{p,e_2}-R_{q,e_2})\}}
+ \pi_{c,e}=\left[\Pr(Z=-1),\Pr(Z=0),\Pr(Z=+1)\right]
+\]
+retains ties rather than dropping them. For contexts $e_1,e_2$,
+\[
+ D_{\rm cross}=\mathbb{E}_c[1-\pi_{c,e_1}^{\mathsf T}\pi_{c,e_2}],\qquad
+ D_{\rm within,e}=\mathbb{E}_c[1-\|\pi_{c,e}\|_2^2].
+\]
+Expanding the squared distance gives the exact identity
+\[
+ D_{\rm cross}-\frac{D_{\rm within,e_1}+D_{\rm within,e_2}}{2}
+ =\frac12\mathbb{E}_c\|\pi_{c,e_1}-\pi_{c,e_2}\|_2^2\geq0.
+\]
+We call the left side the measurement-corrected ordering divergence. It is a
+distributional quantity, not a causal effect and not the same as the
+conservative max-floor excess used for operational stress testing.
+
+The legacy strict inversion statistic is retained only as a secondary
+descriptive summary:
+\[
+ D_{\rm strict}=\frac{\#\{(p,q):\operatorname{sign}(R_{p,e_1}-R_{q,e_1})
+ \neq\operatorname{sign}(R_{p,e_2}-R_{q,e_2})\}}
  {\#\{(p,q):\text{both risk differences are strict}\}}.
 \]
-Ties are excluded from the denominator. The perturbation-level displacement is
+Ties are excluded only for this strict statistic. The perturbation-level
+normalized rank displacement is
 \[
  d_p=\frac{|\operatorname{rank}_{e_1}(R_p)-
  \operatorname{rank}_{e_2}(R_p)|}{n-1}.
 \]
-The source predictor is fit once per shared-label fold and is never refit for
-the target outcome. The context-adapted OOF surface is reported separately,
-because it fits a predictor for each condition and is therefore a deployment
-diagnostic rather than a source-frozen causal test.
 
-The raw-cell lock independently partitions QC-passed cells within each
-context--perturbation stratum and independently partitions controls. For each
-split, each perturbation receives
-$\lfloor\min(n_{p,e_1},n_{p,e_2})/2\rfloor$ cells per half. Measurement floors
-compare two independent truth halves; model floors compare independent model
-members; the joint floor crosses a model-member pair with independent truth
-halves. The final estimand is
+\section{Separate noise estimands}
+The measurement-only estimand fixes the source predictor and resamples raw-cell
+outcomes. The model-only estimand fixes the outcome and compares independent
+model members. The joint estimand crosses an independent model-member pair with
+independent outcome replicates. The joint surface is empirically crossed; it is
+not assumed to be additive. For the operational floor,
 \[
- \Delta_{\mathrm{joint}} = D_{\mathrm{cross}}-
- \max(D_{\mathrm{joint},e_1},D_{\mathrm{joint},e_2}).
+ \Delta_{\rm joint}=D_{\rm cross}-\max(D_{\rm joint,e_1},D_{\rm joint,e_2}).
 \]
-The fixed audit uses 30 split seeds, three model members, the delta-cosine,
-Systema centroid-accuracy and absolute-effect-rank entrypoints, and 2,000
-paired perturbation-bootstrap draws. The primary threshold is $n\geq20$; the
-pre-specified sensitivity is $n\geq40$. No sign-based selection or
-per-metric refitting is performed.
+This max-floor convention is deliberately conservative and can be negative
+even when the ordering distributions differ. It should not be substituted for
+the exact corrected divergence above.
+
+\subsection{Full-size primary resampling}
+For every split seed, context, perturbation and threshold $b$, we sample with
+replacement exactly the matched raw-cell count available for the two contexts,
+creating two independent full-size pseudo-replicates. Controls are resampled
+with the same matched-count rule. The primary Frangieh audit uses 30 seeds
+($20260908$--$20260937$), 2,000 paired perturbation-bootstrap draws, three
+model members, and three pinned metric entrypoints. The cell threshold $n\geq20$
+defines eligibility; the $n\geq40$ split-half audit is retained as a
+pre-specified sensitivity analysis. Every run checks finite outputs, exact
+label coverage, disjoint or independent sampling as appropriate, and the
+source-frozen prediction checksum.
+
+\subsection{Stable-ordering cross-fit}
+For each pair and metric, $p_{c,e}=\Pr_r(Z_{c,e}^{(r)}=+1)$ is estimated on
+15 selection seeds and evaluated on 15 disjoint seeds. The two seed groups are
+swapped. A pair is selection-stable only when its 95\% Beta$(1,1)$ posterior
+interval lies entirely above or below $0.5$. We report selection-stable,
+held-out-evaluable and held-out-inversion fractions without using them to
+choose a metric or context pair.
+
+\section{Controlled Frangieh Claim Lock}
+The shared source-frozen surface has 243 perturbation labels across control,
+co-culture and IFN$\gamma$. A global five-fold perturbation-label assignment
+is fixed before model fitting. For each source context, the Ahlmann--Eltze-style
+bilinear ridge predictor is fit once per fold and its predictions are scored
+unchanged against each target outcome. The evaluation panel contains 8,229
+genes. The full-size summary contains 27 rows (three source contexts, three
+target pairs, three metrics) and the exact identity residual is below
+$8.4\times10^{-17}$ for every row.
+
+The primary macro summaries are:
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+Metric & $D_{\rm cross}$ & $D_{\rm joint}$ & $\Delta_{\rm joint}$ & mean endpoint interval \\
+\midrule
+Delta cosine & 0.2359 & 0.1997 & +0.0362 & [+0.0053,+0.0658] \\
+Systema centroid & 0.0770 & 0.0586 & +0.0185 & [+0.0073,+0.0311] \\
+Absolute-effect rank & 0.2009 & 0.2191 & $-$0.0181 & [$-$0.0472,+0.0095] \\
+\bottomrule
+\end{tabular}
+\end{center}
+The endpoint column averages the row-level paired-bootstrap endpoints and is
+not a pooled confidence interval. The result is therefore reported as
+metric-dependent corrected excess, not as a universal context-specific
+reordering effect.
 
 \section{Outcome-blind replication registry}
-The registry scans local same-study file pairs before reading any prediction,
-risk or inversion result. Eligibility requires at least 200 exact shared
-perturbations, matched controls, the same RNA modality and readout,
-same/matched library evidence, median matched cells of at least 20, raw cells,
-and a provenance status other than \texttt{confounded}. Provenance is tri-state:
-\texttt{supported\_independent\_context}, \texttt{unresolved}, or
-\texttt{confounded}; the decision records its source, evidence type, batch to
-context mapping, nesting, technical replicates and whether the context
-comparison was part of the original design.
+The candidate registry was frozen before prediction, risk or inversion
+evaluation. Eligibility requires at least 200 exact shared perturbations, raw
+cell observations, matched controls, the same RNA readout, same or demonstrably
+matched library evidence, median matched cells of at least 20, and no obvious
+batch/context confound. Provenance is tri-state: supported independent context,
+unresolved, or confounded. The complete 33-row registry is below; its
+unabridged fields, exact candidate identifiers, provenance notes and file paths
+are in the canonical CSV.
 
-The selected Nadig HepG2--Jurkat pair has 2,392 exact shared perturbations,
-same dual-sgRNA library family, parallel cell-line screens, day-7 harvest and
-10x 3' v3 readout. Its GEO design metadata supports biological context as the
-intended factor and places batch identifiers within context
-(\href{https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE264667}{GEO
-GSE264667}). The
-Replogle K562-essential--RPE1 pair is excluded because day-6 versus day-7
-harvest is inseparable from context
-(\href{https://plus.figshare.com/articles/dataset/_Mapping_information-rich_genotype-phenotype_landscapes_with_genome-scale_Perturb-seq_Replogle_et_al_2022_processed_Perturb-seq_datasets/20029387}{Figshare
-record 20029387}).
-The selected candidate is materialized before Claim Lock risk evaluation and
-the registry SHA256 is stored in the replication boundary manifest.
+\clearpage
+\section*{Supplementary Table S1. Complete candidate registry}
+\input{registry_table.tex}
 
-\section{External response extension}
-The matched head-to-head CRISPRko/CRISPRi resource is an orthogonal biological
-extension. It uses guide-level SCEPTRE effects and a source-response persistence
-baseline: the source target mean is persisted to destination guide outcomes.
-It is not a trained perturbation predictor and is not pooled with the Frangieh
-benchmark. Guide modality is taken from the released reference table;
-ambiguous ``either'' guides and negative controls are excluded. Six
-modality-stratified contrasts contain 22--25 exact target intersections, with
-12.0--36.4\% risk-order inversions and 0.66--0.97 response-program shifts.
-These values are descriptive of the measured response object. Raw external CSVs
-remain outside Git; only the derived CSV/JSON summaries are canonical.
+\clearpage
+\section{Nadig Claim Lock}
+The selected pair is Nadig HepG2--Jurkat, with 2,392 exact shared perturbations,
+raw shapes $145{,}473\times9{,}624$ and $262{,}956\times8{,}882$, and 6,606
+common evaluation genes. The registry reports 4,976 and 12,013 control cells,
+median matched cells 41, same dual-sgRNA library family, parallel screens,
+day-7 harvest and 10x 3-prime v3 RNA readout. GEO series design and sample
+metadata support the intended independent context and context-local batch
+nesting (\href{https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE264667}{GSE264667}).
 
-The guide audit treats \texttt{guide\_id} as combinatorial metadata rather than
-a single-sgRNA identity: multi-token strings are retained for provenance and
-coverage inspection but never used as the primary split key.
+The selection hash is
+\texttt{0c21ee8cbc39e39d7100876dfd58b781bc3757c361422031bf137abb15fb9cb1}.
+The registry freeze time is 2026-09-09 10:50:35+08:00 (Asia/Shanghai), commit
+\texttt{9b09a533c7d5b985e65081d3d89dd1dd72dada28}. The execution report records
+the exact source-frozen gene and prediction checksums. Replogle
+K562-essential--RPE1 is excluded despite 2,055
+shared perturbations because public metadata couples harvest day 6 versus day 7
+to the context comparison~\citep{replogle2022genome}.
+
+The Nadig primary uses full-size nonparametric raw-cell resampling: 30 split
+seeds, three model members, three metrics and 2,000 paired bootstrap draws,
+with $n\geq20$ primary eligibility. Its macro $\Delta_{\rm joint}$ values are
+$+0.095$, $+0.073$ and $+0.028$ for delta cosine, Systema and absolute-effect
+rank; the row-level Jurkat rank interval crosses zero, so the macro arithmetic
+mean is not a pooled superiority interval. The original fixed split-half audit
+is retained as sensitivity: at $n\geq20$ the macro values are $+0.0055$,
+$+0.0027$ and $+0.0017$, while at $n\geq40$ they are $+0.0002$, $-0.0008$
+and $-0.0059$, with every row-level interval crossing zero. No result from this
+pair is pooled with the Frangieh surface or promoted to universal transportability.
+
+\section{Recalibration lemma}
+Let $C$ be a calibration-side confidence score and let
+$g(C)=\sigma(aC+b)$ with $a>0$ be a train-only Platt map. For any two strict
+scores $C_i<C_j$, $g(C_i)<g(C_j)$. Thus AURC and every strict ordering are
+unchanged, although Brier or log-loss can change. The 45-group counterfactual
+audit records zero strict order disagreements and zero AURC change. This is a
+mathematical safeguard, not a claim that all non-monotonic recalibration or
+learned ranking methods are harmless.
+
+\section{PTL deployment probe}
+The headline feature matrix contains only outcome-free blocks: uncertainty
+($U$), prediction geometry ($P$), training support ($S$), novelty ($N$), and
+declared context descriptors ($C$). Environment and predictor identifiers,
+fidelity, continuous risk, realized cell counts, QC outcomes, target
+reproducibility and reference membership are excluded. Normalizers, nearest
+neighbor transforms and categorical encoders are fit on calibration-side rows
+only. The information ladder is
+\[
+ U\rightarrow U+P\rightarrow U+P+S\rightarrow U+P+S+N\rightarrow U+P+S+N+C.
+\]
+The row-level random-forest probe and the U-only capacity-matched baseline are
+evaluated under in-domain, leave-environment-out and leave-predictor-out
+protocols. The source-selection gate is evaluated separately and falls back to
+U-only when its validation-only acceptance rule is not met. The gate is not a
+safety mechanism: its selected-source negative-transfer rate is 41.7\% among
+non-fallback decisions.
+
+\section{Modern predictor feasibility gate}
+Modern models are tracked as external feasibility contracts until all Claim
+Lock conditions are satisfied. The shared source-control gene panel contains
+1,536 genes selected from QC-passed source control cells and is checksum-frozen
+at
+\texttt{5a0113470a7ddd1912643bc00c60c0fa4b4fa346968fc5116d9196e7c3608e35}.
+It is not used to retrofit a result into the current Claim Lock.
+
+The official GEARS source imports and its CUDA external contract is runnable,
+but its current artifacts are not frozen Frangieh/Nadig prediction vectors.
+The official TxPert checkout (commit
+\texttt{08d82eea86746b044cf7531f4ec8c5f60e1cb73f}) reproduces cached K562
+single-cell-line inference on the CUDA runtime, with test fast-retrieval
+$0.79968$ and test Pearson delta $0.59549$ over 38,475 perturbations. This is a
+successful external contract, not a HepG2/Jurkat Claim Lock. The installed
+scGPT package fails at Windows torchtext ABI loading before model construction.
+The feasibility manifest records these states, checkpoint/data hashes and
+explicit false Claim Lock flags. No modern result is included in the main
+scientific comparison.
 
 \section{Secondary metrics and reproducibility}
 The broad benchmark reports environment-first macro averages, paired
 hierarchical bootstrap intervals, risk at 50/80\% coverage, false-trust rate,
 Brier score, AUROC and AUPRC. Alternative metrics reuse saved predictions and
 do not refit per metric. Fixed-budget analyses reuse the same learned scores at
-20, 50 and 80\% budgets. These are robustness diagnostics, not new training or
-pooled superiority claims.
+20, 50 and 80\% budgets. These are robustness diagnostics, not additional
+training or pooled superiority claims.
 
-The release also contains the fixed split assignment, prediction contracts,
-deployment features, transfer matrices, source-frozen prediction vectors,
-matched measurement/joint floors, replication and guide-coverage manifests,
-split-half audit summaries and editable vector figures. The local Nadig
-prediction NPZ is retained for reproducibility but is not pushed to GitHub
-because it exceeds the hosting file-size limit; its CSV summaries and hashes
-remain the reviewable record.
+The release contains fixed split assignments, prediction contracts,
+outcome-free deployment features, transport matrices, source-frozen vectors,
+full-size and split-half measurement/joint floors, tie-aware ordering rows,
+registry and guide-coverage manifests, model feasibility checks and editable
+vector figures with source-data manifests. Large local NPZ files are retained
+for reproducibility but excluded from the remote repository when they exceed
+hosting limits; CSV summaries, JSON provenance and checksums remain reviewable.
 
+\bibliographystyle{../../third_party/iclr2027/iclr2027_conference}
+\bibliography{../../manuscript/references}
 \end{document}

@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "figure": "formal_fig1_reliability_reordering",
-  "claim": "source-frozen predictors show cross-context rank displacement, while matched raw-cell joint-noise deltas do not support a stable excess beyond measurement plus model noise",
+  "claim": "source-frozen predictors show cross-context rank displacement; full-size matched raw-cell joint-floor excess is metric-dependent and does not support a universal reordering claim",
   "status": "claim_lock_frangieh_source_frozen_and_noise_audit",
   "source_data": [
     "artifacts/source_data/frangieh_source_frozen_predictions.npz",
     "artifacts/manifests/formal_v2_claim_lock_source_frozen_reordering.csv",
-    "artifacts/manifests/formal_v2_claim_lock_measurement_summary.csv",
-    "artifacts/manifests/formal_v2_claim_lock_measurement_sensitivity40.csv",
+    "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_summary.csv",
+    "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_ordering.csv",
     "artifacts/manifests/formal_v2_controlled_shift_noise_floor.csv",
     "artifacts/manifests/reordering_replication_candidate_registry.json",
     "artifacts/manifests/formal_v2_claim_lock_guide_id_semantics.json"

@@ -93,8 +93,8 @@ def _safe_corr(left: pd.Series, right: pd.Series) -> float:
 def make_measurement_figure() -> tuple[list[str], dict[str, object]]:
     """Visualize the raw-cell lock and its real minimum-cell sensitivity."""
 
-    primary = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_claim_lock_measurement_summary.csv")
-    sensitivity = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_claim_lock_measurement_sensitivity40.csv")
+    primary = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_summary.csv")
+    sensitivity = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_claim_lock_measurement_summary.csv")
     metrics = ["delta_cosine", "systema_centroid_accuracy", "absolute_effect_rank_agreement"]
     metric_labels = {metrics[0]: "delta cosine", metrics[1]: "Systema centroid", metrics[2]: "absolute-effect rank"}
     metric_colors = {metrics[0]: CORAL, metrics[1]: BLUE, metrics[2]: PURPLE}
@@ -115,11 +115,11 @@ def make_measurement_figure() -> tuple[list[str], dict[str, object]]:
         ax.text(x + width / 2, y + height / 2, label, transform=ax.transAxes, ha="center", va="center", color="white", fontsize=6.4, fontweight="bold")
     for x in (0.285, 0.625):
         ax.add_patch(mpl.patches.FancyArrowPatch((x, 0.685), (x + 0.07, 0.685), transform=ax.transAxes, arrowstyle="-|>", mutation_scale=12, linewidth=1.5, color=NAVY))
-    ax.text(0.5, 0.30, "30 split seeds · same 243-label contract\n⌊min(nleft, nright)/2⌋ cells per half\ncontrols split independently", transform=ax.transAxes, ha="center", va="center", fontsize=7.0, color=NAVY, linespacing=1.45)
+    ax.text(0.5, 0.30, "30 split seeds · same 243-label contract\nfull-size with-replacement pseudo-replicates\ncontrols resampled independently", transform=ax.transAxes, ha="center", va="center", fontsize=7.0, color=NAVY, linespacing=1.45)
     ax.text(0.5, 0.08, "positive Δjoint would require cross-context displacement\nto exceed both measured components", transform=ax.transAxes, ha="center", va="center", fontsize=6.0, color=SLATE)
 
     ax = fig.add_subplot(grid[0, 1])
-    panel(ax, "b", "The n≥40 audit retains a smaller label set")
+    panel(ax, "b", "Split-half sensitivity uses the same labels")
     pair_order = list(dict.fromkeys(zip(primary["left_target_environment_id"], primary["right_target_environment_id"])))
     pair_labels = [f"{left.replace('frangieh_melanoma_', '')}\n→ {right.replace('frangieh_melanoma_', '')}" for left, right in pair_order]
     def count_for(frame: pd.DataFrame, pair: tuple[str, str]) -> float:
@@ -128,8 +128,8 @@ def make_measurement_figure() -> tuple[list[str], dict[str, object]]:
     x = np.arange(len(pair_order))
     primary_counts = [count_for(primary, pair) for pair in pair_order]
     sensitivity_counts = [count_for(sensitivity, pair) for pair in pair_order]
-    ax.bar(x - 0.18, primary_counts, 0.34, color=SLATE, label="min 20")
-    ax.bar(x + 0.18, sensitivity_counts, 0.34, color=GOLD, label="min 40")
+    ax.bar(x - 0.18, primary_counts, 0.34, color=SLATE, label="full-size primary")
+    ax.bar(x + 0.18, sensitivity_counts, 0.34, color=GOLD, label="split-half sensitivity")
     for values, offset in ((primary_counts, -0.18), (sensitivity_counts, 0.18)):
         for pos, value in zip(x, values):
             ax.text(pos + offset, value + 2, f"{value:.0f}", ha="center", fontsize=5.8, color=NAVY)
@@ -140,7 +140,7 @@ def make_measurement_figure() -> tuple[list[str], dict[str, object]]:
     ax.text(0.02, 0.96, "same raw cells, folds, metrics and bootstrap policy", transform=ax.transAxes, va="top", fontsize=5.5, color=SLATE)
 
     ax = fig.add_subplot(grid[1, 0])
-    panel(ax, "c", "Metric definitions agree on the direction")
+    panel(ax, "c", "Metric-specific excess can differ")
     for metric_index, metric in enumerate(metrics):
         values = primary.loc[primary["metric"].eq(metric), "delta_joint"].to_numpy(dtype=float)
         jitter = np.linspace(-0.16, 0.16, len(values)) if len(values) else np.array([])
@@ -150,14 +150,14 @@ def make_measurement_figure() -> tuple[list[str], dict[str, object]]:
     ax.axhline(0, color=NAVY, lw=0.8)
     ax.set_xticks(range(len(metrics)), [metric_labels[m] for m in metrics], rotation=18, ha="right", fontsize=5.7)
     ax.set_ylabel("Δjoint")
-    ax.set_ylim(-0.10, 0.06)
+    ax.set_ylim(-0.10, 0.10)
     ax.text(0.02, 0.04, "each point = source context × target pair", transform=ax.transAxes, fontsize=5.5, color=SLATE)
 
     ax = fig.add_subplot(grid[1, 1])
-    panel(ax, "d", "The negative result survives the real min-40 sensitivity")
+    panel(ax, "d", "Primary and split-half floors are separated")
     grouped = []
     for metric in metrics:
-        for label, frame, color, offset in [("min 20", primary, SLATE, -0.13), ("min 40", sensitivity, GOLD, 0.13)]:
+        for label, frame, color, offset in [("full-size primary", primary, SLATE, -0.13), ("split-half sensitivity", sensitivity, GOLD, 0.13)]:
             rows = frame.loc[frame["metric"].eq(metric)]
             grouped.append((metric, label, float(rows["delta_joint"].mean()), float(rows["delta_joint_ci_low"].mean()), float(rows["delta_joint_ci_high"].mean()), color, offset))
     for metric_index, metric in enumerate(metrics):
@@ -168,20 +168,21 @@ def make_measurement_figure() -> tuple[list[str], dict[str, object]]:
     ax.axhline(0, color=NAVY, lw=0.8)
     ax.set_xticks(range(len(metrics)), [metric_labels[m] for m in metrics], rotation=18, ha="right", fontsize=5.7)
     ax.set_ylabel("macro Δjoint with 95% CI means")
-    ax.set_ylim(-0.10, 0.06)
+    ax.set_ylim(-0.10, 0.10)
     ax.legend(fontsize=5.7, loc="lower left")
-    ax.text(0.02, 0.96, "n≥40 was executed with the primary source-frozen vectors", transform=ax.transAxes, va="top", fontsize=5.5, color=SLATE)
+    ax.text(0.02, 0.96, "full-size primary; original split-half audit as sensitivity", transform=ax.transAxes, va="top", fontsize=5.5, color=SLATE)
 
-    fig.suptitle("Raw-cell measurement lock: the negative excess result is sensitivity-tested", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
+    fig.suptitle("Raw-cell measurement lock: corrected excess is estimated above the full-size floor", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
     outputs = save_figure(fig, ROOT / "results/figures/iclr_formal/formal_fig2_measurement_reliability")
     manifest = {
         "schema_version": 1,
         "figure": "formal_fig2_measurement_reliability",
-        "claim": "matched raw-cell measurement and joint floors are explicitly separated, and the non-positive macro excess survives the executed min-40 sensitivity",
+        "claim": "matched raw-cell measurement and joint floors are explicitly separated; full-size nonparametric resampling is primary and the original split-half audit is sensitivity evidence",
         "source_data": [
+            "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_summary.csv",
+            "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize_ordering.csv",
             "artifacts/manifests/formal_v2_claim_lock_measurement_summary.csv",
-            "artifacts/manifests/formal_v2_claim_lock_measurement_sensitivity40.csv",
-            "artifacts/manifests/formal_v2_claim_lock_measurement.json",
+            "artifacts/manifests/formal_v2_claim_lock_measurement_fullsize.json",
         ],
         "outputs": outputs,
     }
@@ -193,8 +194,12 @@ def make_replication_boundary_figure() -> tuple[list[str], dict[str, object]]:
 
     registry = pd.read_csv(ROOT / "artifacts/manifests/reordering_replication_candidate_registry.csv")
     report = json.loads((ROOT / "artifacts/manifests/reordering_replication_candidate_registry.json").read_text(encoding="utf-8"))
-    recalibration = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_recalibration_counterfactual.csv")
-    summary = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_claim_lock_replication_nadig.csv")
+    fullsize_summary_path = ROOT / "artifacts/manifests/formal_v2_claim_lock_replication_nadig_fullsize.csv"
+    split_half_summary_path = ROOT / "artifacts/manifests/formal_v2_claim_lock_replication_nadig.csv"
+    summary_path = fullsize_summary_path if fullsize_summary_path.is_file() else split_half_summary_path
+    summary = pd.read_csv(summary_path)
+    execution_report_path = summary_path.with_suffix(".json")
+    execution_report = json.loads(execution_report_path.read_text(encoding="utf-8")) if execution_report_path.is_file() else {}
     summary["analysis_label"] = summary["analysis_label"].astype(str)
     summary["metric"] = summary["metric"].astype(str)
     metric_order = ["delta_cosine", "systema_centroid_accuracy", "absolute_effect_rank_agreement"]
@@ -221,7 +226,7 @@ def make_replication_boundary_figure() -> tuple[list[str], dict[str, object]]:
     ax.text(0.5, 0.07, "No target predictions, risks or inversions entered candidate selection.", transform=ax.transAxes, ha="center", va="center", fontsize=5.9, color=SLATE)
 
     ax = fig.add_subplot(grid[0, 1])
-    panel(ax, "b", "Primary: cross-context ≈ joint")
+    panel(ax, "b", "Primary: full-size cross-context and floors" if fullsize_summary_path.is_file() else "Primary: cross-context ≈ joint")
     primary = summary.loc[summary["analysis_label"].eq("primary_min20")]
     means = primary.groupby("metric", sort=False)[["cross_d", "measurement_floor_d", "joint_floor_d"]].mean().reindex(metric_order)
     x = np.arange(len(metric_order))
@@ -232,42 +237,80 @@ def make_replication_boundary_figure() -> tuple[list[str], dict[str, object]]:
     ax.set_ylabel("rank displacement / floor")
     ax.set_ylim(0, 0.40)
     ax.legend(fontsize=5.1, loc="upper left", ncol=3, handlelength=1.2, columnspacing=0.8)
-    ax.text(0.02, 0.86, "2,392 shared perturbations · 1,255 labels at n≥20", transform=ax.transAxes, va="top", fontsize=5.2, color=NAVY)
+    shared_count = int(execution_report.get("common_perturbation_count", 2392))
+    evaluated_count = int(primary["n_perturbations"].max())
+    ax.text(0.02, 0.86, f"{shared_count:,} shared perturbations · {evaluated_count:,} labels evaluated", transform=ax.transAxes, va="top", fontsize=5.2, color=NAVY)
     ax.text(0.02, 0.02, "three metrics; macro mean across HepG2 and Jurkat source contexts", transform=ax.transAxes, va="bottom", fontsize=4.9, color=SLATE)
 
     ax = fig.add_subplot(grid[1, 0])
-    panel(ax, "c", "No stable excess at min20 or min40")
-    sensitivity = summary.loc[summary["analysis_label"].isin(["primary_min20", "sensitivity_min40"])]
-    grouped = sensitivity.groupby(["analysis_label", "metric"], sort=False)["delta_joint"].mean().reset_index()
-    lower = sensitivity.groupby(["analysis_label", "metric"], sort=False)["delta_joint_ci_low"].mean().reset_index(name="low")
-    upper = sensitivity.groupby(["analysis_label", "metric"], sort=False)["delta_joint_ci_high"].mean().reset_index(name="high")
-    grouped = grouped.merge(lower, on=["analysis_label", "metric"]).merge(upper, on=["analysis_label", "metric"])
-    threshold_order = ["primary_min20", "sensitivity_min40"]
-    positions = np.arange(len(threshold_order))
+    if fullsize_summary_path.is_file():
+        panel(ax, "c", "Full-size vs split-half sensitivity")
+        split_half = pd.read_csv(split_half_summary_path)
+        comparison = pd.concat([
+            primary.assign(comparison_label="full-size primary"),
+            split_half.loc[split_half["analysis_label"].eq("primary_min20")].assign(comparison_label="split-half sensitivity"),
+        ], ignore_index=True)
+        grouped = comparison.groupby(["comparison_label", "metric"], sort=False)["delta_joint"].mean().reset_index()
+        lower = comparison.groupby(["comparison_label", "metric"], sort=False)["delta_joint_ci_low"].mean().reset_index(name="low")
+        upper = comparison.groupby(["comparison_label", "metric"], sort=False)["delta_joint_ci_high"].mean().reset_index(name="high")
+        grouped = grouped.merge(lower, on=["comparison_label", "metric"]).merge(upper, on=["comparison_label", "metric"])
+        threshold_order = ["full-size primary", "split-half sensitivity"]
+        positions = np.arange(len(threshold_order))
+        x_labels = ["full-size\nprimary", "split-half\nsensitivity"]
+    else:
+        panel(ax, "c", "Nadig split-half sensitivity by cell threshold")
+        sensitivity = summary.loc[summary["analysis_label"].isin(["primary_min20", "sensitivity_min40"])]
+        grouped = sensitivity.groupby(["analysis_label", "metric"], sort=False)["delta_joint"].mean().reset_index()
+        lower = sensitivity.groupby(["analysis_label", "metric"], sort=False)["delta_joint_ci_low"].mean().reset_index(name="low")
+        upper = sensitivity.groupby(["analysis_label", "metric"], sort=False)["delta_joint_ci_high"].mean().reset_index(name="high")
+        grouped = grouped.merge(lower, on=["analysis_label", "metric"]).merge(upper, on=["analysis_label", "metric"])
+        threshold_order = ["primary_min20", "sensitivity_min40"]
+        positions = np.arange(len(threshold_order))
+        x_labels = ["min20\n(n=1,255)", "min40\n(n=345)"]
     offsets = np.linspace(-0.22, 0.22, len(metric_order))
     for offset, metric in zip(offsets, metric_order):
-        rows = grouped.loc[grouped["metric"].eq(metric)].set_index("analysis_label").reindex(threshold_order)
+        label_column = "comparison_label" if fullsize_summary_path.is_file() else "analysis_label"
+        rows = grouped.loc[grouped["metric"].eq(metric)].set_index(label_column).reindex(threshold_order)
         y = rows["delta_joint"].to_numpy(dtype=float)
         yerr = np.vstack([y - rows["low"].to_numpy(dtype=float), rows["high"].to_numpy(dtype=float) - y])
         ax.errorbar(positions + offset, y, yerr=yerr, fmt="o", ms=4.5, capsize=2.5, lw=1.0, color=metric_colors[metric], label=metric_labels[metric], zorder=3)
     ax.axhline(0, color=NAVY, lw=0.8)
-    ax.set_xticks(positions, ["min20\n(n=1,255)", "min40\n(n=345)"], fontsize=5.7)
+    ax.set_xticks(positions, x_labels, fontsize=5.7)
     ax.set_ylabel("Δ joint floor")
-    ax.set_ylim(-0.065, 0.065)
+    interval_values = pd.concat([grouped["low"], grouped["high"]], ignore_index=True).to_numpy(dtype=float)
+    interval_limit = max(0.065, 1.20 * float(np.max(np.abs(interval_values))))
+    ax.set_ylim(-interval_limit, interval_limit)
     ax.legend(fontsize=5.2, loc="upper right", ncol=1)
-    ax.text(0.02, 0.04, "all 6 bootstrap intervals cross zero", transform=ax.transAxes, fontsize=5.5, color=SLATE)
+    ax.text(0.02, 0.04, "row-level bootstrap intervals are shown; no threshold is hidden", transform=ax.transAxes, fontsize=5.2, color=SLATE)
 
     ax = fig.add_subplot(grid[1, 1])
-    panel(ax, "d", "Calibration changes scale, not rank")
-    grouped = recalibration.groupby("predictor", as_index=False).agg(platt_delta_aurc=("platt_delta_aurc", "mean"), n_order_disagreements=("n_order_disagreements", "sum"))
-    grouped["predictor"] = grouped["predictor"].map({"mean_matching": "matching", "strong_linear": "strong linear", "slim_string": "SLIM"}).fillna(grouped["predictor"])
-    x = np.arange(len(grouped))
-    ax.bar(x, grouped["n_order_disagreements"], color=[BLUE, PURPLE, GOLD], width=0.52)
-    ax.set_xticks(x, grouped["predictor"], rotation=18, ha="right", fontsize=5.8)
-    ax.set_ylabel("strict order disagreements")
-    ax.set_ylim(0, 1)
-    ax.text(0.02, 0.78, "all 45 groups = 0", transform=ax.transAxes, fontsize=8.0, fontweight="bold", color=NAVY)
-    ax.text(0.02, 0.62, "monotonic Platt maps can improve Brier\nbut cannot repair reordered reliability", transform=ax.transAxes, fontsize=5.8, color=SLATE, linespacing=1.35)
+    panel(ax, "d", "Modern-model gates")
+    feasibility_path = ROOT / "artifacts/manifests/modern_predictor_feasibility.json"
+    if feasibility_path.is_file():
+        feasibility = json.loads(feasibility_path.read_text(encoding="utf-8"))
+        model_rows = feasibility.get("rows", [])
+        gate_names = ["official\nsource", "checkpoint", "source-only\ntraining", "frozen\nvector", "target\nblind", "Claim\nLock"]
+        matrix = np.asarray([
+            [
+                int(bool(row.get("official_source_checkout"))),
+                int(bool(row.get("official_checkpoint_verified"))),
+                int(bool(row.get("source_only_training_verified"))),
+                int(bool(row.get("heldout_prediction_vector_verified"))),
+                int(bool(row.get("target_outcome_blind_verified"))),
+                int(bool(row.get("claim_lock_eligible"))),
+            ]
+            for row in model_rows
+        ], dtype=float)
+        ax.imshow(matrix, cmap=mpl.colors.ListedColormap(["#F3F5F6", TEAL]), vmin=0, vmax=1, aspect="auto")
+        ax.set_xticks(range(len(gate_names)), gate_names, fontsize=4.8)
+        ax.set_yticks(range(len(model_rows)), [str(row["predictor_id"]).replace("official_", "") for row in model_rows], fontsize=5.8)
+        for i in range(matrix.shape[0]):
+            for j in range(matrix.shape[1]):
+                ax.text(j, i, "✓" if matrix[i, j] else "—", ha="center", va="center", fontsize=7.0, color="white" if matrix[i, j] else SLATE)
+        ax.set_title("No modern audit is silently promoted to Claim Lock", loc="left", pad=7, color=NAVY, fontweight="bold", fontsize=8.5)
+        ax.text(0.02, -0.22, "TxPert: official K562 cached inference succeeds; scGPT: ABI-blocked;\nGEARS: external contract only.", transform=ax.transAxes, fontsize=5.5, color=SLATE, va="top")
+    else:
+        ax.text(0.5, 0.5, "modern-model feasibility manifest pending", ha="center", va="center", transform=ax.transAxes, color=SLATE)
 
     fig.suptitle("Independent replication confirms the measurement-limited boundary", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
     outputs = save_figure(fig, ROOT / "results/figures/iclr_formal/formal_fig3_replication_boundary")
@@ -278,8 +321,8 @@ def make_replication_boundary_figure() -> tuple[list[str], dict[str, object]]:
         "source_data": [
             "artifacts/manifests/reordering_replication_candidate_registry.csv",
             "artifacts/manifests/reordering_replication_candidate_registry.json",
-            "artifacts/manifests/formal_v2_recalibration_counterfactual.csv",
-            "artifacts/manifests/formal_v2_claim_lock_replication_nadig.csv",
+            summary_path.relative_to(ROOT).as_posix(),
+            summary_path.with_name(summary_path.stem + "_floors.csv").relative_to(ROOT).as_posix(),
             "artifacts/manifests/formal_v2_claim_lock_replication_nadig_floors.csv",
         ],
         "outputs": outputs,

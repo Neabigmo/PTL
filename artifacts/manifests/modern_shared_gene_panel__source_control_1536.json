@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "panel_id": "modern_shared_gene_panel__source_control_1536",
+  "selection": "top variance within existing 8,229 evaluation genes using QC-passed control cells only",
+  "source_environments": [
+    "Control",
+    "Co-culture",
+    "IFNγ"
+  ],
+  "n_control_cells": 56741,
+  "raw_shape": [
+    218331,
+    23712
+  ],
+  "n_evaluation_genes": 8229,
+  "n_selected_genes": 1536,
+  "panel_path": "H:\\2026try\\9.5PTL\\artifacts\\manifests\\modern_shared_gene_panel__source_control_1536.txt",
+  "panel_sha256": "5a0113470a7ddd1912643bc00c60c0fa4b4fa346968fc5116d9196e7c3608e35",
+  "scientific_result_claimed": false,
+  "note": "Contract panel only; model-specific checkpoint, source-only training, and frozen prediction vectors remain separate gates."
+}

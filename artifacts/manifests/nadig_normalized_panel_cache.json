@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "panel_gene_count": 6606,
+  "contexts": {
+    "nadig_hepg2": {
+      "path": "artifacts/source_data/nadig_nadig_hepg2_normalized_panel_6606_3343c65db9030316.npy",
+      "shape": [
+        145473,
+        6606
+      ],
+      "dtype": "float32"
+    },
+    "nadig_jurkat": {
+      "path": "artifacts/source_data/nadig_nadig_jurkat_normalized_panel_6606_3343c65db9030316.npy",
+      "shape": [
+        262956,
+        6606
+      ],
+      "dtype": "float32"
+    }
+  },
+  "target_sum": 10000.0,
+  "normalization": "raw dense X / ncounts * 10000, then log1p, float32"
+}

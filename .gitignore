@@ -60,6 +60,7 @@
 /_github_ptl_work/
 /third_party/GEARS/
 /third_party/systema/
+/third_party/TxPert/
 
 # Python, local environments, caches and editor files.
 __pycache__/

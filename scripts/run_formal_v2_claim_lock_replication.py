@@ -207,6 +207,26 @@ def _panel_for_contexts(root: Path, contexts: dict[str, dict[str, Any]]) -> list
     return panel
 
 
+def _panel_cache_path(root: Path, context_id: str, panel: list[str]) -> Path:
+    checksum = hashlib.sha256("\n".join(panel).encode("utf-8")).hexdigest()[:16]
+    return root / "artifacts/source_data" / f"nadig_{context_id}_normalized_panel_{len(panel)}_{checksum}.npy"
+
+
+def _attach_panel_caches(root: Path, contexts: dict[str, dict[str, Any]], panel: list[str]) -> None:
+    """Attach exact read-only normalized panel caches when precomputed."""
+
+    for context_id in CONTEXTS:
+        path = _panel_cache_path(root, context_id, panel)
+        if not path.is_file():
+            continue
+        cached = np.load(path, mmap_mode="r")
+        expected_shape = (contexts[context_id]["shape"][0], len(panel))
+        if tuple(cached.shape) != expected_shape or cached.dtype != np.dtype(np.float32):
+            raise ValueError(f"normalized panel cache has unexpected shape/dtype: {path}")
+        contexts[context_id]["normalized_panel"] = cached
+        contexts[context_id]["normalized_panel_path"] = path
+
+
 def _aggregate_full_profiles(context: dict[str, Any], labels: list[str], panel: list[str]) -> np.ndarray:
     """Aggregate each label and control once from all raw cells."""
 
@@ -222,34 +242,54 @@ def _aggregate_full_profiles(context: dict[str, Any], labels: list[str], panel: 
     panel_positions = np.asarray([context["var_names"].index(gene) for gene in panel], dtype=np.int64)
     sums = np.zeros((len(group_labels), len(panel)), dtype=np.float64)
     counts = np.zeros(len(group_labels), dtype=np.int64)
-    with h5py.File(context["path"], "r") as handle:
-        x_dataset = handle["X"]
-        if str(x_dataset.attrs.get("encoding-type", "")) != "array":
-            raise ValueError("replication H5AD must retain a dense raw X array")
+    cached_panel = context.get("normalized_panel")
+    if cached_panel is not None:
         for start in range(0, context["shape"][0], ROW_CHUNK_SIZE):
             end = min(start + ROW_CHUNK_SIZE, context["shape"][0])
-            block = _read_dense_block(x_dataset, start, end, panel_positions)
-            scales = TARGET_SUM / context["obs"].iloc[start:end]["ncounts"].to_numpy(dtype=np.float32)
-            block *= scales[:, None]
-            np.log1p(block, out=block)
+            block = np.asarray(cached_panel[start:end], dtype=np.float32)
             groups = row_group[start:end]
             valid = groups >= 0
             if valid.any():
                 np.add.at(sums, groups[valid], block[valid])
                 counts += np.bincount(groups[valid], minlength=len(group_labels))
+    else:
+        with h5py.File(context["path"], "r") as handle:
+            x_dataset = handle["X"]
+            if str(x_dataset.attrs.get("encoding-type", "")) != "array":
+                raise ValueError("replication H5AD must retain a dense raw X array")
+            for start in range(0, context["shape"][0], ROW_CHUNK_SIZE):
+                end = min(start + ROW_CHUNK_SIZE, context["shape"][0])
+                block = _read_dense_block(x_dataset, start, end, panel_positions)
+                scales = TARGET_SUM / context["obs"].iloc[start:end]["ncounts"].to_numpy(dtype=np.float32)
+                block *= scales[:, None]
+                np.log1p(block, out=block)
+                groups = row_group[start:end]
+                valid = groups >= 0
+                if valid.any():
+                    np.add.at(sums, groups[valid], block[valid])
+                    counts += np.bincount(groups[valid], minlength=len(group_labels))
     if (counts <= 0).any():
         raise ValueError("one or more perturbation/control groups has no raw cells")
     return (sums / counts[:, None]).astype(np.float32)
 
 
-def _budgets(contexts: dict[str, dict[str, Any]], labels: list[str], minimum_cells: int) -> dict[str, int]:
+def _budgets(
+    contexts: dict[str, dict[str, Any]],
+    labels: list[str],
+    minimum_cells: int,
+    *,
+    resampling_mode: str = "split_half",
+) -> dict[str, int]:
     result: dict[str, int] = {}
     for label in [*labels, "control"]:
         paired_count = min(
             len(contexts[CONTEXTS[0]]["groups"].get(label, [])),
             len(contexts[CONTEXTS[1]]["groups"].get(label, [])),
         )
-        budget = paired_count // 2
+        if resampling_mode == "full_size_nonparametric":
+            budget = paired_count
+        else:
+            budget = paired_count // 2
         if budget >= minimum_cells:
             result[label] = int(budget)
     return result
@@ -261,6 +301,8 @@ def _seed_plan(
     budgets_by_minimum: dict[int, dict[str, int]],
     seed: int,
     context_id: str,
+    *,
+    resampling_mode: str = "split_half",
 ) -> dict[str, Any]:
     virtual_keys: list[tuple[int, str, int, int]] = []
     selected_rows: list[np.ndarray] = []
@@ -271,8 +313,16 @@ def _seed_plan(
             if budget is None:
                 continue
             source_rows = context["groups"][label]
-            permutation = np.random.default_rng(_stable_seed(seed, context_id, label)).permutation(source_rows)
-            halves = np.array_split(permutation, 2)
+            if resampling_mode == "full_size_nonparametric":
+                halves = [
+                    np.random.default_rng(_stable_seed(seed, context_id, label, half, "full_size")).choice(
+                        source_rows, size=budget, replace=True
+                    )
+                    for half in (0, 1)
+                ]
+            else:
+                permutation = np.random.default_rng(_stable_seed(seed, context_id, label)).permutation(source_rows)
+                halves = np.array_split(permutation, 2)
             for half in (0, 1):
                 chosen = halves[half][:budget].astype(np.int64, copy=False)
                 if len(chosen) != budget:
@@ -329,27 +379,69 @@ def _aggregate_seed_plans(
     panel_positions = np.asarray([context["var_names"].index(gene) for gene in panel], dtype=np.int64)
     sorted_order = np.argsort(panel_positions, kind="stable")
     sorted_positions = panel_positions[sorted_order]
-    with h5py.File(context["path"], "r") as handle:
+    cached_panel = context.get("normalized_panel")
+    torch = None
+    use_gpu = False
+    if cached_panel is not None:
+        try:
+            import torch as _torch
+            use_gpu = bool(_torch.cuda.is_available())
+            torch = _torch if use_gpu else None
+        except (ImportError, OSError):
+            torch = None
+            use_gpu = False
+    if cached_panel is not None:
+        handle = None
+    else:
+        handle = h5py.File(context["path"], "r")
         x_dataset = handle["X"]
+    try:
         for row_start_index in range(0, len(union_rows), int(row_chunk_size)):
             row_end_index = min(row_start_index + int(row_chunk_size), len(union_rows))
             row_ids = union_rows[row_start_index:row_end_index]
-            selected = _read_dense_rows(x_dataset, row_ids, sorted_positions)
-            scales = TARGET_SUM / context["obs"].iloc[row_ids]["ncounts"].to_numpy(dtype=np.float32)
-            selected *= scales[:, None]
-            np.log1p(selected, out=selected)
+            if cached_panel is not None:
+                selected = np.asarray(cached_panel[row_ids], dtype=np.float32)
+            else:
+                selected = _read_dense_rows(x_dataset, row_ids, sorted_positions)
+                scales = TARGET_SUM / context["obs"].iloc[row_ids]["ncounts"].to_numpy(dtype=np.float32)
+                selected *= scales[:, None]
+                np.log1p(selected, out=selected)
             design_chunk = design[row_start_index:row_end_index]
-            for gene_start in range(0, len(panel), int(gene_chunk_size)):
-                gene_end = min(gene_start + int(gene_chunk_size), len(panel))
-                grouped = design_chunk.T @ selected[:, gene_start:gene_end]
-                if sparse.issparse(grouped):
-                    grouped = grouped.toarray()
-                grouped = np.asarray(grouped, dtype=np.float32)
-                output_start = 0
-                for plan_index, plan in enumerate(plans):
-                    n_groups = len(plan["virtual_keys"])
-                    outputs[plan_index][:, sorted_order[gene_start:gene_end]] = grouped[output_start:output_start + n_groups]
-                    output_start += n_groups
+            if use_gpu:
+                coo = design_chunk.tocoo(copy=False)
+                device = torch.device("cuda")
+                row_index = torch.as_tensor(coo.row, dtype=torch.long, device=device)
+                column_index = torch.as_tensor(coo.col, dtype=torch.long, device=device)
+                weights = torch.as_tensor(np.asarray(coo.data, dtype=np.float32), dtype=torch.float32, device=device)
+                selected_gpu = torch.as_tensor(np.ascontiguousarray(selected), dtype=torch.float32, device=device)
+                for gene_start in range(0, len(panel), int(gene_chunk_size)):
+                    gene_end = min(gene_start + int(gene_chunk_size), len(panel))
+                    grouped_gpu = torch.zeros((group_offset, gene_end - gene_start), dtype=torch.float32, device=device)
+                    values = selected_gpu[:, gene_start:gene_end]
+                    if len(coo.data):
+                        grouped_gpu.index_add_(0, column_index, values[row_index] * weights[:, None])
+                    grouped = grouped_gpu.cpu().numpy()
+                    output_start = 0
+                    for plan_index, plan in enumerate(plans):
+                        n_groups = len(plan["virtual_keys"])
+                        outputs[plan_index][:, sorted_order[gene_start:gene_end]] = grouped[output_start:output_start + n_groups]
+                        output_start += n_groups
+                del selected_gpu
+            else:
+                for gene_start in range(0, len(panel), int(gene_chunk_size)):
+                    gene_end = min(gene_start + int(gene_chunk_size), len(panel))
+                    grouped = design_chunk.T @ selected[:, gene_start:gene_end]
+                    if sparse.issparse(grouped):
+                        grouped = grouped.toarray()
+                    grouped = np.asarray(grouped, dtype=np.float32)
+                    output_start = 0
+                    for plan_index, plan in enumerate(plans):
+                        n_groups = len(plan["virtual_keys"])
+                        outputs[plan_index][:, sorted_order[gene_start:gene_end]] = grouped[output_start:output_start + n_groups]
+                        output_start += n_groups
+    finally:
+        if handle is not None:
+            handle.close()
     lookups: list[dict[tuple[int, str, int, int], np.ndarray]] = []
     for plan, output in zip(plans, outputs):
         output /= plan["counts"][:, None]
@@ -412,6 +504,33 @@ def _truths_from_lookup(
     return result
 
 
+def _write_bootstrap_input_chunk(
+    output_path: Path,
+    inputs: dict[tuple[int, str, str], list[dict[str, np.ndarray]]],
+) -> list[str]:
+    """Write one bounded bootstrap-input chunk and return its encoded keys."""
+
+    input_fields = (
+        "cross_left_a", "cross_right_a", "cross_left_b", "cross_right_b",
+        "meas_left_a", "meas_left_b", "meas_right_a", "meas_right_b",
+        "joint_left_a", "joint_left_b", "joint_right_a", "joint_right_b",
+    )
+    input_arrays: dict[str, np.ndarray] = {}
+    input_keys: list[str] = []
+    for (minimum_cells, source, metric), values in inputs.items():
+        if not values:
+            continue
+        encoded = f"{minimum_cells}__{source}__{metric}"
+        input_keys.append(encoded)
+        for field in input_fields:
+            input_arrays[f"{encoded}__{field}"] = np.stack([value[field] for value in values]).astype(np.float32)
+    if not input_arrays:
+        return []
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(output_path, **input_arrays)
+    return sorted(input_keys)
+
+
 def _run_thresholds(
     contexts: dict[str, dict[str, Any]],
     labels: list[str],
@@ -420,7 +539,11 @@ def _run_thresholds(
     budgets_by_minimum: dict[int, dict[str, int]],
     *,
     seed_chunk: int,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    resampling_mode: str = "split_half",
+    split_seeds: tuple[int, ...] = SPLIT_SEEDS,
+    bootstrap_input_dir: Path | None = None,
+    bootstrap_input_stem: str | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[tuple[int, str, str], list[dict[str, np.ndarray]]], list[dict[str, Any]]]:
     floor_rows: list[dict[str, Any]] = []
     inputs: dict[tuple[int, str, str], list[dict[str, Any]]] = {
         (minimum, source, metric): []
@@ -428,12 +551,22 @@ def _run_thresholds(
         for source in CONTEXTS
         for metric in METRICS
     }
-    for start in range(0, len(SPLIT_SEEDS), max(1, int(seed_chunk))):
-        selected_seeds = SPLIT_SEEDS[start:start + max(1, int(seed_chunk))]
+    stream_files: list[dict[str, Any]] = []
+    for start in range(0, len(split_seeds), max(1, int(seed_chunk))):
+        selected_seeds = split_seeds[start:start + max(1, int(seed_chunk))]
+        active_inputs = inputs if bootstrap_input_dir is None else {
+            (minimum, source, metric): []
+            for minimum in (MIN_CELLS_PRIMARY, MIN_CELLS_SENSITIVITY)
+            for source in CONTEXTS
+            for metric in METRICS
+        }
         plans_by_context: dict[str, list[dict[str, Any]]] = {}
         for context_id in CONTEXTS:
             plans_by_context[context_id] = [
-                _seed_plan(contexts[context_id], labels, budgets_by_minimum, seed, context_id)
+                _seed_plan(
+                    contexts[context_id], labels, budgets_by_minimum, seed, context_id,
+                    resampling_mode=resampling_mode,
+                )
                 for seed in selected_seeds
             ]
         lookups_by_context: dict[str, list[dict[tuple[int, str, int, int], np.ndarray]]] = {}
@@ -478,7 +611,7 @@ def _run_thresholds(
                         cross_d = 0.5 * (_d(mean_left[0], mean_right[0]) + _d(mean_left[1], mean_right[1]))
                         meas_left = _d(mean_left[0], mean_left[1])
                         meas_right = _d(mean_right[0], mean_right[1])
-                        inputs[(minimum_cells, source, metric)].append({
+                        active_inputs[(minimum_cells, source, metric)].append({
                             "cross_left_a": mean_left[0],
                             "cross_right_a": mean_right[0],
                             "cross_left_b": mean_left[1],
@@ -522,11 +655,33 @@ def _run_thresholds(
                                 "joint_floor_max_d": max(joint_left, joint_right),
                                 "delta_meas": cross_d - max(meas_left, meas_right),
                                 "delta_joint": cross_d - max(joint_left, joint_right),
-                                "raw_split_contract": "raw cells; independent half A/B within context×perturbation; controls split independently",
-                                "budget_contract": "floor(min(n_left,n_right)/2) cells per half",
+                                "raw_split_contract": (
+                                    "raw cells; independent full-size with-replacement pseudo-replicates within "
+                                    "context×perturbation; controls resampled independently"
+                                    if resampling_mode == "full_size_nonparametric"
+                                    else "raw cells; independent half A/B within context×perturbation; controls split independently"
+                                ),
+                                "budget_contract": (
+                                    "min(n_left,n_right) cells per full-size pseudo-replicate"
+                                    if resampling_mode == "full_size_nonparametric"
+                                    else "floor(min(n_left,n_right)/2) cells per half"
+                                ),
                                 "refit_per_metric": 0,
                             })
         print(f"[replication-lock] completed seeds {selected_seeds[0]}-{selected_seeds[-1]}", flush=True)
+        if bootstrap_input_dir is not None:
+            chunk_stem = bootstrap_input_stem or "formal_v2_claim_lock_replication_bootstrap"
+            chunk_path = bootstrap_input_dir / f"{chunk_stem}_bootstrap_chunk_{selected_seeds[0]}_{selected_seeds[-1]}.npz"
+            encoded_keys = _write_bootstrap_input_chunk(chunk_path, active_inputs)
+            if not encoded_keys:
+                raise ValueError(f"no bootstrap inputs were written for seeds {selected_seeds}")
+            stream_files.append({
+                "path": chunk_path,
+                "split_seeds": [int(seed) for seed in selected_seeds],
+                "keys": encoded_keys,
+            })
+    if bootstrap_input_dir is not None:
+        return [], floor_rows, {}, stream_files
     summary_rows: list[dict[str, Any]] = []
     for (minimum_cells, source, metric), values in inputs.items():
         if not values:
@@ -550,13 +705,17 @@ def _run_thresholds(
             "split_seed_start": int(SPLIT_SEEDS[0]),
             "split_seed_end": int(SPLIT_SEEDS[-1]),
             "bootstrap_unit": "matched perturbation label; each draw selects one measurement seed and one unordered model-member pair",
-            "measurement_definition": "fixed source-frozen mean prediction versus independent raw-cell half A/B truths",
+            "measurement_definition": (
+                "fixed source-frozen mean prediction versus independent full-size with-replacement raw-cell pseudo-replicates"
+                if resampling_mode == "full_size_nonparametric"
+                else "fixed source-frozen mean prediction versus independent raw-cell half A/B truths"
+            ),
             "joint_definition": "source-frozen model member pair crossed with independent truth halves",
             "metric_entrypoint": "same delta cosine, pinned Systema centroid-accuracy, and absolute-effect-rank implementation as Frangieh Claim Lock",
             "refit_per_metric": 0,
             **stats,
         })
-    return summary_rows, floor_rows
+    return summary_rows, floor_rows, inputs, stream_files
 
 
 def _write_executed_boundary(
@@ -605,41 +764,82 @@ def _write_executed_boundary(
     return output_path
 
 
-def run(root: Path, *, seed_chunk: int = 2) -> dict[str, Any]:
+def run(
+    root: Path,
+    *,
+    seed_chunk: int = 2,
+    resampling_mode: str = "split_half",
+    seed_start: int = 0,
+    seed_stop: int | None = None,
+    output_stem: str | None = None,
+    stream_bootstrap_inputs: bool = False,
+) -> dict[str, Any]:
+    if resampling_mode not in {"split_half", "full_size_nonparametric"}:
+        raise ValueError("resampling_mode must be split_half or full_size_nonparametric")
+    if seed_start < 0 or seed_start >= len(SPLIT_SEEDS):
+        raise ValueError("seed_start must index the declared 30-seed schedule")
+    if seed_stop is None:
+        seed_stop = len(SPLIT_SEEDS)
+    if seed_stop <= seed_start or seed_stop > len(SPLIT_SEEDS):
+        raise ValueError("seed_stop must be greater than seed_start and within the declared 30-seed schedule")
+    selected_split_seeds = tuple(SPLIT_SEEDS[seed_start:seed_stop])
     root = root.resolve()
     registry_report, selected = _load_registry_decision(root)
     contexts = {context_id: _load_context(root / RAW_PATHS[context_id]) for context_id in CONTEXTS}
+    print("[replication-lock] contexts loaded", flush=True)
     labels = sorted(set(contexts[CONTEXTS[0]]["target_counts"]) & set(contexts[CONTEXTS[1]]["target_counts"]))
     if len(labels) < 200:
         raise ValueError("selected replication pair has fewer than 200 exact shared perturbations")
     panel = _panel_for_contexts(root, contexts)
+    _attach_panel_caches(root, contexts, panel)
+    print(f"[replication-lock] panel ready genes={len(panel)} cache={all('normalized_panel' in contexts[key] for key in CONTEXTS)}", flush=True)
+    output_dir = root / "artifacts/manifests"
+    source_dir = root / "artifacts/source_data"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    source_dir.mkdir(parents=True, exist_ok=True)
+    stem = output_stem or (
+        "formal_v2_claim_lock_replication_nadig_fullsize"
+        if resampling_mode == "full_size_nonparametric"
+        else "formal_v2_claim_lock_replication_nadig"
+    )
     full_profiles = {
         context_id: _aggregate_full_profiles(contexts[context_id], labels, panel)
         for context_id in CONTEXTS
     }
+    print("[replication-lock] full profiles ready", flush=True)
     fold_ids = _fold_ids(labels)
     predictions = _fit_source_predictions(labels, full_profiles, panel, fold_ids)
+    print("[replication-lock] source-frozen predictions ready", flush=True)
     budgets_by_minimum = {
-        minimum: _budgets(contexts, labels, minimum)
+        minimum: _budgets(contexts, labels, minimum, resampling_mode=resampling_mode)
         for minimum in (MIN_CELLS_PRIMARY, MIN_CELLS_SENSITIVITY)
     }
+    if resampling_mode == "full_size_nonparametric":
+        # The existing split-half min-40 artifact is the prespecified
+        # sensitivity. Do not recompute it inside the more expensive
+        # full-size primary pass.
+        budgets_by_minimum[MIN_CELLS_SENSITIVITY] = {}
     if "control" not in budgets_by_minimum[MIN_CELLS_PRIMARY]:
         raise ValueError("matched controls do not satisfy the primary split-half budget")
-    summary_rows, floor_rows = _run_thresholds(
+    print(f"[replication-lock] budgets ready primary={len(budgets_by_minimum[MIN_CELLS_PRIMARY]) - 1}", flush=True)
+    stream_bootstrap_inputs = bool(stream_bootstrap_inputs)
+    summary_rows, floor_rows, bootstrap_inputs, stream_files = _run_thresholds(
         contexts,
         labels,
         panel,
         predictions,
         budgets_by_minimum,
         seed_chunk=seed_chunk,
+        resampling_mode=resampling_mode,
+        split_seeds=selected_split_seeds,
+        bootstrap_input_dir=output_dir if stream_bootstrap_inputs else None,
+        bootstrap_input_stem=stem if stream_bootstrap_inputs else None,
     )
-    if not summary_rows or any(row["n_split_seeds"] != len(SPLIT_SEEDS) for row in summary_rows):
-        raise ValueError("replication did not produce all 30 split seeds for every threshold/source/metric")
-    output_dir = root / "artifacts/manifests"
-    source_dir = root / "artifacts/source_data"
-    output_dir.mkdir(parents=True, exist_ok=True)
-    source_dir.mkdir(parents=True, exist_ok=True)
-    stem = "formal_v2_claim_lock_replication_nadig"
+    if stream_bootstrap_inputs:
+        if not floor_rows or len(set(int(row["split_seed"]) for row in floor_rows)) != len(selected_split_seeds):
+            raise ValueError("streamed replication did not produce every requested split seed")
+    elif not summary_rows or any(row["n_split_seeds"] != len(selected_split_seeds) for row in summary_rows):
+        raise ValueError("replication did not produce every requested split seed for every threshold/source/metric")
     prediction_path = source_dir / f"{stem}_predictions.npz"
     np.savez_compressed(
         prediction_path,
@@ -655,10 +855,46 @@ def run(root: Path, *, seed_chunk: int = 2) -> dict[str, Any]:
     floor_path = output_dir / f"{stem}_floors.csv"
     pd.DataFrame(summary_rows).to_csv(summary_path, index=False)
     pd.DataFrame(floor_rows).to_csv(floor_path, index=False)
+    if stream_bootstrap_inputs:
+        input_keys = sorted({key for item in stream_files for key in item["keys"]})
+        serialized_stream_files = [
+            {
+                "path": Path(item["path"]).relative_to(root).as_posix(),
+                "split_seeds": [int(seed) for seed in item["split_seeds"]],
+                "keys": list(item["keys"]),
+            }
+            for item in stream_files
+        ]
+        input_path = output_dir / f"{stem}_bootstrap_inputs.json"
+        input_path.write_text(json.dumps({"files": serialized_stream_files, "keys": input_keys}, indent=2) + "\n", encoding="utf-8")
+    else:
+        input_path = output_dir / f"{stem}_bootstrap_inputs.npz"
+        input_arrays: dict[str, np.ndarray] = {}
+        input_fields = (
+            "cross_left_a", "cross_right_a", "cross_left_b", "cross_right_b",
+            "meas_left_a", "meas_left_b", "meas_right_a", "meas_right_b",
+            "joint_left_a", "joint_left_b", "joint_right_a", "joint_right_b",
+        )
+        input_keys = []
+        for (minimum_cells, source, metric), values in bootstrap_inputs.items():
+            if not values:
+                continue
+            encoded = f"{minimum_cells}__{source}__{metric}"
+            input_keys.append(encoded)
+            for field in input_fields:
+                input_arrays[f"{encoded}__{field}"] = np.stack([value[field] for value in values]).astype(np.float32)
+        np.savez_compressed(input_path, **input_arrays)
+        serialized_stream_files = []
+    if resampling_mode == "full_size_nonparametric":
+        split_half_sensitivity = _budgets(contexts, labels, MIN_CELLS_SENSITIVITY, resampling_mode="split_half")
+        sensitivity_count = len(split_half_sensitivity) - ("control" in split_half_sensitivity)
+    else:
+        sensitivity_count = len(budgets_by_minimum[MIN_CELLS_SENSITIVITY]) - ("control" in budgets_by_minimum[MIN_CELLS_SENSITIVITY])
     report = {
         "schema_version": 1,
         "benchmark_id": "ptl_context_v2_independent_replication_claim_lock_v1",
         "status": "independent_replication_claim_lock_executed",
+        "resampling_mode": resampling_mode,
         "candidate_id": CANDIDATE_ID,
         "study": "NadigOConner2024",
         "contexts": [CONTEXT_LABELS[key] for key in CONTEXTS],
@@ -686,13 +922,23 @@ def run(root: Path, *, seed_chunk: int = 2) -> dict[str, Any]:
         "folds": FOLDS,
         "fold_seed": SPLIT_SEED,
         "model_seeds": list(MODEL_SEEDS),
-        "split_seeds": list(SPLIT_SEEDS),
+        "split_seeds": list(selected_split_seeds),
+        "seed_range_indices": [int(seed_start), int(seed_stop)],
+        "bootstrap_input_path": input_path.relative_to(root).as_posix(),
+        "bootstrap_input_keys": input_keys,
+        "bootstrap_input_files": serialized_stream_files,
+        "streamed_bootstrap_inputs": stream_bootstrap_inputs,
         "bootstrap_draws": BOOTSTRAP_DRAWS,
         "thresholds": {
             "primary_min20": int(len(budgets_by_minimum[MIN_CELLS_PRIMARY]) - ("control" in budgets_by_minimum[MIN_CELLS_PRIMARY])),
-            "sensitivity_min40": int(len(budgets_by_minimum[MIN_CELLS_SENSITIVITY]) - ("control" in budgets_by_minimum[MIN_CELLS_SENSITIVITY])),
+            "sensitivity_min40": int(sensitivity_count),
         },
-        "measurement_floor_definition": "matched raw-cell split-half truth with fixed source-frozen prediction",
+        "sensitivity_report": "artifacts/manifests/formal_v2_claim_lock_replication_nadig.csv" if resampling_mode == "full_size_nonparametric" else None,
+        "measurement_floor_definition": (
+            "matched full-size nonparametric raw-cell truth with fixed source-frozen prediction"
+            if resampling_mode == "full_size_nonparametric"
+            else "matched raw-cell split-half truth with fixed source-frozen prediction"
+        ),
         "joint_floor_definition": "fixed source-frozen model member pair crossed with matched independent truth halves",
         "metric_policy": "same labels, prediction vectors, panel, split seeds, and bootstrap unit across delta cosine, Systema, and effect-rank; no per-metric refit",
         "guide_semantics_policy": "guide_id remains an audit field; perturbations are scored at the exact perturbation-label level, not as single-sgRNA identities",
@@ -708,8 +954,21 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--seed-chunk", type=int, default=2)
+    parser.add_argument("--resampling-mode", choices=("split_half", "full_size_nonparametric"), default="split_half")
+    parser.add_argument("--seed-start", type=int, default=0)
+    parser.add_argument("--seed-stop", type=int, default=None)
+    parser.add_argument("--output-stem", default=None)
+    parser.add_argument("--stream-bootstrap-inputs", action="store_true")
     args = parser.parse_args()
-    result = run(args.root.resolve(), seed_chunk=args.seed_chunk)
+    result = run(
+        args.root.resolve(),
+        seed_chunk=args.seed_chunk,
+        resampling_mode=args.resampling_mode,
+        seed_start=args.seed_start,
+        seed_stop=args.seed_stop,
+        output_stem=args.output_stem,
+        stream_bootstrap_inputs=args.stream_bootstrap_inputs,
+    )
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
 
