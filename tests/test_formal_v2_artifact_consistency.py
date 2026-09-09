@@ -208,3 +208,25 @@ def test_claim_lock_source_frozen_and_measurement_artifacts_are_materialized() -
     guide = json.loads((MANIFESTS / "formal_v2_claim_lock_guide_id_semantics.json").read_text(encoding="utf-8"))
     assert guide["status"] == "guide_id_semantics_audited_not_single_sgrna_identity"
     assert guide["risk_evaluated"] is False
+
+
+def test_nadig_figure_and_paper_lock_match_replication_artifacts() -> None:
+    figure = json.loads((MANIFESTS / "formal_fig3_replication_boundary.json").read_text(encoding="utf-8"))
+    assert "formal_v2_claim_lock_replication_nadig.csv" in " ".join(figure["source_data"])
+    assert "formal_v2_claim_lock_replication_nadig_floors.csv" in " ".join(figure["source_data"])
+    assert "formal_v2_claim_lock_guide_id_semantics.json" not in " ".join(figure["source_data"])
+    assert "supported independent-context provenance" in figure["claim"]
+
+    paper = (ROOT / "paper/iclr2027/main.tex").read_text(encoding="utf-8")
+    assert "supported independent-context" in paper
+    assert "fail the" not in paper[paper.index("\\caption{\\textbf{Outcome-blind replication"):paper.index("\\label{fig:replication}")]
+    assert "no stable excess above matched" in paper
+
+    summary = pd.read_csv(MANIFESTS / "formal_v2_claim_lock_replication_nadig.csv")
+    primary = summary.loc[summary["analysis_label"].eq("primary_min20")]
+    means = primary.groupby("metric")[["cross_d", "joint_floor_d"]].mean()
+    assert set(means.index) == {"delta_cosine", "systema_centroid_accuracy", "absolute_effect_rank_agreement"}
+    assert (means["cross_d"] >= means["joint_floor_d"]).all()
+    assert (summary["delta_joint_ci_low"] < 0).all()
+    assert (summary["delta_joint_ci_high"] > 0).all()
+    assert set(summary["analysis_label"]) == {"primary_min20", "sensitivity_min40"}

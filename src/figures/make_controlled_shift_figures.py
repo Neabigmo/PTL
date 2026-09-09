@@ -189,17 +189,26 @@ def make_measurement_figure() -> tuple[list[str], dict[str, object]]:
 
 
 def make_replication_boundary_figure() -> tuple[list[str], dict[str, object]]:
-    """Show the outcome-blind registry, selected replication and its boundary."""
+    """Show the outcome-blind Nadig replication and its measurement boundary."""
 
     registry = pd.read_csv(ROOT / "artifacts/manifests/reordering_replication_candidate_registry.csv")
     report = json.loads((ROOT / "artifacts/manifests/reordering_replication_candidate_registry.json").read_text(encoding="utf-8"))
-    guide = json.loads((ROOT / "artifacts/manifests/formal_v2_claim_lock_guide_id_semantics.json").read_text(encoding="utf-8"))
     recalibration = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_recalibration_counterfactual.csv")
-    fig = plt.figure(figsize=(7.25, 6.25))
-    grid = fig.add_gridspec(2, 2, width_ratios=[0.95, 1.05], height_ratios=[1.0, 1.0], hspace=0.56, wspace=0.42)
+    summary = pd.read_csv(ROOT / "artifacts/manifests/formal_v2_claim_lock_replication_nadig.csv")
+    summary["analysis_label"] = summary["analysis_label"].astype(str)
+    summary["metric"] = summary["metric"].astype(str)
+    metric_order = ["delta_cosine", "systema_centroid_accuracy", "absolute_effect_rank_agreement"]
+    metric_labels = {
+        "delta_cosine": "delta cosine",
+        "systema_centroid_accuracy": "Systema",
+        "absolute_effect_rank_agreement": "effect-rank",
+    }
+    metric_colors = {"delta_cosine": BLUE, "systema_centroid_accuracy": TEAL, "absolute_effect_rank_agreement": PURPLE}
+    fig = plt.figure(figsize=(7.25, 6.10))
+    grid = fig.add_gridspec(2, 2, width_ratios=[0.95, 1.05], height_ratios=[1.0, 1.05], hspace=0.53, wspace=0.42)
 
     ax = fig.add_subplot(grid[0, 0])
-    panel(ax, "a", "Replication selection is frozen before risk")
+    panel(ax, "a", "Outcome-blind selection precedes risk")
     ax.axis("off")
     stages = [(0.06, "metadata\nscan", f"{report['candidate_count']} pairs", BLUE), (0.37, "eligibility\ngate", f"{report['eligible_candidate_count']} pass", TEAL), (0.68, "Claim Lock\nrisk", "Nadig · once", CORAL)]
     for index, (x, title, detail, color) in enumerate(stages):
@@ -212,55 +221,41 @@ def make_replication_boundary_figure() -> tuple[list[str], dict[str, object]]:
     ax.text(0.5, 0.07, "No target predictions, risks or inversions entered candidate selection.", transform=ax.transAxes, ha="center", va="center", fontsize=5.9, color=SLATE)
 
     ax = fig.add_subplot(grid[0, 1])
-    panel(ax, "b", "One provenance-supported overlap is audited")
-    available = registry.loc[registry["file_a_available"] & registry["file_b_available"]].copy().sort_values("exact_shared_perturbation_count", ascending=False).head(10)
-    if not available.empty:
-        y = np.arange(len(available))
-        status_colors = {"supported_independent_context": TEAL, "confounded": GOLD, "unresolved": CORAL}
-        ax.barh(y, available["exact_shared_perturbation_count"], color=[status_colors.get(str(value), SLATE) for value in available["batch_context_status"]], alpha=0.88)
-        ax.axvline(200, color=NAVY, ls="--", lw=0.8, label="shared-label threshold")
-        def short_candidate(value: object) -> str:
-            text = str(value).replace("local_", "")
-            if text == "nadig_hepg2_vs_jurkat":
-                return "Nadig HepG2\nvs Jurkat"
-            if "k562_essential_vs_rpe1" in text:
-                return "Replogle K562 essential\nvs RPE1"
-            if "k562_essential_replogleweissman2022_k562_gwps" in text:
-                return "Replogle K562 essential\nvs GWPS"
-            if "k562_gwps_replogleweissman2022_rpe1" in text:
-                return "Replogle GWPS\nvs RPE1"
-            return text.replace("_", " ")[:28]
-        labels = [short_candidate(value) for value in available["candidate_id"]]
-        ax.set_yticks(y, labels, fontsize=4.8)
-        ax.invert_yaxis()
-        ax.set_xlabel("exact shared perturbations")
-        ax.legend(handles=[mpl.patches.Patch(color=TEAL, label="supported; selected"), mpl.patches.Patch(color=GOLD, label="confounded"), mpl.patches.Patch(color=CORAL, label="unresolved")], fontsize=5.0, loc="upper right", bbox_to_anchor=(1.0, 0.90))
-        selected_row = registry.loc[registry["candidate_id"].eq(report.get("selected_candidate"))]
-        if not selected_row.empty:
-            shared = int(selected_row.iloc[0]["exact_shared_perturbation_count"])
-            ax.text(0.02, 0.96, f"selected Nadig HepG2 ↔ Jurkat: {shared:,} shared labels\nClaim Lock: 1,255 (n≥20) / 345 (n≥40)", transform=ax.transAxes, va="top", fontsize=5.2, color=NAVY, bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.84, "pad": 1.8})
-        ax.text(0.02, 0.02, "colors encode predeclared provenance; no risk entered selection", transform=ax.transAxes, va="bottom", fontsize=5.0, color=SLATE)
-    else:
-        ax.text(0.5, 0.5, "No metadata-complete pair", ha="center", va="center", color=SLATE)
-        ax.axis("off")
+    panel(ax, "b", "Primary: cross-context ≈ joint")
+    primary = summary.loc[summary["analysis_label"].eq("primary_min20")]
+    means = primary.groupby("metric", sort=False)[["cross_d", "measurement_floor_d", "joint_floor_d"]].mean().reindex(metric_order)
+    x = np.arange(len(metric_order))
+    width = 0.22
+    for offset, column, label, color in [(-width, "cross_d", "cross-context", CORAL), (0.0, "measurement_floor_d", "measurement", GOLD), (width, "joint_floor_d", "joint", TEAL)]:
+        ax.bar(x + offset, means[column].to_numpy(dtype=float), width=width, label=label, color=color, alpha=0.90)
+    ax.set_xticks(x, [metric_labels[m] for m in metric_order], fontsize=5.6)
+    ax.set_ylabel("rank displacement / floor")
+    ax.set_ylim(0, 0.40)
+    ax.legend(fontsize=5.1, loc="upper left", ncol=3, handlelength=1.2, columnspacing=0.8)
+    ax.text(0.02, 0.86, "2,392 shared perturbations · 1,255 labels at n≥20", transform=ax.transAxes, va="top", fontsize=5.2, color=NAVY)
+    ax.text(0.02, 0.02, "three metrics; macro mean across HepG2 and Jurkat source contexts", transform=ax.transAxes, va="bottom", fontsize=4.9, color=SLATE)
 
     ax = fig.add_subplot(grid[1, 0])
-    panel(ax, "c", "guide_id is not a single-sgRNA identity")
-    representatives = pd.DataFrame(guide["representative_groups"])
-    if not representatives.empty:
-        colors = representatives["perturbation_label"].map({"A2M": CORAL, "ACSL3": BLUE, "control": SLATE}).fillna(TEAL)
-        ax.scatter(representatives["n_unique_guide_strings"], representatives["fraction_multi_token_cells"], s=24, c=colors, alpha=0.30, edgecolor="white", linewidth=0.35)
-        for label, group in representatives.groupby("perturbation_label", sort=False):
-            x_median = float(group["n_unique_guide_strings"].median())
-            y_median = float(group["fraction_multi_token_cells"].median())
-            color = {"A2M": CORAL, "ACSL3": BLUE, "control": SLATE}.get(label, TEAL)
-            ax.scatter([x_median], [y_median], s=54, c=[color], edgecolor=NAVY, linewidth=0.7, zorder=3)
-            offsets = {"A2M": (5, 10), "ACSL3": (5, -16), "control": (7, 5)}
-            ax.annotate(f"{label}\nmedian", (x_median, y_median), xytext=offsets.get(label, (5, 5)), textcoords="offset points", fontsize=5.2, color=NAVY, zorder=4)
-    ax.set_xlabel("unique guide strings per group")
-    ax.set_ylabel("fraction of cells with multiple tokens")
-    ax.set_ylim(-0.03, 0.75)
-    ax.text(0.02, 0.96, "combinatorial guide strings are audited metadata, not a single-guide split key", transform=ax.transAxes, va="top", fontsize=5.0, color=SLATE)
+    panel(ax, "c", "No stable excess at min20 or min40")
+    sensitivity = summary.loc[summary["analysis_label"].isin(["primary_min20", "sensitivity_min40"])]
+    grouped = sensitivity.groupby(["analysis_label", "metric"], sort=False)["delta_joint"].mean().reset_index()
+    lower = sensitivity.groupby(["analysis_label", "metric"], sort=False)["delta_joint_ci_low"].mean().reset_index(name="low")
+    upper = sensitivity.groupby(["analysis_label", "metric"], sort=False)["delta_joint_ci_high"].mean().reset_index(name="high")
+    grouped = grouped.merge(lower, on=["analysis_label", "metric"]).merge(upper, on=["analysis_label", "metric"])
+    threshold_order = ["primary_min20", "sensitivity_min40"]
+    positions = np.arange(len(threshold_order))
+    offsets = np.linspace(-0.22, 0.22, len(metric_order))
+    for offset, metric in zip(offsets, metric_order):
+        rows = grouped.loc[grouped["metric"].eq(metric)].set_index("analysis_label").reindex(threshold_order)
+        y = rows["delta_joint"].to_numpy(dtype=float)
+        yerr = np.vstack([y - rows["low"].to_numpy(dtype=float), rows["high"].to_numpy(dtype=float) - y])
+        ax.errorbar(positions + offset, y, yerr=yerr, fmt="o", ms=4.5, capsize=2.5, lw=1.0, color=metric_colors[metric], label=metric_labels[metric], zorder=3)
+    ax.axhline(0, color=NAVY, lw=0.8)
+    ax.set_xticks(positions, ["min20\n(n=1,255)", "min40\n(n=345)"], fontsize=5.7)
+    ax.set_ylabel("Δ joint floor")
+    ax.set_ylim(-0.065, 0.065)
+    ax.legend(fontsize=5.2, loc="upper right", ncol=1)
+    ax.text(0.02, 0.04, "all 6 bootstrap intervals cross zero", transform=ax.transAxes, fontsize=5.5, color=SLATE)
 
     ax = fig.add_subplot(grid[1, 1])
     panel(ax, "d", "Calibration changes scale, not rank")
@@ -274,7 +269,7 @@ def make_replication_boundary_figure() -> tuple[list[str], dict[str, object]]:
     ax.text(0.02, 0.78, "all 45 groups = 0", transform=ax.transAxes, fontsize=8.0, fontweight="bold", color=NAVY)
     ax.text(0.02, 0.62, "monotonic Platt maps can improve Brier\nbut cannot repair reordered reliability", transform=ax.transAxes, fontsize=5.8, color=SLATE, linespacing=1.35)
 
-    fig.suptitle("One bounded replication: provenance first, floors before interpretation", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
+    fig.suptitle("Independent replication confirms the measurement-limited boundary", x=0.03, y=1.015, ha="left", fontsize=11.5, fontweight="bold", color=NAVY)
     outputs = save_figure(fig, ROOT / "results/figures/iclr_formal/formal_fig3_replication_boundary")
     manifest = {
         "schema_version": 1,
@@ -283,7 +278,6 @@ def make_replication_boundary_figure() -> tuple[list[str], dict[str, object]]:
         "source_data": [
             "artifacts/manifests/reordering_replication_candidate_registry.csv",
             "artifacts/manifests/reordering_replication_candidate_registry.json",
-            "artifacts/manifests/formal_v2_claim_lock_guide_id_semantics.json",
             "artifacts/manifests/formal_v2_recalibration_counterfactual.csv",
             "artifacts/manifests/formal_v2_claim_lock_replication_nadig.csv",
             "artifacts/manifests/formal_v2_claim_lock_replication_nadig_floors.csv",

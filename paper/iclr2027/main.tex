@@ -43,44 +43,37 @@ deployment evidence, not as a frozen-predictor causal diagnostic. A train-only
 monotonic Platt recalibration changes probability calibration while producing
 zero AURC change and zero strict-order disagreements across 45
 environment--predictor groups.
-The broad formal benchmark contains 1,603 condition-level biological instances
-from eight semantically verified environments, three completed predictor
-families, an 8,229-gene shared evaluation panel, and a frozen 60/20/20
-biological-instance split. PTL is evaluated later as a deployment-safe probe;
-its transport evidence remains heterogeneous rather than being used to
-overstate portability.
+An outcome-blind second matched-context audit in Nadig HepG2/Jurkat covers
+2,392 shared perturbations and reaches the same qualitative boundary: across
+all three metrics and both cell-count thresholds, cross-context displacement
+shows no stable excess over the matched joint noise floor. PTL is evaluated
+later as a deployment-safe probe, with transport evidence reported as
+heterogeneous rather than portable by default.
 \end{abstract}
 
 \section{Introduction}
-Single-cell perturbation models turn large screens into predictions of
-cellular responses and thereby offer a way to prioritize experiments over a
-combinatorial intervention space. Their practical value is consequently not
-only the average fidelity of a screen, but whether a researcher can decide
-which predictions to trust before spending experimental budget. Predictors
-span matching baselines, linear perturbation models, generative models and
-graph neural networks such as \gears{}~\citep{norman2019manifolds,lotfollahi2019scgen,bunne2023cellot,lotfollahi2023cpa,roohani2023gears}.
-Each model may expose an uncertainty score, but a score learned in a K562
-screen need not have the same meaning in RPE1, iPSC-derived neurons or
-patient-derived melanoma.
+Single-cell perturbation models turn large screens into predictions that can
+prioritize experiments over a combinatorial intervention space. Their value
+therefore depends not only on average fidelity, but on whether a researcher
+can decide which predictions to trust before spending experimental budget.
+Predictors span matching, linear, generative and graph-based models such as
+\gears{}~\citep{norman2019manifolds,lotfollahi2019scgen,bunne2023cellot,lotfollahi2023cpa,roohani2023gears};
+an uncertainty score learned in K562 need not mean the same thing in RPE1,
+iPSC-derived neurons or patient-derived melanoma.
 
-Accuracy alone does not settle this decision problem. Recent analyses show
-that deep perturbation predictors do not yet reliably outperform simple
-linear baselines~\citep{ahlmann2025simple,wong2025simple}, while Systema
-shows that control-referenced metrics can be inflated by systematic variation
-and that perturbation-specific evaluation is substantially harder
-\citep{systema2025,scperteval2026}. These results make the ordering of
-trusted versus risky predictions an object of interest in its own right, not
-an afterthought to a single benchmark score.
+Accuracy alone does not settle this decision problem. Deep perturbation
+predictors do not yet reliably outperform simple linear baselines, while
+Systema and scPertEval show that reference construction, split design and
+metric choice can change conclusions~\citep{ahlmann2025simple,wong2025simple,systema2025,scperteval2026}.
+The ordering of trusted versus risky predictions is therefore an object in
+its own right, not an afterthought to one benchmark score.
 
-Uncertainty, calibration and selective-prediction work provides tools for
-turning scores into decisions, including calibration maps, abstention rules
-and distribution-shift audits~\citep{guo2017calibration,geifman2017selective,ovadia2019uncertainty,liang2024selective}.
-However, these tools usually ask whether a score tracks error in one task or
-whether a representation transports across domains; they do not establish
-that the identity of easy and hard perturbations survives a biological change
-\citep{jalaldoust2024transport}. We therefore study the narrower operational
-question of whether reliability ordering can be transported to a new setting
-without observing target outcomes.
+Calibration, selective prediction and shift audits turn scores into decisions
+\citep{guo2017calibration,geifman2017selective,ovadia2019uncertainty,liang2024selective},
+but usually ask whether a score tracks error in one task or whether a
+representation transports. They do not establish that the identity of easy
+and hard perturbations survives a biological change~\citep{jalaldoust2024transport}.
+We study that narrower operational question without observing target outcomes.
 
 Our central object is the identifiability boundary for reliability reordering:
 \begin{quote}
@@ -91,20 +84,20 @@ instability from identifiable context-specific excess, audit replication
 eligibility before looking at risk, and test whether monotonic recalibration
 can repair the ordering.}
 \end{quote}
+Before asking whether confidence transports across biological contexts, one
+must first establish that the reliability ordering it is supposed to track is
+reproducible above experimental measurement noise.
 We use \emph{Reliability Shift} only as an umbrella term for the broader
 difficulty, ranking and calibration audits.
 
-We make four contributions. First, we turn Frangieh into a Claim Lock ladder
-with a source-frozen primary estimand, a separately labelled context-adapted
-OOF secondary estimand, and a matched raw-cell measurement/joint noise audit.
-Second, we add an orthogonal
-CRISPRko/CRISPRi extension as an evaluation-only source-response persistence
-baseline, explicitly separating it from trained Frangieh predictors. Third,
-we show with a monotonic recalibration counterfactual that probability
-calibration cannot repair a strict reliability ordering. Fourth, we compare
-PTL with an equal-capacity U-only probe, audit prospective source selection
-and modern-model validity, and retain negative transport evidence rather than
-tuning it away.
+We make four contributions. First, source-frozen reliability orderings vary
+substantially across matched biological contexts, while matched raw-cell
+resampling produces instability of comparable magnitude. Second, this
+measurement-limited boundary reproduces in an outcome-blind Nadig
+HepG2/Jurkat audit across three fidelity definitions. Third, monotone
+recalibration changes probability scale but cannot repair an unstable ordering.
+Fourth, prospective transport remains heterogeneous, so PTL is reported as a
+deployment-side probe rather than a universal reliability estimator.
 
 \begin{figure*}[t]
   \centering
@@ -155,158 +148,85 @@ environment-first averages, paired hierarchical bootstrap intervals, risk at
 \end{figure*}
 
 \subsection{Same confidence, different realized risk}
-We fit predictor-relative confidence bins on calibration-side scores and apply
-those fixed bins to untouched test rows. Within each bin we report the global
-risk, the between-environment risk variance, the maximum environment gap and a
-weighted absolute deviation of environment means from the global bin mean,
-which we call \emph{contextual grouping loss}. Matched-confidence pairs are
-formed from the bin assignment alone; their outcome differences are measured
-  only afterward. A hierarchical environment--biological-instance bootstrap
-  provides uncertainty. This makes the title's phenomenon quantitative without
-  turning measured target outcomes into deployment features.
-  The corrected grouping-loss analysis aggregates within-bin quantities rather
-  than recomputing them on the unconditioned test frame. It reports conditional
-  contextual grouping loss, matched-confidence same- and cross-environment
-  risk gaps, their difference, and a confidence-bin-weighted maximum gap, with
-  hierarchical bootstrap intervals. These statistics quantify residual
-  heterogeneity after confidence conditioning without treating the statistic as
-  a new generic calibration concept.
+We fit predictor-relative confidence bins on calibration rows and apply them
+unchanged to held-out test rows. Conditional grouping loss, matched-confidence
+risk gaps and their hierarchical environment--instance bootstrap intervals
+quantify residual heterogeneity after confidence conditioning; the audit
+never turns measured target outcomes into deployment features. Full grouping
+definitions and the matched-confidence null are in the supplement.
 
 \subsection{Controlled Shift Ladder: difficulty and ranking components}
-The controlled Frangieh ladder provides the paper's Claim Lock diagnostic. For
-each condition pair we retain only the common perturbation labels and keep the
-source predictor fixed while changing the target outcome. The shared five-fold
-assignment contains 243 labels. Across the three source contexts and three
-fidelity definitions, source-frozen pairwise risk inversions range from
-$0.10$ to $0.32$ and normalized rank displacement ranges from $0.073$ to
-$0.229$. These establish observable source-frozen rank displacement under a
-biological condition change, but they are not by themselves evidence that the
-change exceeds measurement noise or represents a stable context-specific
-excess. The same matched labels have
-response-program shifts of $0.79$--$0.85$ in mean $1-\cos$ distance. The
-direct, label-level response-shift/rank-displacement association is weak
-($\rho=0.04$--$0.17$), with perturbation-bootstrap intervals crossing zero in
-two of the three condition pairs. We therefore use response displacement to
-diagnose that the biological object has moved, not to claim that it explains a
-particular reliability reversal.
-For a pair of environments, the primary rank estimand is
-\begin{equation}
- D_{\mathrm{rank}} = \frac{\#\{(p,q):\operatorname{sign}(R_{p,e_1}-R_{q,e_1})
- \ne \operatorname{sign}(R_{p,e_2}-R_{q,e_2})\}}
- {\#\{(p,q):\text{both risk differences are strict}\}},
- \end{equation}
-and we also report the normalized perturbation rank displacement
-$d_p=|\operatorname{rank}_{e_1}(R_p)-\operatorname{rank}_{e_2}(R_p)|/(n-1)$.
-Ties are excluded from the strict denominator rather than assigned an
-arbitrary direction.
-The context-adapted five-fold OOF surface expands the matched condition sets to
-243--246 labels and gives $0.248$--$0.368$ strict pairwise inversion rates;
-these are retained as secondary deployment evidence because each condition has
-its own fitted predictor. The source-frozen primary is accompanied by a raw-cell
-measurement lock: QC-passed cells are independently split 30 times, controls
-are split independently, and each condition pair uses
-$\lfloor\min(n_{p,e_1},n_{p,e_2})/2\rfloor$ cells per half. Across the three
-source contexts and three metrics, matched-budget cross-context displacement
-does not clear the joint measurement-plus-model floor. The macro mean
-$\Delta_{\mathrm{joint}}$ is $-0.009$ for delta cosine, $+0.006$ for Systema
-centroid accuracy and $-0.036$ for absolute-effect rank agreement; the
-2,000-draw paired intervals generally cross zero. The real $n\geq40$
-sensitivity gives $-0.009$, $+0.006$ and $-0.034$, respectively, with no
-direction reversal except one pair-level Systema comparison whose interval
-still crosses zero. Thus the data support
-observed context-dependent rank instability, while not supporting a stable
-excess beyond the measured noise floor. Confidence tracking on the
-context-adapted surface is $0.122$--$0.152$, below the independent
-confidence-permutation null of $0.249$--$0.251$. The two surfaces are reported
-separately and are not pooled.
+The controlled Frangieh ladder is the Claim Lock diagnostic: common labels are
+scored by a source predictor held fixed while only the target outcome changes.
+Its 243-label five-fold surface shows source-frozen pairwise inversions of
+$0.10$--$0.32$ and normalized rank displacement of $0.073$--$0.229$ across
+three contexts and three fidelity definitions. Response programs also shift
+($1-\cos=0.79$--$0.85$), but the label-level association is weak
+($\rho=0.04$--$0.17$) and is descriptive, not causal.
 
-The decomposition makes the base-risk alternative explicit. Difficulty shift is
-the variation of $\mu_e=\mathbb{E}[R\mid E=e]$ across environments. Ranking
-shift is measured within each environment by Spearman and Kendall concordance
-between confidence and $-R$, together with environment-normalized selective
-AURC. Semantic/calibration shift is tested, but not presumed, by comparing the held-out error of
-$R=\alpha_e+h(c)$ with $R=\alpha_e+h_e(c)$, where confidence bins are defined
-on calibration rows and biological instances are the held-out units. We report
-the interaction improvement, hierarchical interval and an environment-wise
-permutation null. In the present data, difficulty shift and ranking
-heterogeneity are established, whereas the semantic interaction is not
-consistently supported; the claim is therefore limited to the identifiable
-difficulty and ranking components.
+The context-adapted OOF surface (243--246 labels; $0.248$--$0.368$ inversions)
+is secondary because each condition is refit. The source-frozen primary uses
+30 independent raw-cell half-splits, independent control splits and the
+pair-specific $\lfloor\min(n_{p,e_1},n_{p,e_2})/2\rfloor$ budget. The macro
+$\Delta_{\mathrm{joint}}$ is $-0.009$, $+0.006$ and $-0.036$ for delta cosine,
+Systema and effect-rank; the $n\geq40$ sensitivity gives $-0.009$, $+0.006$
+and $-0.034$. All paired intervals cross zero. Confidence tracking is
+$0.122$--$0.152$ versus a permutation null of $0.249$--$0.251$. Thus rank
+instability is observable, but a stable excess above joint noise is not.
+The complete estimands and secondary metrics are supplied in the supplement.
 
-The controlled Frangieh comparison uses shared perturbations across control,
-co-culture and IFN$\gamma$. The primary mean-matching surface has degenerate
-confidence for the Frangieh method panels, so its ranking entries are not
-counted as support. The matched Frangieh surfaces provide a microscope for
-condition changes within study, complementing the eight-environment telescope;
-coverage-limited axes remain explicitly marked in the machine-readable audit.
+The comparison uses shared perturbations across control, co-culture and
+IFN$\gamma$; degenerate mean-matching confidence is not counted as support.
+The matched ladder is a within-study microscope that complements the broad
+eight-environment surface; coverage limits remain explicit in the audit.
 
 \subsection{Response reprogramming across modality, time and cell context}
-The Frangieh OOF surface supplies a dense within-study condition ladder and is
-the primary trained-predictor evidence, while the matched head-to-head
-resource~\citep{headtohead2026crispr} supplies orthogonal axes with exact target
-intersections. We ingest guide-level SCEPTRE effects only for an
-evaluation-only source-response persistence baseline: a source target mean is
-persisted to destination guide outcomes, not pooled with the formal Frangieh
-predictor benchmark and not presented as a newly trained perturbation model.
-Guide modality is taken from the released reference table; ambiguous
-``either'' guides and negative controls are excluded. Day-14 K562 is compared
-separately for CRISPR knockout and CRISPR interference, while Day 7/10 and
-K562/A549 comparisons are stratified by the same modality. This design keeps
-the perturbation intersection fixed within every comparison and treats the
-response-program distance $G_p=1-\cos(\Delta y_{p,e_1},\Delta y_{p,e_2})$ as
-descriptive. In particular, a large $G_p$ is evidence that the measured
-response object changed, not evidence that it caused a reliability reversal.
-Across the six modality-stratified external comparisons, exact target
-intersections contain 22--25 targets, risk-order inversions are 12.0--36.4\%,
-and mean response-program shifts are $0.66$--$0.97$. The persistence baseline
-has zero confidence-tracking rate for these inverted pairs, which is a
-diagnostic failure of this source-only confidence signal rather than evidence
-that every perturbation model is uncalibratable.
+The Frangieh OOF surface is the primary trained-predictor evidence. The matched
+head-to-head resource~\citep{headtohead2026crispr} is an orthogonal,
+evaluation-only source-response persistence baseline, not a trained predictor
+and not pooled with Frangieh. Modality, time and cell-context comparisons keep
+exact target intersections fixed; across six contrasts they contain 22--25
+targets, with 12.0--36.4\% risk-order inversions and $0.66$--$0.97$ response
+shifts. This shows that the measured response object changes, not that every
+trained model must reorder or become uncalibratable. Full coverage and
+guide-semantics audits are in the supplement.
 
 \section{Replication boundary and calibration safeguard}
-An outcome-blind registry scanned 33 local same-study file pairs, including
-Nadig HepG2--Jurkat and Replogle K562--RPE1/GWPS overlaps. Four pairs were
-metadata-complete and had at least 200 exact shared perturbations, matched
-controls, the same RNA readout and strong guide-signature agreement. GEO
-describes Nadig as parallel HepG2/Jurkat screens using the same dual-sgRNA
-library family, day-7 harvest and 10x 3' v3 readout; batch IDs are therefore
-context-local. Replogle K562-essential--RPE1 is confounded by inseparable day-6
-versus day-7 harvest. No risk or inversion entered selection. The exact Claim
-Lock was executed once on Nadig: 2,392 shared perturbations, 6,606 genes, 30
-raw-cell splits and 2,000 paired bootstrap draws, retaining 1,255 labels at
-$n\geq20$ and 345 at $n\geq40$. This is a bounded audit, not a universal
-transport claim. Drepanos K562--A549 and knockout--interference files were
-not present locally.
-The guide audit also shows that $\texttt{guide\_id}$ contains combinatorial
-multi-token strings (median 47 unique strings per perturbation group), so it is
-not interpreted as a single-sgRNA identity or used as a primary split key.
+An outcome-blind registry scanned 33 local same-study file pairs. Nadig
+HepG2--Jurkat was the only eligible overlap after checking shared labels,
+controls, RNA readout, guide signatures and external provenance; GEO describes
+parallel screens with the same dual-sgRNA library family, day-7 harvest and
+10x 3' v3 readout, with batch IDs nested within context. Replogle
+K562-essential--RPE1 remains confounded by inseparable day-6 versus day-7
+harvest, and no risk or inversion entered selection. The fixed Claim Lock was
+run once on Nadig (2,392 shared perturbations; 6,606 genes; 30 raw-cell splits;
+2,000 paired bootstrap draws), retaining 1,255 labels at $n\geq20$ and 345 at
+$n\geq40$. Across both thresholds and all three metrics, the joint-floor
+intervals cross zero. The audit therefore reproduces the identifiability
+boundary, not a universal transport claim. Full provenance and guide-semantics
+decisions are in the supplement.
 
 \subsection{Recalibration cannot repair reordered reliability}
-The recalibration counterfactual makes the distinction operational. The
-calibration-side scalar score is mapped by a train-only monotonic Platt model
-and evaluated on untouched test rows. The map changes Brier score in some
-groups, but it preserves every comparable pairwise order: all 45 groups have
-zero order disagreements and zero AURC change. Isotonic regression is reported
-separately because its non-decreasing map can introduce ties. Formally, if
-$g$ is strictly increasing, then $C_i<C_j$ if and only if
-$g(C_i)<g(C_j)$, so strict order is preserved exactly. If $g$ is only
-non-decreasing, $C_i<C_j$ implies $g(C_i)\leq g(C_j)$: ties may be introduced,
-but an existing strict order cannot be reversed. The fitted Platt map is
-$g(C)=\sigma(aC+b)$; our implementation asserts $a>0$ before using it as a
-monotonic calibration contract. This rules out probability-scale recalibration
-as an explanation for the observed strict ordering change, while leaving open
-richer non-monotonic predictors.
+The calibration-side scalar score is mapped by a train-only monotonic Platt
+model and evaluated on untouched test rows. It changes Brier score in some
+groups but preserves every comparable order: all 45 groups have zero strict
+order disagreements and zero AURC change. A strictly increasing map preserves
+strict order exactly; a non-decreasing map may add ties but cannot reverse one.
+Our implementation asserts the fitted Platt slope $a>0$ in
+$g(C)=\sigma(aC+b)$. Thus probability-scale recalibration cannot explain the
+ordering change; richer non-monotonic predictors remain outside this test.
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{../../results/figures/iclr_formal/formal_fig3_replication_boundary.pdf}
-  \caption{\textbf{Outcome-blind replication boundary and safeguards.} (a) Candidate
-  selection is frozen before any target risk or inversion evaluation. (b) The
-  metadata-complete overlaps meet the shared-label threshold but fail the
-  unresolved batch/context provenance criterion. (c) The guide audit exposes
-  combinatorial guide strings and therefore prevents a false single-sgRNA
-  interpretation. (d) The independent calibration counterfactual confirms that
-  monotonic Platt maps preserve strict order.}
+  \caption{\textbf{Outcome-blind replication and safeguards.} (a) Candidate
+  selection is frozen before any target risk or inversion evaluation. (b) Nadig
+  HepG2/Jurkat is the only candidate with supported independent-context
+  provenance and passes the metadata gate; Replogle is excluded because harvest
+  time is confounded with cell context. (c) The fixed Nadig Claim Lock shows
+  substantial cross-context displacement but no stable excess above matched
+  measurement-plus-model noise across three metrics and both cell thresholds.
+  (d) Monotonic recalibration preserves strict score order.}
   \label{fig:replication}
 \end{figure*}
 
@@ -472,108 +392,72 @@ zero. Nadig is therefore one bounded same-predictor audit, not universal
 transportability. Tian has only one shared label and the head-to-head resource
 is an evaluation-only persistence baseline, so neither is a replication claim.
 
-The five-seed stability atlas is used to characterize, rather than tune,
-transport. Across the same 56 off-diagonal pairs per baseline, the mean
-transfer gain was $+0.0003$ for raw scalar UQ and $+0.0055$ for the equal-capacity
-U-only baseline; negative transfer occurred in 40.7\% and 36.4\% of the
-corresponding observations. A separate raw-cell split-half audit on Norman and
-RPE1 yielded 245 paired perturbations with median split-half cosine 0.814; 153
-of these pairs joined to the reliability surface for the risk-stratified audit.
-On the primary Norman mean-matching/PTL slice, low- versus high-reproducibility
-strata had mean risks $0.469$ versus $0.145$, within-stratum normalized AURCs
-$0.967$ versus $0.824$, and a corrected fixed-calibration-bin grouping loss of
-$0.085$ across the low/middle/high strata.  The reproducibility-stratum
-interaction cross-fit improved over the additive stratum-plus-bin null by
-$-0.007$, so this audit does not support a positive semantic-shift claim.
-Replogle/RPE1 contributed only four joined rows (three low and one middle),
-with no high-reproducibility stratum; it is therefore reported as coverage
-limited rather than used for a high-versus-low inference.  Reproducibility is
-used only for this evaluation/audit stratification and is not entered into
-PTL.  These are stability summaries, not additional tuning or a new
-superiority claim.
+The five-seed stability atlas and the Norman/RPE1 split-half audit characterize
+rather than tune transport. They show heterogeneous gains, nonzero negative
+transfer and a coverage-limited reproducibility interaction ($\Delta=-0.007$);
+reproducibility is never entered into PTL. Full secondary metrics and
+coverage tables are supplied in the supplement, not used for a new superiority
+claim.
 
 \section{Discussion}
-The experiments support a limitation-centered view of reliability. Reliability
-Shift is visible as changes in environment difficulty and within-environment
-ranking, while the Claim Lock shows that the observed controlled reordering is
-not yet a noise-excess result; the environment-dependent semantic component is
-reported only to the extent supported by its null test. PTL's additional deployment-side descriptors
-improve ranking in familiar settings and under predictor-family holdout, yet
-environment holdout does not produce a statistically established improvement.
-The prospective gating baseline makes fallback behavior explicit, but its
-selected-source harm rate is not lower than the ungated candidate-pair rate; it
-is therefore not a protective safeguard.
-
-Context is allowed deployment information, but it changes what transportability
-means; all headline PTL features remain target-outcome-free and explicit-ID-free.
+The experiments support a limitation-centered view. Across two matched-context
+audits, observed ordering changes do not stably exceed the joint instability
+of model fitting and ground-truth measurement. PTL can improve familiar-setting
+ranking, but environment holdout is not statistically established and the
+prospective gate is not protective: its selected-source harm is not below the
+ungated rate. Before confidence is transported, the ordering it tracks must be
+shown reproducible above experimental noise; here that condition is not met.
+All headline PTL features remain target-outcome-free and explicit-ID-free.
+The second audit does not rescue a context-causal interpretation; it reproduces
+the same identifiability boundary under a different matched study design. This
+distinction matters operationally: a high-confidence prediction can still be
+useful for prioritization, but its ranking should not be treated as transportable
+without a prospective measurement plan.
 
 \section{Related work and positioning}
-The first dispute is evaluative. Ahlmann--Eltze et al. show that deep
-perturbation predictors do not yet outperform simple linear baselines, whereas
-Systema argues that control-referenced scores can reward systematic variation
-and proposes perturbation-specific references~\citep{ahlmann2025simple,systema2025}.
-The scPertEval framework likewise emphasizes that metric choice, split design
-and reference construction are part of the scientific question
-\citep{scperteval2026}; independent work finds that simple controls can exceed
-deep models~\citep{wong2025simple}. These studies tell us how a model ranks on
-an evaluation surface, but do not ask whether the same perturbations remain
-easy or hard after a matched biological shift. We add that missing paired
-ordering question rather than claim a new leaderboard.
+The first dispute is evaluative: deep predictors do not yet reliably beat
+simple baselines, while Systema and scPertEval show that references, splits and
+metrics can change conclusions~\citep{ahlmann2025simple,wong2025simple,systema2025,scperteval2026}.
+These works do not ask whether the same perturbations remain easy or hard after
+a matched biological shift; our paired ordering question is complementary.
 
-The second line of work concerns biological context and generalization.
-Generalization benchmarks and context-aware virtual-cell proposals emphasize
-cellular context as a source of out-of-distribution variation
-\citep{generalizable2025benchmark,dibaeinia2026context,molina2026decomposition}.
-Frangieh et al. provide a patient-model, multimodal condition surface, while
-the matched CRISPRko/CRISPRi study supplies orthogonal modality, time and cell
-contexts~\citep{frangieh2021multimodal,headtohead2026crispr}. Those works
-measure response or prediction changes, but a response shift is not itself a
-reliability shift, and neither establishes universal reordering for all
-trained predictors. Our primary Frangieh OOF ladder tests the trained-model
-ordering directly; the external ladder is deliberately limited to an
-evaluation-only persistence baseline.
+The second line concerns context and generalization. Benchmarks, context-aware
+virtual-cell proposals, Frangieh and matched CRISPRko/CRISPRi screens establish
+that responses vary across biological settings~\citep{generalizable2025benchmark,dibaeinia2026context,molina2026decomposition,frangieh2021multimodal,headtohead2026crispr}.
+A response shift is not itself a reliability shift: our Frangieh OOF ladder
+tests trained-model ordering, while the external ladder is only a persistence
+baseline.
 
-The third line concerns uncertainty, calibration, selective prediction and
-transport. Calibration maps~\citep{guo2017calibration}, selective rules
-\citep{geifman2017selective,liang2024selective}, shift audits
-\citep{ovadia2019uncertainty}, grouping-loss analysis
-\citep{perezlebel2023grouping} and epistemic decision criteria
-\citep{melo2026epistemic} improve how scores are interpreted. Recent biological
-methods such as PRESCRIBE and the PertEMA reliability layer also target
-uncertainty-aware decisions~\citep{prescribe2025,shrestha2026pertema}.
-Our object is different: transport of a reliability ordering across biological
-contexts. We therefore test what monotonic recalibration cannot change, audit
-outcome-free source selection with explicit transport descriptors, and retain
-negative transfer instead of presenting PTL as a new uncertainty estimator.
+The third line concerns calibration, selective prediction and transport.
+Calibration and abstention maps, shift audits, grouping loss, epistemic
+criteria, PRESCRIBE and PertEMA improve score interpretation
+\citep{guo2017calibration,geifman2017selective,ovadia2019uncertainty,liang2024selective,perezlebel2023grouping,melo2026epistemic,prescribe2025,shrestha2026pertema}.
+Our object is different: whether a reliability ordering transports across
+contexts, including what monotonic recalibration cannot repair.
 
 \section{Limitations and reproducibility}
-The present claim is bounded by the eight-environment headline surface, one
-Nadig matched-context Claim Lock audit, and predictor families with a common
-validation/test contract. Frangieh remains a primary within-study diagnostic;
-Nadig is one bounded same-predictor audit, not a universal replication.
-The official \gears{} execution is separately audited with a condition-disjoint
-split, a dataset-native gene panel and persisted validation predictions for
-Norman and RPE1; GWPS remains test-only. The audit is not used to manufacture a
-cross-model superiority claim.
-We evaluate three canonical predictor families and conduct an independent
-official \gears{} audit; broader modern-model coverage remains future work.
-The GWPS local surface is
-coverage-limited, and its audit explicitly prevents it from being mistaken
-for a genome-wide surface. The reference-group audit is supplemented, but not
-replaced, by the two-dataset raw-cell split-half audit, so it cannot support a
-universal assay-reproducibility claim. Finally, the transfer predictor is near
-  chance in the strict five-split audit, the prospective gate retains nonzero regret and
-selected negative transfers, and the atlas is descriptive rather than causal.
+The claim is bounded by the eight-environment surface, three predictor families
+and one Nadig same-predictor Claim Lock; Nadig is not universal replication.
+Although its external study design supports independent biological contexts,
+the audit cannot remove every laboratory or processing difference and does not
+identify a causal mechanism. The official \gears{} run is a separate
+condition-disjoint, dataset-native audit, and GWPS remains coverage-limited and
+test-only. Broader model coverage and a universal assay-reproducibility claim
+remain future work; the atlas is descriptive, not causal, and the gate retains
+negative transfers.
 
-All primary outputs are regenerated from the fixed split, native predictor
-spaces and shared panel. The released bundle contains prediction contracts,
-deployment features, paired bootstrap intervals, transfer matrices,
-metric-robustness and fixed-budget tables, source-frozen prediction vectors,
-matched-budget measurement/joint floors, guide-coverage and replication-boundary
-manifests, split-half audit summaries, and editable vector figures with
-source-data manifests. Claims are downgraded whenever confidence intervals,
+All outputs are regenerated from fixed splits and native predictor spaces. The
+release contains prediction contracts, deployment features, bootstrap intervals,
+transfer and robustness tables, source-frozen vectors, matched measurement /
+joint floors, replication manifests, split-half audits and editable vector
+figures with source-data manifests. Claims are downgraded when intervals,
 stability or metric robustness do not support them.
 
+The supplement provides the complete estimands, outcome-blind registry fields,
+external provenance decisions and secondary metric tables needed to reproduce
+the compressed main-text claims.
+
+\clearpage
 \bibliographystyle{../../third_party/iclr2027/iclr2027_conference}
 \bibliography{../../manuscript/references}
 \end{document}

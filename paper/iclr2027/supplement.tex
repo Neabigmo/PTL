@@ -1,0 +1,134 @@
+\documentclass{article}
+\usepackage{../../third_party/iclr2027/iclr2027_conference,times}
+\input{../../third_party/iclr2027/math_commands.tex}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{url}
+
+\title{Supplement to ``Measurement Reliability Limits Claims of Context-Dependent Reliability Reordering in Single-Cell Perturbation Prediction''}
+\author{Anonymous Authors}
+
+\begin{document}
+\maketitle
+
+\section{Scope and artifact map}
+This supplement records the definitions and secondary diagnostics compressed out
+of the nine-page main text. It is an audit companion, not a second analysis
+surface: every number is generated from the same fixed splits, native predictor
+spaces and source-frozen artifacts. The canonical files are
+\texttt{artifacts/manifests/formal\_v2\_claim\_lock\_replication\_nadig.csv},
+\texttt{formal\_v2\_claim\_lock\_replication\_nadig\_floors.csv},
+\texttt{reordering\_replication\_candidate\_registry.json}, and the
+corresponding figure manifests.
+
+\section{Confidence conditioning and grouping loss}
+For each predictor--environment surface, confidence bins are learned from
+calibration rows only and applied unchanged to the held-out test rows. Let
+$B(c)$ be a confidence bin, $R_i$ the held-out continuous risk, and $E_i$ the
+environment. The conditional contextual grouping loss is the confidence-bin
+weighted absolute deviation of environment means from the global bin mean,
+\[
+ L_{\mathrm{group}} = \sum_b w_b\sum_e w_{e\mid b}
+ \left|\bar R_{e,b}-\bar R_b\right|.
+\]
+Matched-confidence pairs are formed from the bin assignment alone. Same- and
+cross-environment risk gaps are computed only after pairing, and uncertainty
+uses a hierarchical environment--biological-instance bootstrap. The
+confidence-permutation null preserves the bin counts while permuting confidence
+labels within the held-out evaluation surface. This prevents target outcomes
+from becoming deployment features and avoids recomputing the statistic on an
+unconditioned frame.
+
+\section{Controlled Frangieh Claim Lock}
+For shared perturbations $p,q$ in environments $e_1,e_2$, the primary strict
+inversion estimand is
+\[
+ D_{\mathrm{rank}} =
+ \frac{\#\{(p,q):\operatorname{sign}(R_{p,e_1}-R_{q,e_1})
+ \ne\operatorname{sign}(R_{p,e_2}-R_{q,e_2})\}}
+ {\#\{(p,q):\text{both risk differences are strict}\}}.
+\]
+Ties are excluded from the denominator. The perturbation-level displacement is
+\[
+ d_p=\frac{|\operatorname{rank}_{e_1}(R_p)-
+ \operatorname{rank}_{e_2}(R_p)|}{n-1}.
+\]
+The source predictor is fit once per shared-label fold and is never refit for
+the target outcome. The context-adapted OOF surface is reported separately,
+because it fits a predictor for each condition and is therefore a deployment
+diagnostic rather than a source-frozen causal test.
+
+The raw-cell lock independently partitions QC-passed cells within each
+context--perturbation stratum and independently partitions controls. For each
+split, each perturbation receives
+$\lfloor\min(n_{p,e_1},n_{p,e_2})/2\rfloor$ cells per half. Measurement floors
+compare two independent truth halves; model floors compare independent model
+members; the joint floor crosses a model-member pair with independent truth
+halves. The final estimand is
+\[
+ \Delta_{\mathrm{joint}} = D_{\mathrm{cross}}-
+ \max(D_{\mathrm{joint},e_1},D_{\mathrm{joint},e_2}).
+\]
+The fixed audit uses 30 split seeds, three model members, the delta-cosine,
+Systema centroid-accuracy and absolute-effect-rank entrypoints, and 2,000
+paired perturbation-bootstrap draws. The primary threshold is $n\geq20$; the
+pre-specified sensitivity is $n\geq40$. No sign-based selection or
+per-metric refitting is performed.
+
+\section{Outcome-blind replication registry}
+The registry scans local same-study file pairs before reading any prediction,
+risk or inversion result. Eligibility requires at least 200 exact shared
+perturbations, matched controls, the same RNA modality and readout,
+same/matched library evidence, median matched cells of at least 20, raw cells,
+and a provenance status other than \texttt{confounded}. Provenance is tri-state:
+\texttt{supported\_independent\_context}, \texttt{unresolved}, or
+\texttt{confounded}; the decision records its source, evidence type, batch to
+context mapping, nesting, technical replicates and whether the context
+comparison was part of the original design.
+
+The selected Nadig HepG2--Jurkat pair has 2,392 exact shared perturbations,
+same dual-sgRNA library family, parallel cell-line screens, day-7 harvest and
+10x 3' v3 readout. Its GEO design metadata supports biological context as the
+intended factor and places batch identifiers within context
+(\href{https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE264667}{GEO
+GSE264667}). The
+Replogle K562-essential--RPE1 pair is excluded because day-6 versus day-7
+harvest is inseparable from context
+(\href{https://plus.figshare.com/articles/dataset/_Mapping_information-rich_genotype-phenotype_landscapes_with_genome-scale_Perturb-seq_Replogle_et_al_2022_processed_Perturb-seq_datasets/20029387}{Figshare
+record 20029387}).
+The selected candidate is materialized before Claim Lock risk evaluation and
+the registry SHA256 is stored in the replication boundary manifest.
+
+\section{External response extension}
+The matched head-to-head CRISPRko/CRISPRi resource is an orthogonal biological
+extension. It uses guide-level SCEPTRE effects and a source-response persistence
+baseline: the source target mean is persisted to destination guide outcomes.
+It is not a trained perturbation predictor and is not pooled with the Frangieh
+benchmark. Guide modality is taken from the released reference table;
+ambiguous ``either'' guides and negative controls are excluded. Six
+modality-stratified contrasts contain 22--25 exact target intersections, with
+12.0--36.4\% risk-order inversions and 0.66--0.97 response-program shifts.
+These values are descriptive of the measured response object. Raw external CSVs
+remain outside Git; only the derived CSV/JSON summaries are canonical.
+
+The guide audit treats \texttt{guide\_id} as combinatorial metadata rather than
+a single-sgRNA identity: multi-token strings are retained for provenance and
+coverage inspection but never used as the primary split key.
+
+\section{Secondary metrics and reproducibility}
+The broad benchmark reports environment-first macro averages, paired
+hierarchical bootstrap intervals, risk at 50/80\% coverage, false-trust rate,
+Brier score, AUROC and AUPRC. Alternative metrics reuse saved predictions and
+do not refit per metric. Fixed-budget analyses reuse the same learned scores at
+20, 50 and 80\% budgets. These are robustness diagnostics, not new training or
+pooled superiority claims.
+
+The release also contains the fixed split assignment, prediction contracts,
+deployment features, transfer matrices, source-frozen prediction vectors,
+matched measurement/joint floors, replication and guide-coverage manifests,
+split-half audit summaries and editable vector figures. The local Nadig
+prediction NPZ is retained for reproducibility but is not pushed to GitHub
+because it exceeds the hosting file-size limit; its CSV summaries and hashes
+remain the reviewable record.
+
+\end{document}

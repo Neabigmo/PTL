@@ -5,7 +5,6 @@
   "source_data": [
     "artifacts/manifests/reordering_replication_candidate_registry.csv",
     "artifacts/manifests/reordering_replication_candidate_registry.json",
-    "artifacts/manifests/formal_v2_claim_lock_guide_id_semantics.json",
     "artifacts/manifests/formal_v2_recalibration_counterfactual.csv",
     "artifacts/manifests/formal_v2_claim_lock_replication_nadig.csv",
     "artifacts/manifests/formal_v2_claim_lock_replication_nadig_floors.csv"
