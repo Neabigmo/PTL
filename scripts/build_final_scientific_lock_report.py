@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import subprocess
 
+import numpy as np
 import pandas as pd
 
 
@@ -24,7 +26,106 @@ def _status(path: Path) -> str:
 def _git_release_clean(root: Path) -> bool:
     result = subprocess.run(["git", "-C", str(root), "status", "--porcelain"], capture_output=True, text=True, check=False)
     branch = subprocess.run(["git", "-C", str(root), "branch", "--show-current"], capture_output=True, text=True, check=False).stdout.strip()
-    return result.returncode == 0 and not result.stdout.strip() and bool(branch)
+    changed = [line for line in result.stdout.splitlines() if "FINAL_SCIENTIFIC_LOCK_REPORT.md" not in line]
+    return result.returncode == 0 and not changed and bool(branch)
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _decision_bootstrap_lock(root: Path, manifests: Path, master: pd.DataFrame) -> dict:
+    """Validate that the raw bootstrap is consumed by the canonical master."""
+    raw_path = manifests / "reliability_transport_measurement_depth_matched_fixed_decision_macro_bootstrap.csv"
+    risk_path = manifests / "reliability_transport_measurement_depth_matched_fixed_risks.csv"
+    summary_path = manifests / "reliability_transport_measurement_depth_matched_fixed_decision_macro_bootstrap_summary.csv"
+    report_path = manifests / "reliability_transport_measurement_depth_decision_macro_bootstrap_summary.json"
+    required = [raw_path, risk_path, summary_path, report_path]
+    if not all(path.is_file() for path in required):
+        return {"status": "fail", "reason": "missing_bootstrap_lineage_artifact", "missing": [path.relative_to(root).as_posix() for path in required if not path.is_file()]}
+    try:
+        report = _load_json(report_path)
+        raw_sha = _sha256(raw_path)
+        risk_sha = _sha256(risk_path)
+        summary_sha = _sha256(summary_path)
+        raw = pd.read_csv(raw_path, dtype={"cell_budget_label": "string"}, low_memory=False)
+        summary = pd.read_csv(summary_path, dtype={"cell_budget_label": "string"}, low_memory=False)
+        key = ["source_environment_id", "target_environment_id", "left_target_environment_id", "right_target_environment_id", "metric", "cell_budget_label", "decision_budget_fraction"]
+        draw_key = key + ["bootstrap_draw"]
+        numeric = ["retention", "regret", "normalized_regret", "boundary_inversion", "measurement_floor_regret", "excess_regret"]
+        budgets = sorted(pd.to_numeric(raw["decision_budget_fraction"], errors="raise").round(8).unique().tolist())
+        counts = raw.groupby(key, sort=True, observed=True).size()
+        directed = (
+            raw["source_environment_id"].astype(str).eq(raw["left_target_environment_id"].astype(str))
+            & raw["target_environment_id"].astype(str).eq(raw["right_target_environment_id"].astype(str))
+        ) | (
+            raw["source_environment_id"].astype(str).eq(raw["right_target_environment_id"].astype(str))
+            & raw["target_environment_id"].astype(str).eq(raw["left_target_environment_id"].astype(str))
+        )
+        finite = bool(np.isfinite(raw[numeric].to_numpy(dtype=float)).all())
+        raw_checks = {
+            "sha256_present_and_matching": report.get("raw_bootstrap_sha256") == raw_sha,
+            "risk_input_sha256_present_and_matching": report.get("risk_input_sha256") == risk_sha,
+            "rows_864000": len(raw) == 864000 and report.get("raw_rows") == 864000,
+            "valid_directed_groups_108": raw[key[:-1]].drop_duplicates().shape[0] == 108 and report.get("valid_directed_groups") == 108,
+            "exactly_2000_draws_per_key": bool((counts == 2000).all()),
+            "exactly_432_group_budget_keys": len(counts) == 432,
+            "draw_ids_0_to_1999": set(raw["bootstrap_draw"].astype(int).unique()) == set(range(2000)),
+            "no_duplicate_group_budget_draw_keys": not raw.duplicated(draw_key).any(),
+            "four_fixed_budgets": budgets == [0.05, 0.1, 0.2, 0.5],
+            "all_executed": set(raw["status"].astype(str).unique()) == {"executed"},
+            "declared_bootstrap_unit": set(raw["bootstrap_unit"].astype(str).unique()) == {"perturbation_label_then_measurement_seed"},
+            "directed_only": bool(directed.all()),
+            "finite_numeric_outputs": finite,
+        }
+        summary_checks = {
+            "summary_sha256_present_and_matching": report.get("summary_sha256") == summary_sha,
+            "summary_rows_432": len(summary) == 432 and report.get("summary_rows") == 432,
+            "summary_unique_keys_432": len(summary.drop_duplicates(key)) == 432,
+            "summary_status_executed": set(summary["status"].astype(str).unique()) == {"executed"},
+            "summary_raw_digest_matches": set(summary["raw_bootstrap_sha256"].astype(str).unique()) == {raw_sha} if "raw_bootstrap_sha256" in summary else False,
+            "summary_finite": bool(np.isfinite(summary.select_dtypes(include=["number"]).to_numpy(dtype=float)).all()),
+        }
+        decision = master.loc[master["regime"].eq("decision_transport_directed")].copy() if not master.empty else pd.DataFrame()
+        inferential_columns = [
+            "retention_ci_low", "retention_ci_high", "regret_ci_low", "regret_ci_high",
+            "normalized_regret_ci_low", "normalized_regret_ci_high", "boundary_inversion_ci_low", "boundary_inversion_ci_high",
+            "excess_regret_ci_low", "excess_regret_ci_high",
+        ]
+        provenance_ok = False
+        if len(decision) == 432 and all(column in decision.columns for column in inferential_columns):
+            try:
+                provenance = decision["provenance"].map(json.loads)
+                provenance_ok = bool(
+                    decision[inferential_columns].notna().all().all()
+                    and provenance.map(lambda item: item.get("risk_input") == "artifacts/manifests/reliability_transport_measurement_depth_matched_fixed_risks.csv").all()
+                    and provenance.map(lambda item: item.get("raw_bootstrap") == "artifacts/manifests/reliability_transport_measurement_depth_matched_fixed_decision_macro_bootstrap.csv").all()
+                    and provenance.map(lambda item: item.get("bootstrap_summary") == "artifacts/manifests/reliability_transport_measurement_depth_matched_fixed_decision_macro_bootstrap_summary.csv").all()
+                )
+            except (TypeError, json.JSONDecodeError):
+                provenance_ok = False
+        master_checks = {
+            "master_decision_rows_432": len(decision) == 432,
+            "master_inferential_fields_finite_and_present": provenance_ok,
+            "master_provenance_consumes_summary_and_raw": provenance_ok,
+        }
+        checks = {**raw_checks, **summary_checks, **master_checks}
+        return {
+            "status": "pass" if all(checks.values()) else "fail",
+            "checks": checks,
+            "raw_rows": int(len(raw)),
+            "raw_sha256": raw_sha,
+            "risk_input_sha256": risk_sha,
+            "summary_rows": int(len(summary)),
+            "summary_sha256": summary_sha,
+            "master_decision_rows": int(len(decision)),
+        }
+    except Exception as exc:
+        return {"status": "fail", "reason": f"bootstrap_lock_error:{type(exc).__name__}:{exc}"}
 
 
 def run(root: Path = ROOT) -> Path:
@@ -45,6 +146,7 @@ def run(root: Path = ROOT) -> Path:
     pathway = _load_json(manifests / "pathway_explanation_audit.json")
     master_path = manifests / "reliability_transport_master.csv"
     master = pd.read_csv(master_path) if master_path.is_file() else pd.DataFrame()
+    decision_lock = _decision_bootstrap_lock(root, manifests, master)
     split_seeds = depth.get("split_seeds") or depth.get("checks", {}).get("all_seeds", [])
     metrics = depth.get("metrics", [])
     if not metrics:
@@ -56,7 +158,7 @@ def run(root: Path = ROOT) -> Path:
         ("Canonical artifact audit", audit.get("status", "unavailable"), "No duplicated canonical keys; declared 30-seed coverage and metric grid are checked."),
         ("Metadata-frozen atlas", atlas.get("status", "unavailable"), "Evidence tier is determined from registry metadata, never from observed effect."),
         ("Measurement depth", depth.get("status", "unavailable"), "Fixed budgets 10/20/40/80/160 plus full matched depth."),
-        ("Decision theory", "available" if decision_bootstrap.get("status") == "executed" else "unavailable", "Directed source-select/target-evaluate retention, target floors and excess regret are budget-specific."),
+        ("Decision theory", "available" if decision_lock.get("status") == "pass" else "unavailable", "Directed source-select/target-evaluate retention, target floors and excess regret are budget-specific; inferential intervals are consumed from the canonical 2,000-draw summary."),
         ("Prospective predictability", predictability.get("status", "unavailable"), "Source-only leave-one-label-out prediction; target values are evaluation-only."),
         ("Metric dependence", metric_dependence.get("status", "unavailable"), "Pairwise burden ranking, top-20% overlap and transition states are descriptive."),
         ("Pathway explanation layer", pathway.get("status", "unavailable"), "Fixed gene-set resource is checksum-frozen and cannot select primary claims."),
@@ -82,7 +184,7 @@ def run(root: Path = ROOT) -> Path:
         ("13", "top-k budgets fixed", depth.get("decision_budgets") == [0.05, 0.1, 0.2, 0.5]),
         ("14", "directed retention reported", (manifests / "reliability_transport_measurement_depth_matched_fixed_decision.csv").is_file()),
         ("15", "directed regret reported", (manifests / "reliability_transport_measurement_depth_matched_fixed_decision.csv").is_file()),
-        ("16", "hierarchical excess-regret bootstrap reported", decision_bootstrap.get("status") == "executed"),
+        ("16", "hierarchical excess-regret bootstrap reported and consumed", decision_lock.get("status") == "pass"),
         ("17", "source-only heterogeneity", (manifests / "reliability_transport_heterogeneity.json").is_file()),
         ("18", "source-only predictability", predictability.get("status") == "executed"),
         ("19", "nested/leave-out separation", predictability.get("status") == "executed"),
@@ -105,6 +207,13 @@ def run(root: Path = ROOT) -> Path:
     report.append("| Analysis surface | Status | Interpretation |")
     report.append("|---|---|---|")
     report.extend(f"| {name} | {status} | {note} |" for name, status, note in rows)
+    report.append("\n## Decision-bootstrap provenance closure\n")
+    report.append(
+        f"Status: **{decision_lock.get('status', 'fail').upper()}**. The lock verifies the raw digest, "
+        f"{decision_lock.get('raw_rows', 0)} raw draws, {decision_lock.get('summary_rows', 0)} summary rows, "
+        f"and {decision_lock.get('master_decision_rows', 0)} decision rows consumed by the master. "
+        "The inferential chain is risk input → raw perturbation bootstrap → canonical summary → master."
+    )
     report.append("\n## Eight scientific lock questions\n")
     questions = [
         ("1. What was frozen?", "The source-frozen prediction vectors, label universe, gene panel, split schedule, metrics and model-member policy are declared in the manifests."),

@@ -248,7 +248,11 @@ inversion $V_k$ is zero exactly when the strict top-$k$ sets agree; with $m$
 mis-selected items, the audit checks the finite bound
 $V_k\geq m^2/[k(n-k)]$ under strict tie handling. Measurement-floor and joint-
 floor excess regret are reported separately, so a low global ordering
-disagreement cannot be read as a deployment guarantee.
+disagreement cannot be read as a deployment guarantee. Decision point estimates
+are the frozen 30-seed means; their descriptive seed quantiles are kept
+separate from the inferential 90\% intervals, which are the $q_{.05}$--$q_{.95}$
+quantiles of the canonical 2,000-draw perturbation-label $\times$
+measurement-seed bootstrap.
 
 \begin{figure*}[t]
   \centering
@@ -256,8 +260,8 @@ disagreement cannot be read as a deployment guarantee.
   \caption{\textbf{Budget-specific decision consequences.} Each directed
   source selects using its source risk and the target evaluates the selected
   set. Retention and excess regret are evaluated at fixed top-$k$ budgets with
-  synchronized perturbation-label $\times$ seed intervals; target self-floors
-  use independent off-diagonal target pairs.}
+  synchronized 2,000-draw perturbation-label $\times$ measurement-seed
+  intervals; target self-floors use independent off-diagonal target pairs.}
   \label{fig:decision}
 \end{figure*}
 

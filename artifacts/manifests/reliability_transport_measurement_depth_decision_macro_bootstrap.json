@@ -2,7 +2,11 @@
   "schema_version": 1,
   "status": "executed",
   "input": "artifacts/manifests/reliability_transport_measurement_depth_matched_fixed_risks.csv",
+  "input_sha256": "5eacf2ba44ef42db0738fc3c78e39330eb4c16190488f88d2e92321d289e1875",
   "output": "artifacts/manifests/reliability_transport_measurement_depth_matched_fixed_decision_macro_bootstrap.csv",
+  "output_sha256": "4c050aaaf39b920ec20658832baf165733595d8b36f70e995046a3526126f53c",
+  "generation_commit": "2068423eb2d36532da920a5504809164a853a134",
+  "generation_script": "scripts/build_decision_macro_bootstrap.py",
   "draws": 2000,
   "budgets": [
     0.05,

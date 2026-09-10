@@ -20,10 +20,13 @@ MASTER_COLUMNS = (
     "measurement_identifiable", "measurement_identifiable_ci_low", "measurement_identifiable_ci_high",
     "joint_identifiable", "joint_identifiable_ci_low", "joint_identifiable_ci_high", "stable_fraction_both",
     "decision_budget_fraction", "decision_budget_ci_low", "decision_budget_ci_high", "retention",
-    "retention_ci_low", "retention_ci_high", "regret", "regret_ci_low", "regret_ci_high",
-    "normalized_regret", "normalized_regret_ci_low", "normalized_regret_ci_high", "boundary_inversion",
-    "boundary_inversion_ci_low", "boundary_inversion_ci_high", "measurement_floor_regret", "joint_floor_regret",
-    "excess_regret", "joint_excess_regret", "predictability_model", "predictability_dataset_split",
+    "retention_ci_low", "retention_ci_high", "retention_seed_q05", "retention_seed_q95",
+    "regret", "regret_ci_low", "regret_ci_high", "regret_seed_q05", "regret_seed_q95",
+    "normalized_regret", "normalized_regret_ci_low", "normalized_regret_ci_high", "normalized_regret_seed_q05", "normalized_regret_seed_q95",
+    "boundary_inversion", "boundary_inversion_ci_low", "boundary_inversion_ci_high", "boundary_inversion_seed_q05", "boundary_inversion_seed_q95",
+    "measurement_floor_regret", "measurement_floor_regret_seed_q05", "measurement_floor_regret_seed_q95", "joint_floor_regret",
+    "excess_regret", "excess_regret_ci_low", "excess_regret_ci_high", "excess_regret_seed_q05", "excess_regret_seed_q95", "joint_excess_regret",
+    "predictability_model", "predictability_dataset_split",
     "predictability_spearman", "predictability_auroc", "predictability_mae", "calibration_brier",
     "modern_claim_lock_status", "modern_claim_lock_blocker", "checksums", "provenance", "status",
 )
@@ -95,34 +98,83 @@ def _depth_rows(manifests: Path) -> pd.DataFrame:
 
 def _decision_rows(manifests: Path) -> pd.DataFrame:
     path = manifests / "reliability_transport_measurement_depth_matched_fixed_decision.csv"
+    summary_path = manifests / "reliability_transport_measurement_depth_matched_fixed_decision_macro_bootstrap_summary.csv"
+    summary_report_path = manifests / "reliability_transport_measurement_depth_decision_macro_bootstrap_summary.json"
+    raw_path = manifests / "reliability_transport_measurement_depth_matched_fixed_decision_macro_bootstrap.csv"
+    risk_path = manifests / "reliability_transport_measurement_depth_matched_fixed_risks.csv"
     if not path.is_file():
         return pd.DataFrame(columns=MASTER_COLUMNS)
-    frame = pd.read_csv(path)
+    if not summary_path.is_file() or not summary_report_path.is_file():
+        raise FileNotFoundError("decision master requires the canonical bootstrap summary and its manifest")
+    if not raw_path.is_file() or not risk_path.is_file():
+        raise FileNotFoundError("decision master requires the raw bootstrap and frozen risk input for provenance closure")
+    frame = pd.read_csv(path, dtype={"cell_budget_label": "string"})
+    summary = pd.read_csv(summary_path, dtype={"cell_budget_label": "string"})
+    summary_report = json.loads(summary_report_path.read_text(encoding="utf-8"))
     numeric = ["retention", "regret", "normalized_regret", "boundary_inversion"]
+    seed_quantiles = ["retention", "regret", "normalized_regret", "boundary_inversion", "measurement_floor_regret", "excess_regret"]
     group_cols = [c for c in ["source_environment_id", "target_environment_id", "left_target_environment_id", "right_target_environment_id", "metric", "cell_budget_label", "decision_budget_fraction", "universe_mode"] if c in frame.columns]
-    if "target_environment_id" not in frame.columns:
+    summary_group_cols = [c for c in group_cols if c in summary.columns]
+    if "target_environment_id" not in frame.columns or summary_group_cols != group_cols:
         return pd.DataFrame(columns=MASTER_COLUMNS)
+    if len(summary) != 432 or summary.duplicated(summary_group_cols).any():
+        raise ValueError("decision bootstrap summary must contain 432 unique group-budget rows")
+    if summary_report.get("status") != "executed" or summary_report.get("summary_rows") != 432:
+        raise ValueError("decision bootstrap summary manifest is not executed and complete")
+    summary_index = {
+        key: group.iloc[0].to_dict()
+        for key, group in summary.groupby(summary_group_cols, sort=True, observed=True)
+    }
+    point_sha256 = _sha256(path)
     rows = []
     for key, group in frame.groupby(group_cols, sort=True, observed=True):
         rec = dict(zip(group_cols, key if isinstance(key, tuple) else (key,)))
+        summary_row = summary_index.get(key if isinstance(key, tuple) else (key,))
+        if summary_row is None:
+            raise ValueError(f"decision bootstrap summary missing key: {key}")
         row = _empty()
+        point_relative = path.relative_to(ROOT).as_posix()
+        summary_relative = summary_path.relative_to(ROOT).as_posix()
+        raw_relative = raw_path.relative_to(ROOT).as_posix()
+        risk_relative = risk_path.relative_to(ROOT).as_posix()
+        provenance = {
+            "risk_input": risk_relative,
+            "raw_bootstrap": raw_relative,
+            "bootstrap_summary": summary_relative,
+            "point_estimate": point_relative,
+            "master_aggregation": "frozen 30-seed point estimator plus 2000-draw q05/q95 bootstrap summary",
+        }
+        checksums = {
+            "risk_input_sha256": summary_report.get("risk_input_sha256"),
+            "raw_bootstrap_sha256": summary_report.get("raw_bootstrap_sha256"),
+            "bootstrap_summary_sha256": summary_report.get("summary_sha256"),
+            "point_estimate_sha256": point_sha256,
+        }
         row.update({
             "dataset": "FrangiehIzar2021_RNA", "dataset_split": "within_dataset", "evidence_tier": 1,
             "source_environment_id": rec.get("source_environment_id"), "target_environment_id": rec.get("target_environment_id"),
             "left_target_environment_id": rec.get("left_target_environment_id"), "right_target_environment_id": rec.get("right_target_environment_id"),
             "source_target_orientation": "directed_source_select_target_evaluate", "predictor": "source_frozen_ensemble",
             "predictor_information_regime": "strict_source_only_frozen_prediction", "regime": "decision_transport_directed", "metric": rec.get("metric"),
-            "cell_budget_label": rec.get("cell_budget_label"), "universe_mode": rec.get("universe_mode", "matched_fixed"),
-            "decision_budget_fraction": rec.get("decision_budget_fraction"), "provenance": path.relative_to(ROOT).as_posix(), "checksums": _sha256(path), "status": "available",
+            "cell_budget": group["cell_budget"].iloc[0], "cell_budget_label": rec.get("cell_budget_label"), "universe_mode": rec.get("universe_mode", "matched_fixed"),
+            "decision_budget_fraction": rec.get("decision_budget_fraction"), "provenance": json.dumps(provenance, sort_keys=True), "checksums": json.dumps(checksums, sort_keys=True), "status": "available",
         })
         for column in numeric:
-            if column in group:
-                row[column] = float(group[column].mean())
-                row[f"{column}_ci_low"] = float(group[column].quantile(0.05))
-                row[f"{column}_ci_high"] = float(group[column].quantile(0.95))
+            if column in group and f"{column}_point" in summary_row:
+                row[column] = float(summary_row[f"{column}_point"])
+                row[f"{column}_ci_low"] = float(summary_row[f"{column}_ci_low"])
+                row[f"{column}_ci_high"] = float(summary_row[f"{column}_ci_high"])
+                row[f"{column}_seed_q05"] = float(summary_row[f"{column}_seed_q05"])
+                row[f"{column}_seed_q95"] = float(summary_row[f"{column}_seed_q95"])
         for column in ["measurement_floor_regret", "joint_floor_regret", "excess_regret", "joint_excess_regret"]:
             if column in group:
-                row[column] = float(group[column].mean())
+                row[column] = float(summary_row[f"{column}_point"] if f"{column}_point" in summary_row else group[column].mean())
+                if column in seed_quantiles and f"{column}_seed_q05" in summary_row:
+                    row[f"{column}_seed_q05"] = float(summary_row[f"{column}_seed_q05"])
+                    row[f"{column}_seed_q95"] = float(summary_row[f"{column}_seed_q95"])
+                if column in ("measurement_floor_regret", "excess_regret"):
+                    row[f"{column}_ci_low"] = float(summary_row[f"{column}_ci_low"])
+                    row[f"{column}_ci_high"] = float(summary_row[f"{column}_ci_high"])
         rows.append(row)
     return pd.DataFrame(rows)
 
@@ -174,7 +226,7 @@ def build(root: Path = ROOT) -> tuple[pd.DataFrame, dict]:
         "claims": [
             {"claim_id": "C1_transport_reordering_is_observed", "claim": "Cross-context ordering disagreement is measurable under the prespecified pairwise-order estimand.", "support_filter": {"regime": "canonical_fullsize_claim_lock", "status": "available", "required_columns": ["observed_D", "observed_D_ci_low", "observed_D_ci_high"]}},
             {"claim_id": "C2_measurement_depth_is_a_boundary", "claim": "The identifiable component is reported after U-statistic floor subtraction on a matched fixed universe, with depth-dependent resolution explicit.", "support_filter": {"regime": "measurement_depth_matched_fixed", "universe_mode": "matched_fixed", "status": "available", "required_columns": ["measurement_identifiable", "measurement_identifiable_ci_low", "measurement_identifiable_ci_high"]}},
-            {"claim_id": "C3_directed_decision_consequence_is_budget_specific", "claim": "A source ordering has directed source-select/target-evaluate retention and regret consequences at each budget, with target-context floors.", "support_filter": {"regime": "decision_transport_directed", "source_target_orientation": "directed_source_select_target_evaluate", "status": "available", "required_columns": ["decision_budget_fraction", "retention", "regret"]}},
+            {"claim_id": "C3_directed_decision_consequence_is_budget_specific", "claim": "A source ordering has directed source-select/target-evaluate retention and regret consequences at each budget, with target-context floors and bootstrap intervals traced to the canonical perturbation bootstrap.", "support_filter": {"regime": "decision_transport_directed", "source_target_orientation": "directed_source_select_target_evaluate", "status": "available", "required_columns": ["decision_budget_fraction", "retention", "retention_ci_low", "retention_ci_high", "regret", "regret_ci_low", "regret_ci_high"]}},
             {"claim_id": "C4_source_only_predictability_is_audited", "claim": "Source-only predictability is reported using held-out outcomes; cross-dataset rows remain explicitly blocked when canonical per-label outcomes are unavailable.", "support_filter": {"regime": "prospective_source_only", "status": "executed", "required_columns": ["predictability_model", "predictability_spearman"]}},
         ],
     }

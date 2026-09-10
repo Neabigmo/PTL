@@ -32,7 +32,7 @@
     },
     {
       "claim_id": "C3_directed_decision_consequence_is_budget_specific",
-      "claim": "A source ordering has directed source-select/target-evaluate retention and regret consequences at each budget, with target-context floors.",
+      "claim": "A source ordering has directed source-select/target-evaluate retention and regret consequences at each budget, with target-context floors and bootstrap intervals traced to the canonical perturbation bootstrap.",
       "support_filter": {
         "regime": "decision_transport_directed",
         "source_target_orientation": "directed_source_select_target_evaluate",
@@ -40,7 +40,11 @@
         "required_columns": [
           "decision_budget_fraction",
           "retention",
-          "regret"
+          "retention_ci_low",
+          "retention_ci_high",
+          "regret",
+          "regret_ci_low",
+          "regret_ci_high"
         ]
       }
     },

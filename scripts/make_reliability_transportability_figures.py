@@ -141,18 +141,28 @@ def figure3(out_dir: Path, manifests: Path) -> tuple[list[str], pd.DataFrame]:
 
 
 def figure4(out_dir: Path, manifests: Path) -> tuple[list[str], pd.DataFrame]:
-    path = manifests / "reliability_transport_measurement_depth_matched_fixed_decision.csv"
-    if not path.is_file():
-        path = manifests / "reliability_transport_measurement_depth_decision.csv"
-    decision = pd.read_csv(path)
-    decision = _ensure_depth_labels(decision)
-    if "excess_regret" not in decision:
-        decision["excess_regret"] = np.nan
-    aggregate = decision.groupby(["metric", "cell_budget_order", "cell_budget_label", "decision_budget_fraction"], sort=True, observed=True).agg(
-        retention=("retention", "mean"), retention_ci_low=("retention", lambda x: x.quantile(0.05)), retention_ci_high=("retention", lambda x: x.quantile(0.95)),
-        excess_regret=("excess_regret", "mean"), excess_regret_ci_low=("excess_regret", lambda x: x.quantile(0.05)), excess_regret_ci_high=("excess_regret", lambda x: x.quantile(0.95)),
-        regret=("regret", "mean"), regret_ci_low=("regret", lambda x: x.quantile(0.05)), regret_ci_high=("regret", lambda x: x.quantile(0.95)),
-    ).reset_index()
+    summary_path = manifests / "reliability_transport_measurement_depth_matched_fixed_decision_macro_bootstrap_summary.csv"
+    if summary_path.is_file():
+        summary = _ensure_depth_labels(pd.read_csv(summary_path, dtype={"cell_budget_label": "string"}))
+        aggregate = summary.groupby(["metric", "cell_budget_order", "cell_budget_label", "decision_budget_fraction"], sort=True, observed=True).agg(
+            retention=("retention_point", "mean"), retention_ci_low=("retention_ci_low", "mean"), retention_ci_high=("retention_ci_high", "mean"),
+            excess_regret=("excess_regret_point", "mean"), excess_regret_ci_low=("excess_regret_ci_low", "mean"), excess_regret_ci_high=("excess_regret_ci_high", "mean"),
+            regret=("regret_point", "mean"), regret_ci_low=("regret_ci_low", "mean"), regret_ci_high=("regret_ci_high", "mean"),
+        ).reset_index()
+        aggregate["uncertainty_unit"] = "2,000-draw perturbation-label × measurement-seed bootstrap; point = frozen 30-seed mean"
+    else:
+        path = manifests / "reliability_transport_measurement_depth_matched_fixed_decision.csv"
+        if not path.is_file():
+            path = manifests / "reliability_transport_measurement_depth_decision.csv"
+        decision = _ensure_depth_labels(pd.read_csv(path))
+        if "excess_regret" not in decision:
+            decision["excess_regret"] = np.nan
+        aggregate = decision.groupby(["metric", "cell_budget_order", "cell_budget_label", "decision_budget_fraction"], sort=True, observed=True).agg(
+            retention=("retention", "mean"), retention_ci_low=("retention", lambda x: x.quantile(0.05)), retention_ci_high=("retention", lambda x: x.quantile(0.95)),
+            excess_regret=("excess_regret", "mean"), excess_regret_ci_low=("excess_regret", lambda x: x.quantile(0.05)), excess_regret_ci_high=("excess_regret", lambda x: x.quantile(0.95)),
+            regret=("regret", "mean"), regret_ci_low=("regret", lambda x: x.quantile(0.05)), regret_ci_high=("regret", lambda x: x.quantile(0.95)),
+        ).reset_index()
+        aggregate["uncertainty_unit"] = "legacy 30-seed decision rows"
     full = aggregate.loc[aggregate["cell_budget_order"].eq(aggregate["cell_budget_order"].max())].copy()
     if full.empty:
         full = aggregate
@@ -231,7 +241,7 @@ def run(root: Path = ROOT) -> dict:
         "status": "executed",
         "figure_count": 5,
         "formats": ["png", "pdf", "svg", "tiff"],
-        "color_policy": "colorblind-safe Okabe-Ito-inspired palette; ribbons are quantiles of synchronized macro draws or seed-conditional decision draws",
+        "color_policy": "colorblind-safe Okabe-Ito-inspired palette; decision ribbons use the canonical 2,000-draw bootstrap summary and other ribbons use their declared synchronized macro source",
         "outputs": outputs,
     }
     report_path = manifests / "reliability_transport_figures.json"

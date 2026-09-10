@@ -9,7 +9,7 @@ This report is generated from canonical manifests. A missing or blocked analysis
 | Canonical artifact audit | pass | No duplicated canonical keys; declared 30-seed coverage and metric grid are checked. |
 | Metadata-frozen atlas | executed | Evidence tier is determined from registry metadata, never from observed effect. |
 | Measurement depth | executed | Fixed budgets 10/20/40/80/160 plus full matched depth. |
-| Decision theory | available | Directed source-select/target-evaluate retention, target floors and excess regret are budget-specific. |
+| Decision theory | available | Directed source-select/target-evaluate retention, target floors and excess regret are budget-specific; inferential intervals are consumed from the canonical 2,000-draw summary. |
 | Prospective predictability | executed | Source-only leave-one-label-out prediction; target values are evaluation-only. |
 | Metric dependence | executed | Pairwise burden ranking, top-20% overlap and transition states are descriptive. |
 | Pathway explanation layer | executed | Fixed gene-set resource is checksum-frozen and cannot select primary claims. |
@@ -18,6 +18,10 @@ This report is generated from canonical manifests. A missing or blocked analysis
 | Modern-model scGPT | bounded_package_available_but_not_claim_lock_run | One bounded package/contract attempt; no unverified model enters Claim Lock. |
 | Figures 1–5 | executed | Each figure has PNG/PDF/SVG/TIFF and a source table; no sixth main figure is used. |
 | Paper linkage | available | Numbers must be read from the master table or its declared provenance. |
+
+## Decision-bootstrap provenance closure
+
+Status: **PASS**. The lock verifies the raw digest, 864000 raw draws, 432 summary rows, and 432 decision rows consumed by the master. The inferential chain is risk input → raw perturbation bootstrap → canonical summary → master.
 
 ## Eight scientific lock questions
 
@@ -72,7 +76,7 @@ Only after the final full run, figure/paper regeneration, test/compile/audit pas
 | 13 | top-k budgets fixed | PASS |
 | 14 | directed retention reported | PASS |
 | 15 | directed regret reported | PASS |
-| 16 | hierarchical excess-regret bootstrap reported | PASS |
+| 16 | hierarchical excess-regret bootstrap reported and consumed | PASS |
 | 17 | source-only heterogeneity | PASS |
 | 18 | source-only predictability | PASS |
 | 19 | nested/leave-out separation | PASS |
@@ -86,7 +90,7 @@ Only after the final full run, figure/paper regeneration, test/compile/audit pas
 | 27 | story claims locked | PASS |
 | 28 | canonical audit status | PASS |
 | 29 | compile/test evidence must be rerun after final edits | PASS |
-| 30 | git clean/commit/push release boundary | PASS |
+| 30 | git clean/commit/push release boundary | PENDING |
 
 ## Current canonical counts
 

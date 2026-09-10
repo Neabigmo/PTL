@@ -244,8 +244,15 @@ set is formed from source risk with deterministic index tie-breaking and is
 evaluated using target risk. Retention, target regret, normalized regret,
 boundary inversion and the finite inversion bound are stored for each seed and
 depth. Measurement floors use off-diagonal within-context replicate pairs;
-joint floors use the six source-frozen member/measurement combinations. No
-decision quantity is substituted for the global ordering estimand.
+joint floors use the six source-frozen member/measurement combinations. For
+each of the 432 directed group--budget keys, the frozen 30-seed decision-table
+mean is the point estimator and its seed quantiles are descriptive only. The
+inferential intervals in the master table and Figure 4 are instead the
+$q_{.05}$--$q_{.95}$ quantiles of exactly 2,000 synchronized perturbation-label
+$\times$ measurement-seed draws. The committed summary records the complete
+lineage $\text{risk input}\rightarrow864{,}000$ raw draws$\rightarrow432$
+group--budget summaries$\rightarrow\text{master}$, including SHA256 digests.
+No decision quantity is substituted for the global ordering estimand.
 
 \section{Perturbation heterogeneity and source-only predictability}
 The heterogeneity and predictability manifests use source prediction geometry
@@ -264,10 +271,13 @@ permitted to supply paper numbers after final regeneration. It stores dataset,
 evidence tier, source/target pair, predictor and regime, metric, cell budget,
 label-universe size, observed disagreement, measurement and joint excesses,
 stable ordering, decision retention/regret fields, checksums and provenance.
-\texttt{story\_claims.json} maps each narrative claim to a support filter and
-records its scope. The final scientific lock report answers the eight release
-questions and keeps incomplete modern-model contracts, unresolved registry
-cells and negative excess estimates explicit.
+The decision fields carry separate descriptive seed quantiles and inferential
+bootstrap intervals; their provenance points to the frozen risk input, raw
+draws and 432-row bootstrap summary. \texttt{story\_claims.json} maps each
+narrative claim to a support filter and records its scope. The final scientific
+lock report answers the eight release questions and keeps incomplete modern-
+model contracts, unresolved registry cells and negative excess estimates
+explicit.
 
 \section{Secondary metrics and reproducibility}
 The broad benchmark reports environment-first macro averages, paired

@@ -8,7 +8,7 @@
     "svg",
     "tiff"
   ],
-  "color_policy": "colorblind-safe Okabe-Ito-inspired palette; ribbons are quantiles of synchronized macro draws or seed-conditional decision draws",
+  "color_policy": "colorblind-safe Okabe-Ito-inspired palette; decision ribbons use the canonical 2,000-draw bootstrap summary and other ribbons use their declared synchronized macro source",
   "outputs": {
     "fig1": {
       "files": [
