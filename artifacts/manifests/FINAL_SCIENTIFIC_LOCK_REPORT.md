@@ -17,7 +17,7 @@ This report is generated from canonical manifests. A missing or blocked analysis
 | Modern-model State | blocked_semantic_contract | Promotion requires verified source-only training, vectors, panel and blindness. |
 | Modern-model TxPert | blocked_external_contract | Official checkpoint context is recorded; K562 is not relabelled as HepG2/Jurkat. |
 | Modern-model scGPT | bounded_package_available_but_not_claim_lock_run | One bounded package/contract attempt; no unverified model enters Claim Lock. |
-| Figures 1–5 | executed | Each figure has PNG/PDF/SVG/TIFF and a source table; no sixth main figure is used. |
+| Figures 1–6 | executed | Each figure has PNG/PDF/SVG/TIFF and a source table; the six-figure main story is canonical-data backed. |
 | Paper linkage | available | Numbers must be read from the master table or its declared provenance. |
 
 ## Decision-bootstrap provenance closure
@@ -85,13 +85,13 @@ Only after the final full run, figure/paper regeneration, test/compile/audit pas
 | 21 | modern State blocker explicit | PASS |
 | 22 | modern TxPert context checked | PASS |
 | 23 | modern scGPT bounded attempt | PASS |
-| 24 | five main figures generated | PASS |
+| 24 | six main figures generated | PASS |
 | 25 | figure source tables generated | PASS |
 | 26 | master table exists | PASS |
 | 27 | story claims locked | PASS |
 | 28 | canonical audit status | PASS |
 | 29 | compile/test evidence must be rerun after final edits | PASS |
-| 30 | git clean/commit/push release boundary | PASS |
+| 30 | git clean/commit/push release boundary | PENDING |
 
 ## Current canonical counts
 

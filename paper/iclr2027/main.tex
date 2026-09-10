@@ -7,7 +7,7 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 
-\title{Reliability Transportability Has a Measurement and Decision Boundary in Single-Cell Perturbation Prediction}
+\title{Reliability Transportability in Single-Cell Perturbation Prediction: Measurement Boundaries, Decision Regret, and Prospective Limits}
 \author{Anonymous Authors}
 
 \newcommand{\ptl}{\textsc{PTL}}
@@ -22,18 +22,18 @@
 Confidence scores from single-cell perturbation predictors are often used to
 rank experiments, although the identity of easy and difficult perturbations
 may change after a biological shift. We ask when such a reliability reordering
-is identifiable and when it changes a decision. In a source-frozen Frangieh
-ladder, one predictor is evaluated unchanged across control, co-culture and
-IFN$\gamma$ outcomes using a tie-aware pairwise ordering estimand and matched
-raw-cell measurement floors. The full-size measurement-identifiable excess is 0.0255--0.1140
-across the three metrics, while the joint-floor excess ranges from $-0.0512$ to
-0.0364, so the evidence is metric-dependent rather than universal. At a fixed
-10\% decision budget, the prespecified full-depth link between the identifiable
-excess and normalized regret contains 18 directed transfer--metric points and
-is descriptive (Spearman $\rho=0.80$). An outcome-blind Nadig HepG2/Jurkat
-replication and a source-only held-out analysis delimit the result: biological
-context can reshape reliability ordering, but measurement depth and prospective
-feature availability determine what can be known before a new experiment.
+is identifiable, when it changes a decision, and what can be known before a new
+experiment. In a source-frozen Frangieh ladder, one predictor is evaluated
+unchanged across control, co-culture and IFN$\gamma$ outcomes using a tie-aware
+pairwise ordering estimand and matched raw-cell measurement floors. The
+measurement-identifiable excess is metric-dependent, while the conservative
+joint-floor excess can be negative. At a fixed 10\% decision budget, the
+prespecified full-depth link between identifiable excess and normalized regret
+contains 18 directed transfer--metric points and is descriptive (Spearman
+$\rho=0.80$). An outcome-blind Nadig HepG2/Jurkat replication and a source-only
+held-out analysis delimit the result: context can reshape reliability ordering,
+but measurement depth and prospective feature availability determine what can
+be known before experiment.
 \end{abstract}
 
 \section{Introduction}
@@ -63,21 +63,23 @@ blind selection.
 Our central claim is an identifiability boundary: a visible cross-context
 ordering difference becomes a scientific transport result only after the same
 ordering statistic is compared with matched experimental and model floors.
-Figure~\ref{fig:framework} summarizes the resulting path from biological shift
-to ordering, measurement and decision.
+Figures~\ref{fig:framework}--\ref{fig:prospective} summarize the path from
+biological shift to ordering, measurement, decision consequence, heterogeneous
+failure anatomy and the prospective information boundary.
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig1_graphical_abstract.pdf}
-  \caption{\textbf{From biological shift to a decision boundary.} A single
-  source-frozen predictor is evaluated across three outcomes; crossing ranking
-  trajectories represent observed reordering, which is decomposed into a
-  measurement-identifiable component. Depth, top-$k$ retention and regret are
-  linked schematically. The panel is conceptual and does not add an estimand.}
+  \caption{\textbf{The source-frozen reliability ordering is the object that moves.}
+  Panel A states the frozen-predictor contract. Panel B shows real source-only
+  rank trajectories for registered labels across the three Frangieh contexts;
+  Panel C retains tie-aware pairwise states. Panels D--F show the observed
+  disagreement/floor decomposition, actual depth trajectory and real top-10\%
+  selection consequence.}
   \label{fig:framework}
 \end{figure*}
 
-\section{From observed to identifiable reliability reordering}
+\section{Reliability transport as an identifiable ordering problem}
 For a perturbation pair $c=(p,q)$, context $e$, and measurement replicate $r$,
 let $R_{p,e}^{(r)}$ be continuous risk from a fixed predictor and define
 \begin{equation}
@@ -132,22 +134,6 @@ by a source-to-single-target forest.
   \label{fig:atlas}
 \end{figure*}
 
-\begin{table}[t]
-\centering
-\caption{Full-size Frangieh primary ordering estimates. Intervals are 90\%
-macro-bootstrap intervals for the stated estimand.}
-\label{tab:primary}
-\begin{tabular}{lrrr}
-\toprule
-Metric & $D_{\rm cross}$ & $D_{\rm meas\text{-}ID}$ & $D_{\rm joint\text{-}ID}$ \\
-\midrule
-Delta cosine & 0.3153 & 0.1140 [0.0816, 0.1500] & 0.0364 [-0.0025, 0.0761] \\
-Systema centroid & 0.0969 & 0.0255 [0.0153, 0.0364] & 0.0220 [0.0117, 0.0331] \\
-Absolute-effect rank & 0.2786 & 0.0574 [0.0284, 0.0850] & -0.0512 [-0.0888, -0.0145] \\
-\bottomrule
-\end{tabular}
-\end{table}
-
 Figure~\ref{fig:atlas} shows why the estimand must retain both the source and
 the left/right contrast. The three metrics do not share a single transport
 surface: the largest measurement-identifiable excess is observed for delta
@@ -156,26 +142,28 @@ absolute-effect rank. These signs are interpreted only with their declared
 floors and intervals; a negative joint-floor result is not evidence that the
 underlying ordering distributions are identical.
 
-\section{Measurement depth defines the identifiability boundary}
+\section{Measurement depth defines when reordering is identifiable}
 We next hold the perturbation universe fixed at the highest matched budget and
 resample 10, 20, 40, 80 and 160 cells per environment--perturbation
 pseudoreplicate, together with the matched full-depth endpoint. For each
-source-by-contrast cell, the depth ratio is
-$R(n)=D_{\rm meas\text{-}ID}(n)/D_{\rm meas\text{-}ID}(\mathrm{full})$.
-The first budget within ten percent of the full value defines a resolution
-summary; the first budget with a positive 90\% lower interval defines
-detectability. If no budget meets a rule, the threshold remains unavailable.
-This makes the measurement boundary an explicit property of the cell and
-metric, not a universal cutoff.
+source-by-contrast cell, we retain the signed, raw
+$D_{\rm meas\text{-}ID}(n)$ trajectory rather than clipping negative values or
+forcing a universal ratio. The first budget within ten percent of the full
+value defines a resolution summary; the first budget with a positive 90\%
+lower interval defines detectability. If no budget meets a rule, the threshold
+remains unavailable. This makes the measurement boundary an explicit property
+of the cell and metric, not a universal cutoff.
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig3_measurement_boundary.pdf}
-  \caption{\textbf{Measurement depth sets resolution.} Each heatmap reports
-  $R(n)$ for one metric across the nine source-context/contrast cells; raw
-  values above one are retained and unavailable cells remain gray. The lower
-  curves show median and IQR across source-context/contrast cells; dots and
-  triangles mark the cell-specific detectability and 90\% resolution thresholds.}
+  \caption{\textbf{Measurement depth defines an identifiability boundary.}
+  Panel A shows actual signed $D_{\rm meas\text{-}ID}(n)$ trajectories for all
+  nine source-context/contrast cells per metric. Panel B gives three
+  representative cells, Panel C the cell-specific detectability and 90\%
+  resolution budgets, Panel D a descriptive 30-seed distribution, Panel E the
+  full-depth across-cell summary, and Panel F the observed cross/within/floor
+  components. Negative values and unavailable thresholds remain visible.}
   \label{fig:boundary}
 \end{figure*}
 
@@ -190,13 +178,13 @@ keeps this decision layer separate from the global ordering estimand.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig4_decision_consequence.pdf}
-  \caption{\textbf{Decision consequence at fixed budgets.} The source ranking
-  is evaluated against target utility, retention and excess regret are traced
-  over the four fixed budgets, and the primary association links full-depth
-  $D_{\rm meas\text{-}ID}$ to normalized regret at 10\%. The association uses
-  18 transfer--metric points and is descriptive rather than causal. Panel B
-  uses IQR across six directed-transfer point estimates, not an aggregate
-  confidence interval.}
+  \caption{\textbf{Identifiable reordering changes experimental decisions.}
+  Panels A--B show real top-$k$ selection changes for the registered Ctrl to
+  IFN$\gamma$ transfer. Panel C traces retention and normalized regret over
+  fixed budgets with median and IQR across six directed transfers. Panel D is
+  the retention--regret Pareto view, Panel E is the fixed 18-point
+  full-depth/10\% link, and Panel F is the existing point regret decomposition.
+  The association is descriptive rather than causal.}
   \label{fig:decision}
 \end{figure*}
 
@@ -208,26 +196,49 @@ weakens the association: the scientific question is whether identifiable
 ordering loss has a measurable decision consequence, not whether a single
 summary correlation is universal.
 
-\section{What drives transport failure, and can we know it beforehand?}
+\section{Transport failure is heterogeneous at the perturbation level}
 The failure anatomy reuses the existing per-perturbation identifiable burden,
-the matched response-program displacement and the existing response-magnitude
-diagnostic. These quantities are explanatory and target-informed. They are
-therefore not allowed into the prospective predictor. The prospective analysis
-uses only source-side prediction geometry and model-member uncertainty, with
-leave-label-out evaluation and target outcomes used only after prediction.
+matched response displacement and response-magnitude diagnostic. These
+quantities are explanatory and target-informed, so they are shown only
+post-hoc. Complete rows are reported without imputation; the coverage boundary
+is part of the result rather than hidden by a larger-looking plot.
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig5_failure_anatomy.pdf}
-  \caption{\textbf{Failure anatomy and prospective predictability.} Tie-aware
-  source-to-target state transitions pool resolved $\{-1,\mathrm{tie},+1\}$
-  states and show unstable/unresolved coverage separately. Response
-  displacement versus reordering burden is a complete-row ($219/2784$),
-  no-imputation post-hoc analysis, with marker size encoding model
-  disagreement. The final panel evaluates held-out target outcomes from
-  source-only features; target-informed explanatory quantities never enter
-  that prospective fit.}
+  \caption{\textbf{Failure anatomy is heterogeneous and partly unobserved.}
+  Panels A--C are real q10/q50/q90 complete primary cases with source/target
+  ranks and risk distributions. Panel D pools corrected tie-aware states while
+  retaining unstable/unresolved rows, Panel E is the complete-only
+  response-displacement versus burden association ($219/2784$, no imputation),
+  and Panel F reports the existing coverage fractions. All explanatory
+  quantities are post-hoc.}
   \label{fig:failure}
+\end{figure*}
+
+\section{Transport failure is difficult to predict before experiment}
+The prospective analysis uses only source-side prediction geometry and model
+uncertainty: $\texttt{uq\_cosine\_disagreement}$,
+$\texttt{uq\_mean\_gene\_variance}$,
+$\texttt{uq\_effect\_norm\_variance}$, $\texttt{prediction\_norm}$,
+$\texttt{prediction\_sparsity}$ and $\texttt{prediction\_concentration}$.
+Target outcomes, response displacement, effect magnitude, target risk and
+target failure labels are excluded from the feature matrix. Leave-label-out
+evaluation uses target outcomes only after predictions are made. The legal
+within-dataset source-only results and the blocked Frangieh-to-Nadig
+cross-dataset cell are shown separately.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig6_prospective_limit.pdf}
+  \caption{\textbf{Prospective prediction from source-only information.} Panel A
+  freezes the information firewall. Panels B--E report task-level held-out
+  source-only performance and high-identifiability AUROC for the two legal
+  models; negative performance is retained and calibration is not post-hoc
+  reported. Panel F is unavailable because Nadig has aggregate-only outcomes
+  without shared per-label target labels; no numeric proxy or oracle result is
+  inserted.}
+  \label{fig:prospective}
 \end{figure*}
 
 \section{Discussion}

@@ -1,13 +1,14 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "status": "executed",
-  "figure_count": 5,
+  "figure_count": 6,
   "figure_order": [
-    "observed_to_identifiable",
-    "transport_atlas",
+    "problem",
+    "atlas",
     "measurement_boundary",
     "decision_consequence",
-    "failure_anatomy"
+    "failure_anatomy",
+    "prospective_limit"
   ],
   "formats": [
     "png",
@@ -16,6 +17,7 @@
     "tiff"
   ],
   "source_tables_directory": "results/figures/reliability_transportability/source_tables",
+  "exemplar_registry": "artifacts/manifests/figure_exemplar_registry.json",
   "outputs": {
     "fig1": {
       "files": [
@@ -25,7 +27,7 @@
         "reliability_transportability_fig1_graphical_abstract.tiff"
       ],
       "source_table": "results/figures/reliability_transportability/source_tables/fig1_source.csv",
-      "rows": 3
+      "rows": 49
     },
     "fig2": {
       "files": [
@@ -35,7 +37,7 @@
         "reliability_transportability_fig2_transport_atlas.tiff"
       ],
       "source_table": "results/figures/reliability_transportability/source_tables/fig2_transport_atlas.csv",
-      "rows": 33
+      "rows": 83
     },
     "fig3": {
       "files": [
@@ -45,7 +47,7 @@
         "reliability_transportability_fig3_measurement_boundary.tiff"
       ],
       "source_table": "results/figures/reliability_transportability/source_tables/fig3_measurement_boundary.csv",
-      "rows": 135
+      "rows": 247
     },
     "fig4": {
       "files": [
@@ -55,7 +57,7 @@
         "reliability_transportability_fig4_decision_consequence.tiff"
       ],
       "source_table": "results/figures/reliability_transportability/source_tables/fig4_decision_consequence.csv",
-      "rows": 103
+      "rows": 78
     },
     "fig5": {
       "files": [
@@ -65,9 +67,27 @@
         "reliability_transportability_fig5_failure_anatomy.tiff"
       ],
       "source_table": "results/figures/reliability_transportability/source_tables/fig5_failure_anatomy.csv",
-      "rows": 255
+      "rows": 58
+    },
+    "fig6": {
+      "files": [
+        "reliability_transportability_fig6_prospective_limit.png",
+        "reliability_transportability_fig6_prospective_limit.pdf",
+        "reliability_transportability_fig6_prospective_limit.svg",
+        "reliability_transportability_fig6_prospective_limit.tiff"
+      ],
+      "source_table": "results/figures/reliability_transportability/source_tables/fig6_prospective_limit.csv",
+      "rows": 122
     }
   },
   "data_policy": "Frozen Frangieh/Nadig data and existing matched-fixed/bootstrap summaries; unavailable cells stay gray/NA; target-informed explanatory quantities never enter prospective prediction.",
-  "style_policy": "Centralized ptl_figure_style.py; colorblind-safe palette; no rainbow, 3-D, or long-ID axes."
+  "selection_policy": "Fig1/2/4 displayed labels use source-only rank quantiles; Fig5 cases use complete burden quantiles; all selections are registered deterministically.",
+  "style_policy": "Centralized ptl_figure_style.py; colorblind-safe palette; diverging maps centered at zero; no rainbow, 3-D, decorative gradients, or long-ID axes.",
+  "anti_fabrication_checks": [
+    "strict support >= 8",
+    "219/2784 complete failure rows with no imputation",
+    "Fig6 feature firewall",
+    "no numeric Nadig prospective result",
+    "primary intervals are 90%"
+  ]
 }

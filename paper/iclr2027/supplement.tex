@@ -7,7 +7,7 @@
 \usepackage{hyperref}
 \usepackage{url}
 
-\title{Supplement to ``Reliability Transportability Has a Measurement and Decision Boundary in Single-Cell Perturbation Prediction''}
+\title{Supplement to ``Reliability Transportability in Single-Cell Perturbation Prediction: Measurement Boundaries, Decision Regret, and Prospective Limits''}
 \author{Anonymous Authors}
 
 \newcommand{\gears}{\textsc{GEARS}}
@@ -18,9 +18,9 @@
 
 \section{Scope, story map and artifact map}
 This supplement contains the complete computational specification behind the
-five-figure main story. The narrative follows observed reordering, identifiable
-reordering, measurement depth, decision consequence and prospective
-predictability. The main paper is intentionally compact; this document retains
+six-figure main story. The narrative follows the problem, transport atlas,
+measurement boundary, decision consequence, heterogeneous failure anatomy and
+prospective limit. The main paper is intentionally compact; this document retains
 the implementation details needed to reproduce every panel and to distinguish
 scientific evidence from feasibility boundaries.
 
@@ -35,7 +35,7 @@ The primary files are
 \texttt{reliability\_transport\_failure\_anatomy\_coverage.csv}, and
 \texttt{reliability\_transport\_master.csv}. The figure source tables are
 \texttt{results/figures/reliability\_transportability/source\_tables/fig1\_source.csv}
-through \texttt{fig5\_failure\_anatomy.csv}. Their JSON reports record the
+through \texttt{fig6\_prospective\_limit.csv}. Their JSON reports record the
 source paths, analysis units, unavailable states and SHA256 provenance.
 
 \section{Ordering estimands and finite-sample identities}
@@ -132,19 +132,19 @@ pooled with depth or decision results.
 \section{Measurement depth}
 The matched-fixed depth summary uses 10, 20, 40, 80, 160 and full cells per
 pseudoreplicate. The perturbation universe is frozen at the highest fixed
-budget and reused at lower budgets. For each source-by-contrast cell,
-\[
- R(n)=D_{\rm meas\text{-}ID}(n)/D_{\rm meas\text{-}ID}(\mathrm{full}).
-\]
-Raw ratios above one remain visible. The resolution summary is the first budget
-within ten percent of the full value. Detectability is the first budget with a
+budget and reused at lower budgets. Figure 3 retains signed raw values,
+including negative estimates, rather than converting them into a ratio to full
+depth.
+The resolution summary is the first budget within ten percent of the full value;
+a full-depth ``not reached'' value is not treated as resolved. Detectability is
+the first budget with a
 positive 90\% seed-bootstrap lower interval; no threshold is encoded as
 unavailable. The lower curves in Figure 3 are medians with IQR across the
 available source-by-contrast point estimates (up to nine cells) at each depth.
 They are descriptive and do not create a universal cutoff. Dots mark
-detectability and triangles mark the 90\% resolution budget in the heatmaps;
-the exact source-by-contrast rows and threshold availability are in the Figure
-3 source table.
+detectability and triangles mark the 90\% resolution budget in the threshold
+map; the exact source-by-contrast rows, signed estimates and threshold
+availability are in the Figure 3 source table.
 
 \section{Decision consequence and fixed primary association}
 At budgets $k/n\in\{0.05,0.10,0.20,0.50\}$, source risk selects the set and target
@@ -166,7 +166,7 @@ $q_{.95}=0.9003$. This is descriptive, not causal. Metric-specific values are
 reported in the JSON report and are not headline significance tests because
 each metric has only six transfers.
 
-\section{Failure anatomy and prospective boundary}
+\section{Heterogeneous failure anatomy}
 The failure anatomy table reuses the existing per-perturbation
 \texttt{identifiable\_divergence} as reordering burden, the existing
 \texttt{response\_program\_shift} as response displacement, and the existing
@@ -175,18 +175,18 @@ similarity between matched perturbation response vectors; it is descriptive
 and target-informed. Model disagreement and source uncertainty retain their
 source-side definitions from the frozen model members.
 
-Figure 5 matrices use the existing pair-state table and map stable strict
-directions to $-1$ and $+1$, unresolved rows with zero strict observations to
-tie, and unresolved rows with positive strict observations to unstable. The
-three-by-three transition fractions pool counts over the six directed Frangieh
-transfers after excluding unstable rows from the transition denominator; the
-separate gray bar reports their unresolved/unstable fraction. The failure
-anatomy has 219 complete explanatory rows out of 2,784, with 2,565 rows missing
-matched legacy response fields. The coverage report compares complete and
-missing distributions for existing burden and source-side fields; no rows are
-imputed. Explanatory scatter plots use the fixed response-displacement versus
-burden association, with model disagreement as marker size. These quantities
-are explicitly post-hoc explanatory and cannot enter a prospective predictor.
+Figure 5 uses the existing pair-state table and maps stable strict directions to
+$-1$ and $+1$, ties to the explicit tie state, and unresolved rows with positive
+strict observations to unstable. The three-by-three transition fractions retain
+all corrected state counts over the six directed Frangieh transfers; unresolved
+and unstable states remain visible rather than being silently removed or
+relabelled. The failure anatomy has 219 complete explanatory rows out of 2,784,
+with 2,565 rows missing matched legacy response fields. The coverage report
+compares complete and missing distributions for existing burden and source-side
+fields; no rows are imputed. Explanatory scatter plots use the fixed
+response-displacement versus burden association, with model disagreement as
+marker size. These quantities are explicitly post-hoc explanatory and cannot
+enter a prospective predictor.
 
 The prospective feature boundary is frozen to
 \texttt{uq\_cosine\_disagreement}, \texttt{uq\_mean\_gene\_variance},
@@ -197,6 +197,14 @@ cell counts are excluded from the feature matrix. Leave-label-out evaluation
 uses target outcomes only after predictions are made. Requested
 cross-dataset directions remain blocked when canonical per-label outcomes are
 unavailable; no zero imputation is performed.
+
+Figure 6 reports only legal source-only evaluation. Its performance panels use
+leave-label-out rows for the two source-only model classes and retain negative
+or near-chance values where they occur; the gray 0.5 line in the AUROC panel is
+the chance reference, not a fitted baseline. The calibration panel is not
+reported for a post-hoc target-informed calibration fit. The Frangieh-to-Nadig
+cross-dataset direction is marked unavailable because Nadig has no shared
+per-label target outcome; no numeric proxy is substituted.
 
 \section{Outcome-blind Nadig registry}
 The candidate registry was frozen before prediction, risk or inversion

@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "status": "executed",
+  "primary_display_context": {
+    "source_environment_id": "frangieh_melanoma_control",
+    "target_environment_id": "frangieh_melanoma_ifng",
+    "metric": "delta_cosine",
+    "reason": "fixed semantic exemplar, first frozen metric, canonical Ctrl→IFNγ shift; not selected by observed magnitude"
+  },
+  "rank_flow": {
+    "selection_rule": "source-only rank quantiles 5%, 15%, ..., 95%; nearest source rank, alphabetical tie-break",
+    "n_labels": 10,
+    "perturbation_labels": [
+      "SCARB2",
+      "AEBP1",
+      "AHNAK",
+      "CDKN2A",
+      "RTP4",
+      "VDAC2",
+      "MDH2",
+      "PPIA",
+      "DNMT1",
+      "EEF1G"
+    ],
+    "entries": [
+      {
+        "perturbation_label": "SCARB2",
+        "source_risk": 0.4908841743,
+        "source_rank": 2,
+        "coculture_risk": 0.6487295947,
+        "coculture_rank": 6.0,
+        "ifng_risk": 0.5208343719,
+        "ifng_rank": 11
+      },
+      {
+        "perturbation_label": "AEBP1",
+        "source_risk": 0.5171377346,
+        "source_rank": 7,
+        "coculture_risk": null,
+        "coculture_rank": null,
+        "ifng_risk": 0.4173861082,
+        "ifng_rank": 4
+      },
+      {
+        "perturbation_label": "AHNAK",
+        "source_risk": 0.5452057294,
+        "source_rank": 12,
+        "coculture_risk": null,
+        "coculture_rank": null,
+        "ifng_risk": 0.4855789182,
+        "ifng_rank": 8
+      },
+      {
+        "perturbation_label": "CDKN2A",
+        "source_risk": 0.5867919491,
+        "source_rank": 17,
+        "coculture_risk": null,
+        "coculture_rank": null,
+        "ifng_risk": 0.5922409409,
+        "ifng_rank": 21
+      },
+      {
+        "perturbation_label": "RTP4",
+        "source_risk": 0.61227626,
+        "source_rank": 22,
+        "coculture_risk": 0.8083050538,
+        "coculture_rank": 39.0,
+        "ifng_risk": 0.5525095633,
+        "ifng_rank": 15
+      },
+      {
+        "perturbation_label": "VDAC2",
+        "source_risk": 0.6756403344,
+        "source_rank": 26,
+        "coculture_risk": null,
+        "coculture_rank": null,
+        "ifng_risk": 0.9002263758,
+        "ifng_rank": 38
+      },
+      {
+        "perturbation_label": "MDH2",
+        "source_risk": 0.7315200107,
+        "source_rank": 31,
+        "coculture_risk": null,
+        "coculture_rank": null,
+        "ifng_risk": 0.9104522391,
+        "ifng_rank": 40
+      },
+      {
+        "perturbation_label": "PPIA",
+        "source_risk": 0.8026773029,
+        "source_rank": 36,
+        "coculture_risk": null,
+        "coculture_rank": null,
+        "ifng_risk": 0.7675532846,
+        "ifng_rank": 32
+      },
+      {
+        "perturbation_label": "DNMT1",
+        "source_risk": 0.8799801841,
+        "source_rank": 41,
+        "coculture_risk": null,
+        "coculture_rank": null,
+        "ifng_risk": 0.9484272717,
+        "ifng_rank": 42
+      },
+      {
+        "perturbation_label": "EEF1G",
+        "source_risk": 1.1153531731,
+        "source_rank": 46,
+        "coculture_risk": null,
+        "coculture_rank": null,
+        "ifng_risk": 1.1649928503,
+        "ifng_rank": 46
+      }
+    ],
+    "provenance": "artifacts/source_data/formal_v2_reliability_predictions.csv; predictor=mean_matching; scenario=in_domain"
+  },
+  "failure_cases": {
+    "selection_rule": "complete primary failure rows at burden quantiles q10/q50/q90; nearest burden, alphabetical tie-break",
+    "complete_rows": 10,
+    "cases": [
+      {
+        "quantile": 0.1,
+        "perturbation_label": "SCARB2",
+        "source_rank": 2,
+        "ifng_rank": 11,
+        "rank_delta": 9,
+        "reordering_burden": 0.0105263158,
+        "response_displacement": 0.8390384447,
+        "effect_magnitude": 0.0756168491,
+        "model_disagreement": 0.7350157729,
+        "source_uncertainty": 0.7728706625
+      },
+      {
+        "quantile": 0.5,
+        "perturbation_label": "CD44",
+        "source_rank": 8,
+        "ifng_rank": 18,
+        "rank_delta": 10,
+        "reordering_burden": 0.0622807018,
+        "response_displacement": 0.7670192052,
+        "effect_magnitude": 0.0003196909,
+        "model_disagreement": 0.7350157729,
+        "source_uncertainty": 0.7728706625
+      },
+      {
+        "quantile": 0.9,
+        "perturbation_label": "LCP1",
+        "source_rank": 15,
+        "ifng_rank": 12,
+        "rank_delta": -3,
+        "reordering_burden": 0.1307017544,
+        "response_displacement": 0.8330352989,
+        "effect_magnitude": 0.0485465762,
+        "model_disagreement": 0.7350157729,
+        "source_uncertainty": 0.7728706625
+      }
+    ],
+    "provenance": "artifacts/manifests/reliability_transport_failure_anatomy.csv; status=executed; no imputation"
+  },
+  "anti_fabrication": {
+    "visual_references_only": true,
+    "unavailable_target_informed_quantities_not_used_as_prospective_features": true,
+    "minimum_strict_support": 8,
+    "no_new_experiment_or_retraining": true
+  }
+}

@@ -198,7 +198,7 @@ def run(root: Path = ROOT) -> Path:
         ("Modern-model State", state.get("status", "unavailable"), "Promotion requires verified source-only training, vectors, panel and blindness."),
         ("Modern-model TxPert", txpert.get("status", "unavailable"), "Official checkpoint context is recorded; K562 is not relabelled as HepG2/Jurkat."),
         ("Modern-model scGPT", scgpt.get("status", "unavailable"), "One bounded package/contract attempt; no unverified model enters Claim Lock."),
-        ("Figures 1–5", figures.get("status", "unavailable"), "Each figure has PNG/PDF/SVG/TIFF and a source table; no sixth main figure is used."),
+        ("Figures 1–6", figures.get("status", "unavailable"), "Each figure has PNG/PDF/SVG/TIFF and a source table; the six-figure main story is canonical-data backed."),
         ("Paper linkage", "available" if master_path.is_file() else "unavailable", "Numbers must be read from the master table or its declared provenance."),
     ]
     checklist = [
@@ -225,8 +225,8 @@ def run(root: Path = ROOT) -> Path:
         ("21", "modern State blocker explicit", state.get("claim_lock_eligible") is False),
         ("22", "modern TxPert context checked", txpert.get("claim_lock_eligible") is False),
         ("23", "modern scGPT bounded attempt", scgpt.get("bounded_attempt") is True),
-        ("24", "five main figures generated", figures.get("figure_count") == 5),
-        ("25", "figure source tables generated", figures.get("figure_count") == 5),
+        ("24", "six main figures generated", figures.get("figure_count") == 6),
+        ("25", "figure source tables generated", figures.get("figure_count") == 6),
         ("26", "master table exists", master_path.is_file()),
         ("27", "story claims locked", (manifests / "story_claims.json").is_file()),
         ("28", "canonical audit status", audit.get("status") == "pass"),
