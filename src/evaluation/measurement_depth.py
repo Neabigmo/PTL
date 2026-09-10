@@ -124,6 +124,8 @@ def summarize_depth_rows(
         column for column in ("cell_budget_label", "cell_budget_order")
         if column in item_rows.columns and column not in group_columns
     )
+    if "universe_mode" in item_rows.columns and "universe_mode" not in group_columns:
+        optional_group_columns += ("universe_mode",)
     effective_group_columns = tuple(group_columns) + optional_group_columns
     required = set(effective_group_columns) | {"split_seed", "cross_disagreement", "within_disagreement_left", "within_disagreement_right", "identifiable_divergence", "stable_pair_fraction"}
     missing = required.difference(item_rows.columns)
@@ -163,6 +165,70 @@ def summarize_depth_rows(
             record[f"{column}_ci_low"] = low
             record[f"{column}_ci_high"] = high
         rows.append(record)
+    return pd.DataFrame(rows)
+
+
+def hierarchical_macro_bootstrap(
+    item_rows: pd.DataFrame,
+    *,
+    group_columns: tuple[str, ...] = (
+        "source_environment_id", "left_target_environment_id", "right_target_environment_id",
+        "metric", "cell_budget", "cell_budget_label", "cell_budget_order", "universe_mode",
+    ),
+    value_columns: tuple[str, ...] = (
+        "cross_disagreement", "within_disagreement_left", "within_disagreement_right",
+        "identifiable_divergence", "stable_pair_fraction",
+    ),
+    draws: int = 2000,
+    seed: int = 20260910,
+) -> pd.DataFrame:
+    """Create synchronized label×seed macro draws for depth curves.
+
+    The scientific unit is a perturbation label and the measurement seed is a
+    separate random layer.  For every group and draw, labels and seeds are
+    sampled with replacement and the mean is computed from the resulting
+    two-dimensional cell.  The returned table is intentionally draw-level so
+    figures can take quantiles of the macro distribution rather than averaging
+    row-level confidence endpoints.
+    """
+
+    required = set(group_columns) | {"split_seed", "perturbation_label"} | set(value_columns)
+    missing = required.difference(item_rows.columns)
+    if missing:
+        raise ValueError(f"item rows are missing columns: {sorted(missing)}")
+    if int(draws) < 1:
+        raise ValueError("draws must be positive")
+    rows: list[dict[str, Any]] = []
+    for key, group in item_rows.groupby(list(group_columns), sort=True, observed=True):
+        if not isinstance(key, tuple):
+            key = (key,)
+        labels = sorted(group["perturbation_label"].astype(str).unique())
+        seeds = sorted(group["split_seed"].astype(int).unique())
+        if len(labels) < 2 or not seeds:
+            continue
+        index = pd.MultiIndex.from_product([seeds, labels], names=["split_seed", "perturbation_label"])
+        matrix_frame = group.assign(perturbation_label=group["perturbation_label"].astype(str)).set_index(["split_seed", "perturbation_label"])
+        matrix_frame = matrix_frame.reindex(index)
+        if matrix_frame[list(value_columns)].isna().any().any():
+            raise ValueError(f"incomplete label×seed grid for {key}")
+        rng = np.random.default_rng(int(seed) + sum((i + 1) * sum(ord(char) for char in str(value)) for i, value in enumerate(key)))
+        arrays = {
+            column: matrix_frame[column].to_numpy(dtype=float).reshape(len(seeds), len(labels))
+            for column in value_columns
+        }
+        # Each draw resamples a label cohort and a seed layer.  The cartesian
+        # product is the synchronized macro estimand for that draw.
+        seed_indices = rng.integers(0, len(seeds), size=int(draws))
+        label_indices = rng.integers(0, len(labels), size=int(draws))
+        for draw_index, (seed_index, label_index) in enumerate(zip(seed_indices, label_indices)):
+            label_bootstrap = rng.integers(0, len(labels), size=len(labels))
+            seed_bootstrap = rng.integers(0, len(seeds), size=len(seeds))
+            record = dict(zip(group_columns, key))
+            record["bootstrap_draw"] = int(draw_index)
+            record["bootstrap_unit"] = "perturbation_label_then_measurement_seed"
+            for column, array in arrays.items():
+                record[column] = float(array[np.ix_(seed_bootstrap, label_bootstrap)].mean())
+            rows.append(record)
     return pd.DataFrame(rows)
 
 

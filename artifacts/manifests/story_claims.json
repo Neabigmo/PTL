@@ -1,43 +1,60 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "status": "locked_to_master_table",
-  "selection_policy": "claim text may cite only rows with status available and a non-unavailable provenance/checksum",
+  "selection_policy": "every claim filter resolves to canonical rows with status available and non-unavailable provenance; blocked rows cannot support a positive claim",
   "claims": [
     {
       "claim_id": "C1_transport_reordering_is_observed",
       "claim": "Cross-context ordering disagreement is measurable under the prespecified pairwise-order estimand.",
       "support_filter": {
         "regime": "canonical_fullsize_claim_lock",
-        "status": "available"
-      },
-      "scope": "descriptive transportability claim; not a universal biological law"
+        "status": "available",
+        "required_columns": [
+          "observed_D",
+          "observed_D_ci_low",
+          "observed_D_ci_high"
+        ]
+      }
     },
     {
       "claim_id": "C2_measurement_depth_is_a_boundary",
-      "claim": "The identifiable component is reported only after subtracting U-statistic measurement floors, with depth-dependent resolution made explicit.",
+      "claim": "The identifiable component is reported after U-statistic floor subtraction on a matched fixed universe, with depth-dependent resolution explicit.",
       "support_filter": {
-        "regime": "measurement_depth",
-        "status": "available"
-      },
-      "scope": "Frangieh source-frozen prediction and raw-cell contract"
+        "regime": "measurement_depth_matched_fixed",
+        "universe_mode": "matched_fixed",
+        "status": "available",
+        "required_columns": [
+          "measurement_identifiable",
+          "measurement_identifiable_ci_low",
+          "measurement_identifiable_ci_high"
+        ]
+      }
     },
     {
-      "claim_id": "C3_decision_consequence_is_budget_specific",
-      "claim": "Transporting a source ordering has budget-specific retention and regret consequences; a global ordering statistic is not itself a deployment utility.",
+      "claim_id": "C3_directed_decision_consequence_is_budget_specific",
+      "claim": "A source ordering has directed source-select/target-evaluate retention and regret consequences at each budget, with target-context floors.",
       "support_filter": {
-        "regime": "measurement_depth",
-        "status": "available"
-      },
-      "scope": "top-k budgets only; no decision claim outside evaluated universes"
+        "regime": "decision_transport_directed",
+        "source_target_orientation": "directed_source_select_target_evaluate",
+        "status": "available",
+        "required_columns": [
+          "decision_budget_fraction",
+          "retention",
+          "regret"
+        ]
+      }
     },
     {
-      "claim_id": "C4_near_chance_is_valid",
-      "claim": "Source-only predictability may remain weak after nested calibration; weak prediction is reported as a result rather than converted into a positive mechanistic claim.",
+      "claim_id": "C4_source_only_predictability_is_audited",
+      "claim": "Source-only predictability is reported using held-out outcomes; cross-dataset rows remain explicitly blocked when canonical per-label outcomes are unavailable.",
       "support_filter": {
         "regime": "prospective_source_only",
-        "status": "available"
-      },
-      "scope": "only if a source-only held-out manifest is present"
+        "status": "executed",
+        "required_columns": [
+          "predictability_model",
+          "predictability_spearman"
+        ]
+      }
     }
   ]
 }

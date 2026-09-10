@@ -23,10 +23,12 @@ def run(root: Path = ROOT) -> dict:
     frangieh_path = manifests / "formal_v2_claim_lock_measurement_fullsize_summary.csv"
     ordering_path = manifests / "formal_v2_claim_lock_measurement_fullsize_ordering.csv"
     nadig_path = manifests / "formal_v2_claim_lock_replication_nadig_fullsize.csv"
+    transfer_path = manifests / "formal_v2_environment_transfer_matrix_all_splits.csv"
     registry = pd.read_csv(registry_path)
     frangieh = pd.read_csv(frangieh_path)
     nadig = pd.read_csv(nadig_path) if nadig_path.is_file() else None
-    frozen, atlas = build_atlas(registry=registry, frangieh_summary=frangieh, nadig_summary=nadig, ordering_path=ordering_path)
+    transfer = pd.read_csv(transfer_path) if transfer_path.is_file() else pd.read_csv(manifests / "formal_v2_environment_transfer_matrix.csv")
+    frozen, atlas = build_atlas(registry=registry, frangieh_summary=frangieh, nadig_summary=nadig, ordering_path=ordering_path, transfer_matrix=transfer)
     registry_out = manifests / "reliability_transport_atlas_registry.csv"
     atlas_out = manifests / "reliability_transport_atlas.csv"
     report_out = manifests / "reliability_transport_atlas.json"

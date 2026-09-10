@@ -155,8 +155,11 @@ def _budget_map(
 
 
 def _pair_label_set(
-    counts: dict[tuple[str, str], np.ndarray], labels: list[str], left: str, right: str, budget: int, *, full: bool
+    counts: dict[tuple[str, str], np.ndarray], labels: list[str], left: str, right: str, budget: int, *, full: bool,
+    fixed_universe: set[str] | None = None,
 ) -> list[str]:
+    if fixed_universe is not None:
+        return [label for label in labels if label in fixed_universe]
     if full:
         control_ok = min(len(counts[(left, "control")]), len(counts[(right, "control")])) > 0
         return labels.copy() if control_ok else []
@@ -185,16 +188,33 @@ def _append_decision_rows(
     right_risk: np.ndarray,
     left_members: np.ndarray,
     right_members: np.ndarray,
+    universe_mode: str = "coverage",
 ) -> None:
-    curve = replicate_decision_curve(left_risk, right_risk, budgets=DEFAULT_BUDGET_FRACTIONS)
-    measurement_floor = replicate_decision_curve(left_risk, left_risk, budgets=DEFAULT_BUDGET_FRACTIONS, independent_only=True)
+    if source == left:
+        source_risk, target_risk = left_risk, right_risk
+        target_environment = right
+        source_side = "left"
+    elif source == right:
+        source_risk, target_risk = right_risk, left_risk
+        target_environment = left
+        source_side = "right"
+    else:
+        raise ValueError("directed decision source must be one endpoint of the target pair")
+    curve = replicate_decision_curve(source_risk, target_risk, budgets=DEFAULT_BUDGET_FRACTIONS)
+    # The measurement floor must be target self-reproducibility: target A
+    # selects and independent target B evaluates.  Source self-instability is
+    # not a valid baseline for a source-to-target deployment quantity.
+    measurement_floor = replicate_decision_curve(target_risk, target_risk, budgets=DEFAULT_BUDGET_FRACTIONS, independent_only=True)
     joint_left = np.asarray(left_members, dtype=float).reshape(-1, left_members.shape[-1])
     joint_right = np.asarray(right_members, dtype=float).reshape(-1, right_members.shape[-1])
-    joint_curve = replicate_decision_curve(joint_left, joint_right, budgets=DEFAULT_BUDGET_FRACTIONS)
-    joint_floor = replicate_decision_curve(joint_left, joint_left, budgets=DEFAULT_BUDGET_FRACTIONS, independent_only=True)
+    joint_source, joint_target = (joint_left, joint_right) if source_side == "left" else (joint_right, joint_left)
+    joint_curve = replicate_decision_curve(joint_source, joint_target, budgets=DEFAULT_BUDGET_FRACTIONS)
+    joint_floor = replicate_decision_curve(joint_target, joint_target, budgets=DEFAULT_BUDGET_FRACTIONS, independent_only=True)
     for item, measurement, joint, joint_floor_item in zip(curve, measurement_floor, joint_curve, joint_floor):
         rows.append({
             "source_environment_id": source,
+            "target_environment_id": target_environment,
+            "source_target_orientation": f"{source}->{target_environment}",
             "left_target_environment_id": left,
             "right_target_environment_id": right,
             "metric": metric,
@@ -202,6 +222,7 @@ def _append_decision_rows(
             "cell_budget": int(cell_budget),
             "cell_budget_label": cell_budget_label,
             "cell_budget_order": FULL_ORDER if cell_budget_label == FULL_LABEL else DEPTH_ORDER[cell_budget],
+            "universe_mode": universe_mode,
             "decision_budget_fraction": item["budget_fraction"],
             "k": item["k"],
             "n_items": item["n_items"],
@@ -218,8 +239,8 @@ def _append_decision_rows(
             "joint_floor_regret": joint_floor_item["regret"],
             "excess_regret": item["regret"] - measurement["regret"],
             "joint_excess_regret": item["regret"] - joint_floor_item["regret"],
-            "measurement_floor_status": "off_diagonal_within_left_context_replicate_pairs",
-            "joint_floor_status": "six_source_frozen_member_measurement_replicate_pairs",
+            "measurement_floor_status": "target_context_A_selects_target_context_B_evaluates_off_diagonal",
+            "joint_floor_status": "target_context_pipeline_self_reproducibility_off_diagonal_member_pairs",
         })
 
 
@@ -236,8 +257,11 @@ def run(
     include_fixed: bool = True,
     label_start_index: int = 0,
     label_stop_index: int | None = None,
+    universe_mode: str = "coverage",
 ) -> dict[str, Any]:
     root = root.resolve()
+    if universe_mode not in {"coverage", "matched_fixed"}:
+        raise ValueError("universe_mode must be coverage or matched_fixed")
     budgets = tuple(sorted({int(value) for value in budgets}))
     if include_fixed and (not budgets or any(value < 2 for value in budgets)):
         raise ValueError("budgets must contain integers >= 2")
@@ -266,6 +290,16 @@ def run(
         labels = labels[: int(max_labels)]
     panel_positions = _load_panel_positions(root, panel)
     count_frame = _counts(metadata)
+    fixed_budget = max(budgets) if budgets else FIXED_CELL_BUDGETS[-1]
+    fixed_universe_metadata = _load_metadata(root, all_labels) if universe_mode == "matched_fixed" else metadata
+    fixed_universe_groups: dict[tuple[str, str], np.ndarray] = {
+        (str(environment), str(label)): group["row_index"].to_numpy(dtype=np.int64)
+        for (environment, label), group in fixed_universe_metadata.groupby(["environment_key", "perturbation_label"], sort=True)
+    }
+    fixed_universes = {
+        pair: set(_pair_label_set(fixed_universe_groups, all_labels, pair[0], pair[1], fixed_budget, full=False))
+        for pair in PAIR_ORDER
+    } if universe_mode == "matched_fixed" else {}
     output_dir = (output_dir or (root / "artifacts/manifests")).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     item_rows: list[dict[str, Any]] = []
@@ -281,7 +315,10 @@ def run(
     for left, right in PAIR_ORDER:
         for budget, budget_label, full in depth_specs:
             if full:
-                eligible = _pair_label_set(groups, labels, left, right, budget, full=True)
+                eligible = _pair_label_set(
+                    groups, labels, left, right, budget, full=True,
+                    fixed_universe=fixed_universes[(left, right)] if universe_mode == "matched_fixed" else None,
+                )
                 coverage_rows.append({
                     "left_target_environment_id": left,
                     "right_target_environment_id": right,
@@ -293,11 +330,29 @@ def run(
                     "coverage_fraction": float(len(eligible) / len(labels)) if labels else float("nan"),
                     "matched_universe_sha256": hashlib.sha256("\n".join(eligible).encode()).hexdigest(),
                     "matched_universe_policy": "all labels with nonempty matched target strata; each label uses its own full matched cell count with replacement",
+                    "universe_mode": universe_mode,
                 })
             else:
-                curve = coverage_curve(count_frame, left_environment=left, right_environment=right, budgets=(budget,))
-                row = curve.iloc[0].to_dict()
+                if universe_mode == "coverage":
+                    curve = coverage_curve(count_frame, left_environment=left, right_environment=right, budgets=(budget,))
+                    row = curve.iloc[0].to_dict()
+                else:
+                    eligible = _pair_label_set(
+                        groups, all_labels, left, right, budget, full=False,
+                        fixed_universe=fixed_universes[(left, right)],
+                    )
+                    row = {
+                        "left_target_environment_id": left,
+                        "right_target_environment_id": right,
+                        "cell_budget": int(budget),
+                        "n_labels_all": len(all_labels),
+                        "n_labels_matched": len(eligible),
+                        "coverage_fraction": float(len(eligible) / len(all_labels)) if all_labels else float("nan"),
+                        "matched_universe_sha256": hashlib.sha256("\n".join(eligible).encode()).hexdigest(),
+                        "matched_universe_policy": f"fixed universe frozen at {fixed_budget} cells and reused at {budget} cells; control must pass",
+                    }
                 row.update({"cell_budget_label": budget_label, "cell_budget_order": DEPTH_ORDER[budget]})
+                row["universe_mode"] = universe_mode
                 coverage_rows.append(row)
     with h5py.File(root / RAW_PATH.relative_to(ROOT), "r") as handle:
         for budget, budget_label, full in depth_specs:
@@ -358,7 +413,12 @@ def run(
                     for source_index, source in enumerate(ENVIRONMENTS):
                         source_members = predictions[source_index]
                         for left, right in PAIR_ORDER:
-                            eligible = _pair_label_set(groups, labels, left, right, budget, full=full)
+                            if source not in (left, right):
+                                continue
+                            eligible = _pair_label_set(
+                                groups, labels, left, right, budget, full=full,
+                                fixed_universe=fixed_universes[(left, right)] if universe_mode == "matched_fixed" else None,
+                            )
                             if not eligible:
                                 continue
                             indices = np.asarray([labels.index(label) for label in eligible], dtype=np.int64)
@@ -407,6 +467,7 @@ def run(
                                         "cell_budget": int(budget),
                                         "cell_budget_label": budget_label,
                                         "cell_budget_order": FULL_ORDER if full else DEPTH_ORDER[budget],
+                                        "universe_mode": universe_mode,
                                         "effective_cell_budget": int(budget_values[(left, right, label)]),
                                         "cross_disagreement": burden["cross_burden"][index],
                                         "within_disagreement_left": burden["within_burden_left"][index],
@@ -426,32 +487,36 @@ def run(
                                     split_seed=int(seed),
                                     cell_budget=int(budget),
                                     cell_budget_label=budget_label,
+                                    universe_mode=universe_mode,
                                     left_risk=left_mean,
                                     right_risk=right_mean,
                                     left_members=left_members,
                                     right_members=right_members,
                                 )
-                                if full:
-                                    for index, label in enumerate(eligible):
-                                        for replicate_index in range(left_mean.shape[0]):
-                                            risk_row = {
-                                                "source_environment_id": source,
-                                                "left_target_environment_id": left,
-                                                "right_target_environment_id": right,
-                                                "metric": metric,
-                                                "split_seed": int(seed),
-                                                "perturbation_label": label,
-                                                "measurement_replicate": int(replicate_index),
-                                                "cell_budget": int(budget),
-                                                "cell_budget_label": budget_label,
-                                                "cell_budget_order": FULL_ORDER,
-                                                "left_risk": float(left_mean[replicate_index, index]),
-                                                "right_risk": float(right_mean[replicate_index, index]),
-                                            }
-                                            for member_index in range(left_members.shape[1]):
-                                                risk_row[f"left_member_{member_index}"] = float(left_members[replicate_index, member_index, index])
-                                                risk_row[f"right_member_{member_index}"] = float(right_members[replicate_index, member_index, index])
-                                            risk_rows.append(risk_row)
+                                # Keep member-level risks for every depth.  The
+                                # directed hierarchical decision bootstrap needs
+                                # synchronized label×seed resampling at fixed
+                                # budgets as well as at full depth.
+                                for index, label in enumerate(eligible):
+                                    for replicate_index in range(left_mean.shape[0]):
+                                        risk_row = {
+                                            "source_environment_id": source,
+                                            "left_target_environment_id": left,
+                                            "right_target_environment_id": right,
+                                            "metric": metric,
+                                            "split_seed": int(seed),
+                                            "perturbation_label": label,
+                                            "measurement_replicate": int(replicate_index),
+                                            "cell_budget": int(budget),
+                                            "cell_budget_label": budget_label,
+                                            "cell_budget_order": FULL_ORDER if full else DEPTH_ORDER[budget],
+                                            "left_risk": float(left_mean[replicate_index, index]),
+                                            "right_risk": float(right_mean[replicate_index, index]),
+                                        }
+                                        for member_index in range(left_members.shape[1]):
+                                            risk_row[f"left_member_{member_index}"] = float(left_members[replicate_index, member_index, index])
+                                            risk_row[f"right_member_{member_index}"] = float(right_members[replicate_index, member_index, index])
+                                        risk_rows.append(risk_row)
                 print(f"[measurement-depth] budget={budget_label} seeds={selected_seeds[0]}-{selected_seeds[-1]}", flush=True)
     items = pd.DataFrame(item_rows)
     decisions = pd.DataFrame(decision_rows)
@@ -481,6 +546,8 @@ def run(
         "label_index_range": [label_start_index, label_stop_index],
         "n_labels": len(labels),
         "fixed_cell_budgets": list(budgets),
+        "universe_mode": universe_mode,
+        "matched_fixed_budget": int(fixed_budget) if universe_mode == "matched_fixed" else None,
         "full_depth_label": FULL_LABEL,
         "full_depth_contract": "per-label matched target cell count, independently sampled with replacement",
         "decision_budgets": list(DEFAULT_BUDGET_FRACTIONS),
@@ -526,6 +593,7 @@ def main() -> int:
     parser.add_argument("--full-only", action="store_true")
     parser.add_argument("--label-start-index", type=int, default=0)
     parser.add_argument("--label-stop-index", type=int, default=None)
+    parser.add_argument("--universe-mode", choices=("coverage", "matched_fixed"), default="coverage")
     args = parser.parse_args()
     stop = len(SPLIT_SEEDS) if args.seed_stop_index is None else int(args.seed_stop_index)
     if not 0 <= args.seed_start_index < stop <= len(SPLIT_SEEDS):
@@ -542,6 +610,7 @@ def main() -> int:
         include_fixed=not args.full_only,
         label_start_index=args.label_start_index,
         label_stop_index=args.label_stop_index,
+        universe_mode=args.universe_mode,
     )
     return 0
 

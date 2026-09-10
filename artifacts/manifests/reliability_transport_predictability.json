@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "status": "executed",
   "outer_split": "leave-one-perturbation-label-out",
   "models": [
@@ -7,6 +7,17 @@
     "linear_source_features"
   ],
   "target_outcome_blindness": "all target risk/burden values are held out evaluation targets and never feature columns",
+  "feature_set": "fixed_source_only_v2",
+  "within_dataset": "Frangieh executed with source-only features; target outcome held out per label",
+  "cross_dataset": {
+    "directions": [
+      "FrangiehIzar2021_RNA->NadigOConner2024",
+      "NadigOConner2024->FrangiehIzar2021_RNA"
+    ],
+    "status": "blocked_missing_shared_per_label_target_outcomes",
+    "no_imputation": true
+  },
+  "calibration_policy": "Brier and thresholds are not reported; AUROC uses training-fold median and train-fold score scaling only",
   "output": "artifacts/manifests/reliability_transport_predictability.csv",
-  "rows": 326
+  "rows": 238
 }

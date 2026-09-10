@@ -1,13 +1,51 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "status": "executed",
-  "ranking_unit": "full-depth mean per-perturbation identifiable burden",
-  "top_k_fraction": 0.2,
-  "transition_state_definition": "negative/positive sign; zero unresolved",
+  "ranking_unit": "perturbation-label pair",
+  "seed_schedule": {
+    "discovery": [
+      20260908,
+      20260909,
+      20260910,
+      20260911,
+      20260912,
+      20260913,
+      20260914,
+      20260915,
+      20260916,
+      20260917,
+      20260918,
+      20260919,
+      20260920,
+      20260921,
+      20260922
+    ],
+    "validation": [
+      20260923,
+      20260924,
+      20260925,
+      20260926,
+      20260927,
+      20260928,
+      20260929,
+      20260930,
+      20260931,
+      20260932,
+      20260933,
+      20260934,
+      20260935,
+      20260936,
+      20260937
+    ]
+  },
+  "tie_policy": "strict signs only; ties excluded from Beta posterior; stable if posterior direction >=0.95",
+  "source_margin_definition": "mean absolute source-context pairwise risk difference, not per-perturbation burden magnitude",
   "outputs": {
+    "pair_states": "artifacts/manifests/reliability_transport_metric_pair_states.csv",
     "pairwise": "artifacts/manifests/reliability_transport_metric_dependence.csv",
     "transitions": "artifacts/manifests/reliability_transport_metric_transitions.csv"
   },
-  "pairwise_rows": 27,
-  "transition_rows": 486
+  "pair_state_rows": 529254,
+  "pairwise_rows": 36,
+  "transition_rows": 324
 }

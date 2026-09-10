@@ -19,11 +19,13 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import os
 from typing import Any
 
 
 MODELS = (
     ("official_gears", "gears", "official GEARS source is vendored and its CUDA contract is runnable"),
+    ("state", "state", "official ArcInstitute State transition model with source-only training and frozen held-out vector"),
     ("scgpt", "scgpt", "official pretrained checkpoint plus perturbation fine-tuning and frozen source-only vector"),
     ("txpert", "txpert", "public TxPert checkpoint and source-only frozen prediction vector"),
 )
@@ -48,6 +50,8 @@ def _probe_module(module_name: str) -> dict[str, Any]:
             [sys.executable, "-c", f"import importlib; m=importlib.import_module({module_name!r}); print(getattr(m, '__file__', ''))"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=30,
             check=False,
         )
@@ -62,6 +66,8 @@ def _probe_module(module_name: str) -> dict[str, Any]:
 
 
 def _probe_wsl_scgpt() -> dict[str, Any]:
+    if os.environ.get("PTL_SKIP_WSL_PROBE") == "1":
+        return {"status": "skipped", "returncode": None, "stdout": "", "stderr": "explicitly skipped after WSL probe timeout; Windows contract recorded separately"}
     try:
         result = subprocess.run(
             ["wsl", "-d", "Ubuntu", "--", "python3", "-c", "import scgpt; print('scgpt_import=success')"],
@@ -87,6 +93,8 @@ def _file_record(path: Path) -> dict[str, Any]:
 
 
 def collect(root: Path) -> dict[str, Any]:
+    if str(root.resolve()) not in sys.path:
+        sys.path.insert(0, str(root.resolve()))
     runtime: dict[str, Any] = {"python": sys.executable}
     runtime["torch_version"] = _version("torch")
     try:
@@ -127,6 +135,24 @@ def collect(root: Path) -> dict[str, Any]:
         if model_id == "official_gears":
             row["external_contract_artifact"] = "artifacts/manifests/formal_v2_gears_external_validity_summary.json"
             row["claim_lock_blocker"] = "existing GEARS runs are external-contract surfaces, not Frangieh Claim Lock frozen vectors"
+        elif model_id == "state":
+            state_root = root / "third_party" / "State"
+            preprocess = root / "artifacts" / "modern" / "state_preprocessed_frangieh.h5ad"
+            cli_ok = bool(state_root.is_dir() and (state_root / "src" / "state").is_dir())
+            if cli_ok:
+                commit = subprocess.run(["git", "-C", str(state_root), "rev-parse", "HEAD"], capture_output=True, text=True, check=False).stdout.strip()
+                row.update({
+                    "module_found": True,
+                    "import_status": "official_checkout_cli_verified",
+                    "module_path": (state_root / "src" / "state").as_posix(),
+                    "official_source_checkout": True,
+                    "official_source_commit": commit,
+                    "cached_data_files": [_file_record(preprocess)] if preprocess.is_file() else [],
+                    "cached_inference_status": "preprocess_only_no_claim_lock_vector" if preprocess.is_file() else "cli_only",
+                    "claim_lock_blocker": "official State CLI and preprocessing are verified, but its set-transition training/output contract does not materialize this project's frozen global five-fold source-only vector and exact target-risk bridge",
+                })
+            else:
+                row["claim_lock_blocker"] = "official State checkout is unavailable in the selected runtime"
         elif model_id == "scgpt" and probe["import_status"] != "success":
             row["claim_lock_blocker"] = "official scGPT package is installed but import fails before model construction"
         elif model_id == "txpert" and probe["import_status"] != "success":
@@ -182,11 +208,11 @@ def main() -> None:
     json_path = output_dir / "modern_predictor_feasibility.json"
     csv_path = output_dir / "modern_predictor_feasibility.csv"
     json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    fields = list(payload["rows"][0])
+    fields = sorted({field for row in payload["rows"] for field in row})
     with csv_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
-        writer.writerows(payload["rows"])
+        writer.writerows({field: row.get(field, "") for field in fields} for row in payload["rows"])
     print(json.dumps({"json": str(json_path), "csv": str(csv_path), "runtime": payload["runtime"]}, ensure_ascii=False))
 
 

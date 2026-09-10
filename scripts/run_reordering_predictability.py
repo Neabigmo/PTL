@@ -48,7 +48,8 @@ def _prediction_features(root: Path) -> pd.DataFrame:
 def run(root: Path = ROOT) -> dict:
     root = root.resolve()
     manifests = root / "artifacts/manifests"
-    items_path = manifests / "reliability_transport_measurement_depth_items.csv"
+    matched_items_path = manifests / "reliability_transport_measurement_depth_matched_fixed_items.csv"
+    items_path = matched_items_path if matched_items_path.is_file() else manifests / "reliability_transport_measurement_depth_items.csv"
     features_path = root / "artifacts/source_data/formal_v2_reliability_predictions.csv"
     out_path = manifests / "reliability_transport_predictability.csv"
     report_path = manifests / "reliability_transport_predictability.json"
@@ -56,7 +57,7 @@ def run(root: Path = ROOT) -> dict:
         report = {"schema_version": 1, "status": "blocked_missing_input", "items": items_path.as_posix(), "features": features_path.as_posix()}
         report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
         return report
-    items = pd.read_csv(items_path)
+    items = pd.read_csv(items_path, dtype={"cell_budget_label": "string"})
     features = pd.read_csv(features_path)
     selected_columns = [
         "environment_key", "perturbation_label", "prediction_norm", "prediction_sparsity", "prediction_concentration", "prediction_manifold_distance",
@@ -72,13 +73,47 @@ def run(root: Path = ROOT) -> dict:
         if derived_name in merged:
             merged[base] = merged[base].combine_first(merged[derived_name]) if base in merged else merged[derived_name]
     result = evaluate_source_only_predictability(merged)
+    result["dataset"] = "FrangiehIzar2021_RNA"
+    result["dataset_split"] = "within_dataset_leave_one_perturbation_label_out"
+    result["feature_set"] = "fixed_source_only_v2"
+    # A cross-dataset split is part of the prespecified validation surface.
+    # Nadig has aggregate Claim-Lock outcomes but no canonical per-label
+    # identifiable-divergence table, so a numerical score would be invented.
+    # Preserve the requested direction as an explicit blocked audit row.
+    blocked = []
+    for source_dataset, target_dataset in (("FrangiehIzar2021_RNA", "NadigOConner2024"), ("NadigOConner2024", "FrangiehIzar2021_RNA")):
+        for model in ("source_u_only", "linear_source_features"):
+            blocked.append({
+                "dataset": f"{source_dataset}__to__{target_dataset}",
+                "dataset_split": "leave_dataset_out",
+                "source_dataset": source_dataset,
+                "target_dataset": target_dataset,
+                "model": model,
+                "status": "blocked_missing_shared_per_label_target_outcomes",
+                "n_labels": 0,
+                "spearman": float("nan"),
+                "auroc_high_identifiable": float("nan"),
+                "calibration_brier": float("nan"),
+                "calibration_threshold": float("nan"),
+                "calibration_status": "not_reported_no_target_labels",
+                "mean_absolute_error": float("nan"),
+                "source_only_features": "fixed_source_only_v2",
+                "target_outcome_used_only_for_evaluation": True,
+                "feature_set": "fixed_source_only_v2",
+                "reason": "Nadig canonical output is aggregate-only; no shared per-label identifiable-divergence outcome exists",
+            })
+    result = pd.concat([result, pd.DataFrame(blocked)], ignore_index=True, sort=False)
     result.to_csv(out_path, index=False)
     report = {
-        "schema_version": 1,
+        "schema_version": 2,
         "status": "executed",
         "outer_split": "leave-one-perturbation-label-out",
         "models": ["source_u_only", "linear_source_features"],
         "target_outcome_blindness": "all target risk/burden values are held out evaluation targets and never feature columns",
+        "feature_set": "fixed_source_only_v2",
+        "within_dataset": "Frangieh executed with source-only features; target outcome held out per label",
+        "cross_dataset": {"directions": ["FrangiehIzar2021_RNA->NadigOConner2024", "NadigOConner2024->FrangiehIzar2021_RNA"], "status": "blocked_missing_shared_per_label_target_outcomes", "no_imputation": True},
+        "calibration_policy": "Brier and thresholds are not reported; AUROC uses training-fold median and train-fold score scaling only",
         "output": out_path.relative_to(root).as_posix(),
         "rows": int(len(result)),
     }

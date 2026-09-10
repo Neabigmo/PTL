@@ -88,6 +88,10 @@ def merge(root: Path = ROOT, parts_dir: Path | None = None, draws: int = 2000) -
         raise ValueError(f"label range coverage stops at {expected_start}, expected {len(all_labels)}")
     items = pd.concat(item_frames, ignore_index=True)
     risks = pd.concat(risk_frames, ignore_index=True)
+    if "universe_mode" not in items.columns:
+        items["universe_mode"] = "coverage"
+    if "universe_mode" not in risks.columns:
+        risks["universe_mode"] = "coverage"
     item_key = ["source_environment_id", "left_target_environment_id", "right_target_environment_id", "metric", "split_seed", "perturbation_label", "cell_budget_label"]
     risk_key = item_key[:-1] + ["measurement_replicate", "cell_budget_label"]
     if items.duplicated(item_key).any():
@@ -114,6 +118,8 @@ def merge(root: Path = ROOT, parts_dir: Path | None = None, draws: int = 2000) -
     for (source, left, right, metric, seed), group in risks.groupby(
         ["source_environment_id", "left_target_environment_id", "right_target_environment_id", "metric", "split_seed"], sort=False
     ):
+        if source not in (left, right):
+            continue
         group = group.sort_values(["measurement_replicate", "_label_order"])
         replicate_values = sorted(group["measurement_replicate"].astype(int).unique())
         label_values = [label for label, _ in sorted(label_order.items(), key=lambda item: item[1]) if label in set(group["perturbation_label"].astype(str))]
@@ -148,6 +154,7 @@ def merge(root: Path = ROOT, parts_dir: Path | None = None, draws: int = 2000) -
             right_risk=right_mean,
             left_members=left_members,
             right_members=right_members,
+            universe_mode="coverage",
         )
     decisions = pd.DataFrame(decision_rows)
     risks = risks.drop(columns="_label_order")

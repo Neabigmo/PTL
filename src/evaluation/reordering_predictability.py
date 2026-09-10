@@ -22,7 +22,7 @@ def evaluate_source_only_predictability(
     """
 
     from sklearn.linear_model import Ridge
-    from sklearn.metrics import brier_score_loss, roc_auc_score
+    from sklearn.metrics import roc_auc_score
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
 
@@ -46,7 +46,6 @@ def evaluate_source_only_predictability(
             rows.append({**dict(zip(group_columns, key)), "status": "too_few_independent_labels", "model": "unavailable", "n_labels": int(len(group))})
             continue
         y = group[outcome].to_numpy(dtype=float)
-        high = y >= np.median(y)
         feature_sets = {
             "source_u_only": ["uq_cosine_disagreement"] if "uq_cosine_disagreement" in feature_columns else feature_columns[:1],
             "linear_source_features": feature_columns,
@@ -58,13 +57,20 @@ def evaluate_source_only_predictability(
                 model = make_pipeline(StandardScaler(), Ridge(alpha=1.0))
                 model.fit(group.iloc[train][selected_features], y[train])
                 prediction[heldout] = float(model.predict(group.iloc[[heldout]][selected_features])[0])
-            # An ordinal calibration maps the held-out predictions to a
-            # [0,1] high-burden score without fitting on the held-out label.
-            threshold = float(np.median(prediction))
-            score = (prediction - np.min(prediction)) / (np.ptp(prediction) or 1.0)
-            observed_high = high.astype(int)
-            auc = float(roc_auc_score(observed_high, score)) if len(np.unique(observed_high)) == 2 else float("nan")
-            brier = float(brier_score_loss(observed_high, score)) if len(np.unique(observed_high)) == 2 else float("nan")
+            # Every held-out score is scaled and thresholded from the
+            # training fold only.  There is deliberately no post-hoc Brier
+            # score: a global min/max or target median would leak the held-out
+            # outcome into calibration.
+            scores = np.full(len(group), np.nan, dtype=float)
+            observed_high = np.full(len(group), np.nan, dtype=float)
+            for heldout in range(len(group)):
+                train = np.arange(len(group)) != heldout
+                train_pred = prediction[train]
+                lo, hi = float(np.min(train_pred)), float(np.max(train_pred))
+                scores[heldout] = (prediction[heldout] - lo) / (hi - lo or 1.0)
+                observed_high[heldout] = float(y[heldout] >= np.median(y[train]))
+            valid_auc = np.isfinite(scores) & np.isfinite(observed_high)
+            auc = float(roc_auc_score(observed_high[valid_auc], scores[valid_auc])) if len(np.unique(observed_high[valid_auc])) == 2 else float("nan")
             rows.append({
                 **dict(zip(group_columns, key)),
                 "model": model_name,
@@ -72,8 +78,9 @@ def evaluate_source_only_predictability(
                 "n_labels": int(len(group)),
                 "spearman": float(pd.Series(prediction).corr(pd.Series(y), method="spearman")),
                 "auroc_high_identifiable": auc,
-                "calibration_brier": brier,
-                "calibration_threshold": threshold,
+                "calibration_brier": float("nan"),
+                "calibration_threshold": float("nan"),
+                "calibration_status": "not_reported_train_fold_only_no_posthoc_target_calibration",
                 "mean_absolute_error": float(np.mean(np.abs(prediction - y))),
                 "source_only_features": ";".join(selected_features),
                 "target_outcome_used_only_for_evaluation": True,

@@ -10,10 +10,10 @@
       "NVIDIA GeForce RTX 4070 Laptop GPU"
     ],
     "scgpt_compatibility_attempt": {
-      "status": "failed",
-      "returncode": 1,
+      "status": "skipped",
+      "returncode": null,
       "stdout": "",
-      "stderr": "Ubuntu WSL attempt did not provide scGPT; observed WSL/Service/E_ACCESSDENIED and ModuleNotFoundError in fallback attempt."
+      "stderr": "explicitly skipped after WSL probe timeout; Windows contract recorded separately"
     }
   },
   "rows": [
@@ -26,8 +26,8 @@
       "cuda_available": true,
       "cuda_device_count": 1,
       "module_found": true,
-      "import_status": "success",
-      "import_error": "",
+      "import_status": "timeout",
+      "import_error": "TimeoutExpired after 30s",
       "module_path": "H:\\2026try\\9.5PTL\\third_party\\GEARS\\gears\\__init__.py",
       "official_checkpoint_verified": false,
       "source_only_training_verified": false,
@@ -45,6 +45,38 @@
       "claim_lock_blocker": "existing GEARS runs are external-contract surfaces, not Frangieh Claim Lock frozen vectors"
     },
     {
+      "predictor_id": "state",
+      "package": "state",
+      "installed_version": null,
+      "requirement": "official ArcInstitute State transition model with source-only training and frozen held-out vector",
+      "runtime": "E:\\anaconda3\\envs\\pytorch-clean\\python.exe",
+      "cuda_available": true,
+      "cuda_device_count": 1,
+      "module_found": true,
+      "import_status": "official_checkout_cli_verified",
+      "import_error": "ModuleNotFoundError: state",
+      "module_path": "H:/2026try/9.5PTL/third_party/State/src/state",
+      "official_checkpoint_verified": false,
+      "source_only_training_verified": false,
+      "heldout_prediction_vector_verified": false,
+      "target_outcome_blind_verified": false,
+      "claim_lock_eligible": false,
+      "scientific_result_claimed": false,
+      "official_source_checkout": true,
+      "official_source_commit": "9bbfe78a434a55205e4de834e1ea99f85f7a3add",
+      "official_checkpoint_files": [],
+      "cached_data_files": [
+        {
+          "path": "H:/2026try/9.5PTL/artifacts/modern/state_preprocessed_frangieh.h5ad",
+          "bytes": 7711322614,
+          "sha256": "1f34a394778f9b2080b0c1e30eac2a2311466af3ba3e3e3853f8aaa4568ae1be"
+        }
+      ],
+      "cached_inference_status": "preprocess_only_no_claim_lock_vector",
+      "cached_inference_metrics": {},
+      "claim_lock_blocker": "official State CLI and preprocessing are verified, but its set-transition training/output contract does not materialize this project's frozen global five-fold source-only vector and exact target-risk bridge"
+    },
+    {
       "predictor_id": "scgpt",
       "package": "scgpt",
       "installed_version": "0.2.4",
@@ -54,8 +86,8 @@
       "cuda_device_count": 1,
       "module_found": true,
       "import_status": "failed",
-      "import_error": "OSError: [WinError 127] 找不到指定的程序。",
-      "module_path": "",
+      "import_error": "\\importlib\\__init__.py\", line 90, in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<frozen importlib._bootstrap>\", line 1387, in _gcd_import\n  File \"<frozen importlib._bootstrap>\", line 1360, in _find_and_load\n  File \"<frozen importlib._bootstrap>\", line 1331, in _find_and_load_unlocked\n  File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\n  File \"<frozen importlib._bootstrap_external>\", line 999, in exec_module\n  File \"<frozen importlib._bootstrap>\", line 488, in _call_with_frames_removed\n  File \"E:\\anaconda3\\envs\\pytorch-clean\\Lib\\site-packages\\scgpt\\__init__.py\", line 18, in <module>\n    from . import model, tokenizer, scbank, utils, tasks\n  File \"E:\\anaconda3\\envs\\pytorch-clean\\Lib\\site-packages\\scgpt\\tokenizer\\__init__.py\", line 1, in <module>\n    from .gene_tokenizer import *\n  File \"E:\\anaconda3\\envs\\pytorch-clean\\Lib\\site-packages\\scgpt\\tokenizer\\gene_tokenizer.py\", line 11, in <module>\n    import torchtext.vocab as torch_vocab\n  File \"E:\\anaconda3\\envs\\pytorch-clean\\Lib\\site-packages\\torchtext\\__init__.py\", line 18, in <module>\n    from torchtext import _extension  # noqa: F401\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"E:\\anaconda3\\envs\\pytorch-clean\\Lib\\site-packages\\torchtext\\_extension.py\", line 64, in <module>\n    _init_extension()\n  File \"E:\\anaconda3\\envs\\pytorch-clean\\Lib\\site-packages\\torchtext\\_extension.py\", line 58, in _init_extension\n    _load_lib(\"libtorchtext\")\n  File \"E:\\anaconda3\\envs\\pytorch-clean\\Lib\\site-packages\\torchtext\\_extension.py\", line 50, in _load_lib\n    torch.ops.load_library(path)\n  File \"E:\\anaconda3\\envs\\pytorch-clean\\Lib\\site-packages\\torch\\_ops.py\", line 1350, in load_library\n    ctypes.CDLL(path)\n  File \"E:\\anaconda3\\envs\\pytorch-clean\\Lib\\ctypes\\__init__.py\", line 379, in __init__\n    self._handle = _dlopen(self._name, mode)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^\nOSError: [WinError 127] 找不到指定的程序。",
+      "module_path": "E:\\anaconda3\\envs\\pytorch-clean\\Lib\\site-packages\\scgpt\\__init__.py",
       "official_checkpoint_verified": false,
       "source_only_training_verified": false,
       "heldout_prediction_vector_verified": false,
@@ -80,7 +112,7 @@
       "cuda_device_count": 1,
       "module_found": true,
       "import_status": "official_checkout_cached_contract",
-      "import_error": "ModuleNotFoundError: No module named 'txpert'",
+      "import_error": "ModuleNotFoundError: txpert",
       "module_path": "H:/2026try/9.5PTL/third_party/TxPert/gspp",
       "official_checkpoint_verified": true,
       "source_only_training_verified": false,
@@ -136,7 +168,71 @@
         "test_pearson_delta": 0.5954940319061279,
         "evaluated_perturbations": 38475
       },
-      "claim_lock_blocker": "official K562 single-cell-line inference is reproducible, but no frozen Nadig HepG2/Jurkat source-only vector is materialized"
+      "claim_lock_blocker": "official K562 single-cell-line inference is reproducible, but no frozen Nadig HepG2/Jurkat source-only vector is materialized",
+      "adapter_contract": {
+        "predictor_id": "txpert",
+        "checkpoint_training_context": "K562",
+        "source_context": "nadig_hepg2",
+        "target_contexts": [
+          "nadig_jurkat"
+        ],
+        "source_only_training_verified": false,
+        "heldout_prediction_vector_verified": false,
+        "target_outcome_blind_verified": false,
+        "claim_lock_eligible": false,
+        "claim_lock_blockers": [
+          "source_only_training_not_verified",
+          "heldout_prediction_vector_not_verified",
+          "target_outcome_blindness_not_verified",
+          "checkpoint_training_context_does_not_match_source_context"
+        ],
+        "asset_audit": {
+          "official_source_checkout": true,
+          "official_checkpoint_verified": true,
+          "official_checkpoint_files": [
+            {
+              "path": "H:/2026try/9.5PTL/third_party/TxPert/cache/checkpoints/K562_unseen_cell_gat.ckpt",
+              "bytes": 49748832,
+              "sha256": "22994e5097255f75fc4196bddea8e8227dd4c110694a7794f066e041fbf42763"
+            },
+            {
+              "path": "H:/2026try/9.5PTL/third_party/TxPert/cache/checkpoints/K562_unseen_pert_exphormer.ckpt",
+              "bytes": 87247090,
+              "sha256": "e73909069cd4d08db26a318ba573bac7ec8a3ca5937b9e5d18e554727326a504"
+            },
+            {
+              "path": "H:/2026try/9.5PTL/third_party/TxPert/cache/checkpoints/K562_unseen_pert_exphormer_mg.ckpt",
+              "bytes": 87250162,
+              "sha256": "63df6c18b150e918f359b666c82de9ad9826db8e5f1ed771839d18e5dbd6a11c"
+            },
+            {
+              "path": "H:/2026try/9.5PTL/third_party/TxPert/cache/checkpoints/K562_unseen_pert_gat.ckpt",
+              "bytes": 91038698,
+              "sha256": "f533fb0771b9b7eaa1989cc9a6d056d0c4a69700b33c3573ad84b6bc7268fabb"
+            }
+          ],
+          "cached_data_files": [
+            {
+              "path": "H:/2026try/9.5PTL/third_party/TxPert/cache/K562_single_cell_line/de_adata_test.h5ad",
+              "bytes": 2839201052,
+              "sha256": "d9a6e4ff52b97c97dfcaaf48869b0aa1476eb251fa427ee0240bd2dcee26da40"
+            },
+            {
+              "path": "H:/2026try/9.5PTL/third_party/TxPert/cache/K562_single_cell_line/splits/subgroup.pkl",
+              "bytes": 4756,
+              "sha256": "0fa7e8603a5563f2b58b0103feca5b6b6ed25884afb56bfe741864728f03287f"
+            },
+            {
+              "path": "H:/2026try/9.5PTL/third_party/TxPert/cache/K562_single_cell_line/splits/train_test_split.pkl",
+              "bytes": 14254,
+              "sha256": "d05a0fe13bf24a4892a54ed8840d67c0a8322456e8a7ba50625b3ab0dd6f464c"
+            }
+          ],
+          "upstream_training_context": "K562",
+          "upstream_cached_inference_is_external_contract": true
+        },
+        "prediction_vector": null
+      }
     }
   ]
 }

@@ -46,6 +46,16 @@ artifacts/manifests/_depth_label_smoke/
 # Full item-level depth material is reproducible from the canonical summary,
 # decision, coverage and resolution tables but is too large for the repository.
 /artifacts/manifests/reliability_transport_measurement_depth_items.csv
+/artifacts/manifests/reliability_transport_measurement_depth_matched_fixed_items.csv
+/artifacts/manifests/reliability_transport_measurement_depth_matched_fixed_risks.csv
+/artifacts/manifests/reliability_transport_measurement_depth_matched_fixed_macro_bootstrap.csv
+/artifacts/manifests/reliability_transport_measurement_depth_matched_fixed_decision_macro_bootstrap.csv
+# Source-disjoint remote shards and logs are reproducible intermediates; the
+# validated canonical tables and manifests at the manifest root are retained.
+/artifacts/manifests/reliability_transport_measurement_depth_matched_fixed_parts/
+/artifacts/manifests/*.err.log
+/artifacts/manifests/*.out.log
+/artifacts/manifests/reliability_transport_metric_pair_states.csv
 # Local CUDA/QA probes are not claim inputs.
 /artifacts/manifests/formal_v2_claim_lock_guide_composition_coverage_cuda_check*.csv
 **/*.pdf
@@ -77,6 +87,7 @@ artifacts/manifests/_depth_label_smoke/
 /third_party/GEARS/
 /third_party/systema/
 /third_party/TxPert/
+/third_party/State/
 
 # Python, local environments, caches and editor files.
 __pycache__/

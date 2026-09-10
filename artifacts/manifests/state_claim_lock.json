@@ -8,21 +8,25 @@
   "common_gene_panel_size": 1536,
   "source_only_training_verified": false,
   "heldout_prediction_vector_verified": false,
-  "panel_mapping_verified": false,
+  "panel_mapping_verified": true,
   "target_outcome_blind_verified": false,
   "claim_lock_eligible": false,
   "claim_lock_blockers": [
     "source_only_training_verified",
     "heldout_prediction_vector_verified",
-    "panel_mapping_verified",
     "target_outcome_blind_verified"
   ],
   "availability": {
     "package_importable": false,
     "module_origin": null,
     "checkout": "H:/2026try/9.5PTL/third_party/State",
-    "checkout_present": false
+    "checkout_present": true
   },
-  "panel_file": null,
-  "status": "blocked"
+  "panel_file": "H:/2026try/9.5PTL/artifacts/manifests/modern_shared_gene_panel__source_control_1536.txt",
+  "status": "blocked_semantic_contract",
+  "official_source": "https://github.com/ArcInstitute/state",
+  "official_source_commit": "9bbfe78a434a55205e4de834e1ea99f85f7a3add",
+  "official_cli_help": true,
+  "official_preprocess_artifact": "artifacts/modern/state_preprocessed_frangieh.h5ad",
+  "semantic_blocker": "State's official set-transition contract is not the frozen global five-fold source-prediction vector contract; no source-only held-out vector and exact three-metric target-risk bridge is materialized"
 }

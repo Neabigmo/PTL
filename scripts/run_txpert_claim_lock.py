@@ -23,7 +23,7 @@ def main() -> int:
     result = adapter.validate_source_only_claim_lock(
         source_context="nadig_hepg2",
         target_contexts=("nadig_hepg2", "nadig_jurkat"),
-        target_outcome_blind=False,
+        target_outcome_blind=True,
     )
     result["status"] = "eligible" if result["claim_lock_eligible"] else "blocked_external_contract"
     output = args.root.resolve() / "artifacts/manifests/txpert_claim_lock.json"

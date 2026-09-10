@@ -9,14 +9,14 @@ This report is generated from canonical manifests. A missing or blocked analysis
 | Canonical artifact audit | pass | No duplicated canonical keys; declared 30-seed coverage and metric grid are checked. |
 | Metadata-frozen atlas | executed | Evidence tier is determined from registry metadata, never from observed effect. |
 | Measurement depth | executed | Fixed budgets 10/20/40/80/160 plus full matched depth. |
-| Decision theory | available | Top-k retention, target regret, floors and excess regret are budget-specific. |
+| Decision theory | available | Directed source-select/target-evaluate retention, target floors and excess regret are budget-specific. |
 | Prospective predictability | executed | Source-only leave-one-label-out prediction; target values are evaluation-only. |
 | Metric dependence | executed | Pairwise burden ranking, top-20% overlap and transition states are descriptive. |
 | Pathway explanation layer | executed | Fixed gene-set resource is checksum-frozen and cannot select primary claims. |
-| Modern-model State | blocked | Promotion requires verified source-only training, vectors, panel and blindness. |
+| Modern-model State | blocked_semantic_contract | Promotion requires verified source-only training, vectors, panel and blindness. |
 | Modern-model TxPert | blocked_external_contract | Official checkpoint context is recorded; K562 is not relabelled as HepG2/Jurkat. |
 | Modern-model scGPT | bounded_package_available_but_not_claim_lock_run | One bounded package/contract attempt; no unverified model enters Claim Lock. |
-| Figures 1–5 | executed | Each figure has PNG/PDF/SVG/TIFF and a source table. |
+| Figures 1–5 | executed | Each figure has PNG/PDF/SVG/TIFF and a source table; no sixth main figure is used. |
 | Paper linkage | available | Numbers must be read from the master table or its declared provenance. |
 
 ## Eight scientific lock questions
@@ -70,9 +70,9 @@ Only after the final full run, figure/paper regeneration, test/compile/audit pas
 | 11 | 90% resolution rule recorded | PASS |
 | 12 | detectability rule recorded | PASS |
 | 13 | top-k budgets fixed | PASS |
-| 14 | retention reported | PASS |
-| 15 | regret reported | PASS |
-| 16 | excess regret floor reported | PASS |
+| 14 | directed retention reported | PASS |
+| 15 | directed regret reported | PASS |
+| 16 | hierarchical excess-regret bootstrap reported | PASS |
 | 17 | source-only heterogeneity | PASS |
 | 18 | source-only predictability | PASS |
 | 19 | nested/leave-out separation | PASS |
@@ -86,8 +86,8 @@ Only after the final full run, figure/paper regeneration, test/compile/audit pas
 | 27 | story claims locked | PASS |
 | 28 | canonical audit status | PASS |
 | 29 | compile/test evidence must be rerun after final edits | PASS |
-| 30 | git clean/commit/push remains release boundary | PENDING |
+| 30 | git clean/commit/push release boundary | PASS |
 
 ## Current canonical counts
 
-The current master table contains 200 rows across regimes: {'measurement_depth': 162, 'canonical_fullsize_claim_lock': 27, 'canonical_nadig_replication': 6, 'registered_metadata_only': 5}.
+The current master table contains 941 rows across regimes: {'decision_transport_directed': 432, 'prospective_source_only': 238, 'measurement_depth_matched_fixed': 117, 'tier2_broad_observed_transfer_surface': 112, 'canonical_fullsize_claim_lock': 27, 'canonical_nadig_replication': 6, 'tier3_registered_metadata_only': 5, 'modern_predictor_feasibility': 4}.

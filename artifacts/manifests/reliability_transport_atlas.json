@@ -1,24 +1,32 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "status": "executed",
-  "evidence_tiers": {
-    "1": "raw-context verified common-core anchor",
-    "2": "raw-context verified context expansion or independent replication",
-    "3": "registered metadata surface not eligible for the primary claim lock"
-  },
-  "rows": 38,
+  "rows": 150,
   "registry_rows": 8,
+  "evidence_tiers": {
+    "1": "Frangieh/Nadig pair-level Claim Lock with corrected inference",
+    "2": "broader observed transfer rows; descriptive only",
+    "3": "registered metadata without pair-level evidence"
+  },
   "tier_counts": {
-    "1": 2,
-    "2": 36
+    "1": 33,
+    "2": 112,
+    "3": 5
   },
   "availability_counts": {
+    "tier2_broad_observed_transfer_surface": 112,
     "canonical_fullsize_claim_lock": 27,
     "canonical_nadig_replication": 6,
-    "registered_metadata_only": 5
+    "tier3_registered_metadata_only": 5
   },
+  "predictor_axis": [
+    "raw_scalar_uq",
+    "source_frozen_ensemble",
+    "u_only_rf",
+    "unavailable"
+  ],
   "unsupported_values_policy": "missing fields remain explicit unavailable values; no unsupported effect, CI, or predictor statistic is imputed",
-  "outcome_blindness": "atlas construction reads canonical frozen summaries and metadata only; target outcomes are not used to select rows",
+  "outcome_blindness": "atlas construction reads frozen summaries, transfer matrices and metadata; target outcomes do not select rows",
   "outputs": {
     "registry": "artifacts/manifests/reliability_transport_atlas_registry.csv",
     "atlas": "artifacts/manifests/reliability_transport_atlas.csv"

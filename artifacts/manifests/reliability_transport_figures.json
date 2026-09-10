@@ -8,7 +8,7 @@
     "svg",
     "tiff"
   ],
-  "color_policy": "colorblind-safe Okabe-Ito-inspired palette with explicit axis labels and confidence ribbons",
+  "color_policy": "colorblind-safe Okabe-Ito-inspired palette; ribbons are quantiles of synchronized macro draws or seed-conditional decision draws",
   "outputs": {
     "fig1": {
       "files": [
@@ -28,7 +28,7 @@
         "reliability_transportability_fig2_forest.tiff"
       ],
       "source": "results/figures/reliability_transportability/fig2_source.csv",
-      "rows": 33
+      "rows": 145
     },
     "fig3": {
       "files": [
@@ -58,7 +58,7 @@
         "reliability_transportability_fig5_perturbation_drivers.tiff"
       ],
       "source": "results/figures/reliability_transportability/fig5_source.csv",
-      "rows": 21
+      "rows": 6
     }
   }
 }

@@ -74,22 +74,25 @@ def figure1(out_dir: Path) -> tuple[list[str], pd.DataFrame]:
 
 def figure2(out_dir: Path, manifests: Path) -> tuple[list[str], pd.DataFrame]:
     atlas = pd.read_csv(manifests / "reliability_transport_atlas.csv")
-    atlas = atlas.loc[atlas["observed_D"].notna()].copy()
+    atlas["plot_value"] = atlas["observed_D"].combine_first(atlas.get("observed_value"))
+    atlas["plot_low"] = atlas["observed_D_ci_low"].combine_first(atlas.get("observed_value_ci_low"))
+    atlas["plot_high"] = atlas["observed_D_ci_high"].combine_first(atlas.get("observed_value_ci_high"))
+    atlas = atlas.loc[atlas["plot_value"].notna()].copy()
     atlas["label"] = (
         atlas["dataset"].astype(str) + " | " + atlas["source_environment_id"].astype(str)
         + " | " + atlas["left_target_environment_id"].astype(str) + "→" + atlas["right_target_environment_id"].astype(str)
-        + " | " + atlas["metric"].astype(str)
+        + " | " + atlas["metric"].astype(str) + " | " + atlas["predictor"].astype(str) + " | T" + atlas["evidence_tier"].astype(str)
     )
     atlas = atlas.sort_values(["metric", "dataset", "source_environment_id"], kind="stable").reset_index(drop=True)
     fig, ax = plt.subplots(figsize=(9.5, max(4.5, 0.19 * len(atlas) + 1.5)))
     y = np.arange(len(atlas))
     for metric, group in atlas.groupby("metric", sort=False):
         idx = group.index.to_numpy()
-        ax.errorbar(group["observed_D"], idx, xerr=[group["observed_D"] - group["observed_D_ci_low"], group["observed_D_ci_high"] - group["observed_D"]], fmt="o", ms=4, color=PALETTE.get(metric, "#333333"), label=metric)
+        ax.errorbar(group["plot_value"], idx, xerr=[group["plot_value"] - group["plot_low"], group["plot_high"] - group["plot_value"]], fmt="o", ms=4, color=PALETTE.get(metric, "#333333"), label=metric)
     ax.set_yticks(y)
     ax.set_yticklabels(atlas["label"], fontsize=6)
-    ax.set_xlabel("Observed cross-context ordering disagreement D (90% CI)")
-    ax.set_title("Figure 2 | Forest of observed transport reordering")
+    ax.set_xlabel("Metric-specific observed transfer value (90% CI; T1/T2 shown in labels)")
+    ax.set_title("Figure 2 | Pair-level transport atlas")
     ax.legend(frameon=False, loc="lower right", fontsize=8)
     ax.grid(axis="x", alpha=0.2)
     return _save(fig, out_dir, "reliability_transportability_fig2_forest"), atlas
@@ -105,13 +108,21 @@ def _ensure_depth_labels(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def figure3(out_dir: Path, manifests: Path) -> tuple[list[str], pd.DataFrame]:
-    path = manifests / "reliability_transport_measurement_depth_summary.csv"
-    depth = _ensure_depth_labels(pd.read_csv(path))
-    aggregate = depth.groupby(["metric", "cell_budget_order", "cell_budget_label"], sort=True, observed=True).agg(
-        identifiable_divergence=("identifiable_divergence", "mean"),
-        ci_low=("identifiable_divergence_ci_low", "mean"),
-        ci_high=("identifiable_divergence_ci_high", "mean"),
-    ).reset_index()
+    macro_path = manifests / "reliability_transport_measurement_depth_matched_fixed_macro_bootstrap.csv"
+    if macro_path.is_file():
+        macro = _ensure_depth_labels(pd.read_csv(macro_path))
+        aggregate = macro.groupby(["metric", "cell_budget_order", "cell_budget_label", "bootstrap_draw"], sort=True, observed=True)["identifiable_divergence"].mean().reset_index()
+        aggregate = aggregate.groupby(["metric", "cell_budget_order", "cell_budget_label"], sort=True, observed=True)["identifiable_divergence"].agg(
+            identifiable_divergence="mean", ci_low=lambda x: x.quantile(0.05), ci_high=lambda x: x.quantile(0.95)
+        ).reset_index()
+        aggregate["uncertainty_unit"] = "synchronized perturbation-label × measurement-seed macro bootstrap"
+    else:
+        path = manifests / "reliability_transport_measurement_depth_summary.csv"
+        depth = _ensure_depth_labels(pd.read_csv(path))
+        aggregate = depth.groupby(["metric", "cell_budget_order", "cell_budget_label"], sort=True, observed=True).agg(
+            identifiable_divergence=("identifiable_divergence", "mean"), ci_low=("identifiable_divergence_ci_low", "mean"), ci_high=("identifiable_divergence_ci_high", "mean")
+        ).reset_index()
+        aggregate["uncertainty_unit"] = "legacy summary fallback"
     fig, ax = plt.subplots(figsize=(7.5, 4.3))
     for metric, group in aggregate.groupby("metric", sort=False):
         group = group.sort_values("cell_budget_order")
@@ -130,13 +141,17 @@ def figure3(out_dir: Path, manifests: Path) -> tuple[list[str], pd.DataFrame]:
 
 
 def figure4(out_dir: Path, manifests: Path) -> tuple[list[str], pd.DataFrame]:
-    path = manifests / "reliability_transport_measurement_depth_decision.csv"
+    path = manifests / "reliability_transport_measurement_depth_matched_fixed_decision.csv"
+    if not path.is_file():
+        path = manifests / "reliability_transport_measurement_depth_decision.csv"
     decision = pd.read_csv(path)
     decision = _ensure_depth_labels(decision)
     if "excess_regret" not in decision:
         decision["excess_regret"] = np.nan
     aggregate = decision.groupby(["metric", "cell_budget_order", "cell_budget_label", "decision_budget_fraction"], sort=True, observed=True).agg(
-        retention=("retention", "mean"), excess_regret=("excess_regret", "mean"), regret=("regret", "mean")
+        retention=("retention", "mean"), retention_ci_low=("retention", lambda x: x.quantile(0.05)), retention_ci_high=("retention", lambda x: x.quantile(0.95)),
+        excess_regret=("excess_regret", "mean"), excess_regret_ci_low=("excess_regret", lambda x: x.quantile(0.05)), excess_regret_ci_high=("excess_regret", lambda x: x.quantile(0.95)),
+        regret=("regret", "mean"), regret_ci_low=("regret", lambda x: x.quantile(0.05)), regret_ci_high=("regret", lambda x: x.quantile(0.95)),
     ).reset_index()
     full = aggregate.loc[aggregate["cell_budget_order"].eq(aggregate["cell_budget_order"].max())].copy()
     if full.empty:
@@ -145,8 +160,10 @@ def figure4(out_dir: Path, manifests: Path) -> tuple[list[str], pd.DataFrame]:
     for metric, group in full.groupby("metric", sort=False):
         group = group.sort_values("decision_budget_fraction")
         axes[0].plot(group["decision_budget_fraction"], group["retention"], marker="o", label=metric, color=PALETTE.get(metric, "#333333"))
+        axes[0].fill_between(group["decision_budget_fraction"], group["retention_ci_low"], group["retention_ci_high"], color=PALETTE.get(metric, "#333333"), alpha=0.12)
         if group["excess_regret"].notna().any():
             axes[1].plot(group["decision_budget_fraction"], group["excess_regret"], marker="o", label=metric, color=PALETTE.get(metric, "#333333"))
+            axes[1].fill_between(group["decision_budget_fraction"], group["excess_regret_ci_low"], group["excess_regret_ci_high"], color=PALETTE.get(metric, "#333333"), alpha=0.12)
     axes[0].set_title("Top-k retention")
     axes[0].set_ylabel("Fraction retained from target oracle")
     axes[1].set_title("Excess target regret")
@@ -161,26 +178,30 @@ def figure4(out_dir: Path, manifests: Path) -> tuple[list[str], pd.DataFrame]:
 
 
 def figure5(out_dir: Path, manifests: Path) -> tuple[list[str], pd.DataFrame]:
-    items = pd.read_csv(manifests / "reliability_transport_measurement_depth_items.csv")
-    items = _ensure_depth_labels(items)
-    aggregate = items.groupby(["metric", "cell_budget_label"], sort=True, observed=True).agg(
-        cross_disagreement=("cross_disagreement", "mean"), identifiable_divergence=("identifiable_divergence", "mean"),
-    ).reset_index()
+    metric_path = manifests / "reliability_transport_metric_dependence.csv"
+    predict_path = manifests / "reliability_transport_predictability.csv"
+    metric = pd.read_csv(metric_path) if metric_path.is_file() else pd.DataFrame()
+    predict = pd.read_csv(predict_path) if predict_path.is_file() else pd.DataFrame()
+    if metric.empty:
+        aggregate = pd.DataFrame({"metric_from": [], "metric_to": [], "stable_inversion_fraction": []})
+    else:
+        aggregate = metric.groupby(["metric_from", "metric_to"], as_index=False).agg(stable_inversion_fraction=("stable_inversion_fraction", "mean"), stable_same_fraction=("stable_same_fraction", "mean"))
     fig, axes = plt.subplots(1, 2, figsize=(9.0, 3.8))
-    for metric, group in items.groupby("metric", sort=False):
-        axes[0].scatter(group["cross_disagreement"], group["identifiable_divergence"], s=4, alpha=0.12, color=PALETTE.get(metric, "#333333"), label=metric)
-    axes[0].axhline(0, color="#555555", lw=0.8)
-    axes[0].set_xlabel("Per-perturbation cross-context burden")
-    axes[0].set_ylabel("Per-perturbation identifiable burden")
-    axes[0].set_title("Perturbation-level burden decomposition")
-    summary = items.groupby(["metric", "cell_budget_order"], sort=True, observed=True)["identifiable_divergence"].mean().reset_index()
-    for metric, group in summary.groupby("metric", sort=False):
-        axes[1].plot(group["cell_budget_order"], group["identifiable_divergence"], marker="o", color=PALETTE.get(metric, "#333333"), label=metric)
+    if not aggregate.empty:
+        labels = aggregate["metric_from"] + "→" + aggregate["metric_to"]
+        axes[0].bar(np.arange(len(aggregate)), aggregate["stable_inversion_fraction"], color="#CC79A7")
+        axes[0].set_xticks(np.arange(len(aggregate)), labels, rotation=65, ha="right", fontsize=7)
+    axes[0].set_ylabel("Stable transition inversion fraction")
+    axes[0].set_title("Tie-aware metric transitions")
+    if not predict.empty:
+        executed = predict.loc[predict["status"].eq("executed")].copy()
+        if not executed.empty:
+            summary = executed.groupby("model", as_index=False)["spearman"].mean()
+            axes[1].bar(np.arange(len(summary)), summary["spearman"], color="#0072B2")
+            axes[1].set_xticks(np.arange(len(summary)), summary["model"], rotation=45, ha="right")
     axes[1].axhline(0, color="#555555", lw=0.8)
-    axes[1].set_xlabel("Cell-budget depth order")
-    axes[1].set_ylabel("Mean identifiable burden")
-    axes[1].set_title("Drivers are depth-sensitive, not assumed causal")
-    axes[0].legend(frameon=False, fontsize=7)
+    axes[1].set_ylabel("Held-out Spearman")
+    axes[1].set_title("Source-only predictability (target held out)")
     for ax in axes:
         ax.grid(alpha=0.2)
     return _save(fig, out_dir, "reliability_transportability_fig5_perturbation_drivers"), aggregate
@@ -210,7 +231,7 @@ def run(root: Path = ROOT) -> dict:
         "status": "executed",
         "figure_count": 5,
         "formats": ["png", "pdf", "svg", "tiff"],
-        "color_policy": "colorblind-safe Okabe-Ito-inspired palette with explicit axis labels and confidence ribbons",
+        "color_policy": "colorblind-safe Okabe-Ito-inspired palette; ribbons are quantiles of synchronized macro draws or seed-conditional decision draws",
         "outputs": outputs,
     }
     report_path = manifests / "reliability_transport_figures.json"

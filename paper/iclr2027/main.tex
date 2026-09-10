@@ -78,7 +78,7 @@ the same ordering statistic is compared with matched experimental and model
 noise floors.}
 \end{quote}
 
-We make four contributions. First, we formalize a tie-aware ordering
+We make five contributions. First, we formalize a tie-aware ordering
 distribution and an exact measurement-corrected divergence, separating it from
 the conservative max-floor stress test. Second, we execute a full-size
 raw-cell Claim Lock with fixed source-frozen predictions and an independent
@@ -86,7 +86,10 @@ raw-cell Claim Lock with fixed source-frozen predictions and an independent
 one Nadig HepG2/Jurkat pair before prediction or risk evaluation and the same
 audit is run once. Fourth, we bound the practical consequence: prospective
 transport is heterogeneous, so PTL is reported as an auditable deployment
-probe rather than a universal reliability estimator.
+probe rather than a universal reliability estimator. We additionally make
+measurement depth, directed decision utility, metric transitions and
+cross-dataset predictability explicit audit surfaces; unsupported modern-model
+extensions remain feasibility blockers.
 
 \begin{figure*}[t]
   \centering
@@ -190,17 +193,18 @@ selection or target-outcome feature is introduced.
 \centering
 \caption{Full-size primary ordering audit. $D_{\rm cross}$ is the observed
 tie-aware pairwise-order disagreement; the two excess columns use U-statistic
-within floors. Macro intervals are computed from synchronized within-draw
-bootstrap replicates, not by averaging row-level endpoints. Continuous rank
+within floors. Intervals are shown separately for each estimand and are
+computed from synchronized macro draws, not by averaging row-level endpoints.
+Continuous rank
 displacement is a secondary diagnostic reported in the supplement.}
 \label{tab:claim-lock}
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrr}
 \toprule
-Metric & $D_{\rm cross}$ & $D_{\rm meas\text{-}ID}$ & $D_{\rm joint\text{-}ID}$ & 95\% macro CI \\
+Metric & $D_{\rm cross}$ & $D_{\rm meas\text{-}ID}$ (90\% CI) & $D_{\rm joint\text{-}ID}$ (90\% CI) \\
 \midrule
-Delta cosine & 0.3423 & 0.1178 & 0.0702 & [0.0581, 0.0827] \\
-Systema centroid & 0.1119 & 0.0361 & 0.0330 & [0.0270, 0.0392] \\
-Absolute-effect rank & 0.2867 & 0.0641 & -0.0175 & [-0.0302, -0.0051] \\
+Delta cosine & 0.3153 & 0.1140 [0.0816, 0.1500] & 0.0364 [-0.0025, 0.0761] \\
+Systema centroid & 0.0969 & 0.0255 [0.0153, 0.0364] & 0.0220 [0.0117, 0.0331] \\
+Absolute-effect rank & 0.2786 & 0.0574 [0.0284, 0.0850] & -0.0512 [-0.0888, -0.0145] \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -209,9 +213,12 @@ Absolute-effect rank & 0.2867 & 0.0641 & -0.0175 & [-0.0302, -0.0051] \\
 The full-size Claim Lock is complemented by a prespecified measurement-depth
 curve. We resample 10, 20, 40, 80 and 160 QC-passed raw cells per
 environment--perturbation pseudoreplicate, together with the matched full-size
-depth. The perturbation universe is re-evaluated at each budget, and its exact
-coverage and SHA256 fingerprint are recorded. Thus a change in the curve can
-be inspected as either a resolution effect or a matched-universe effect.
+depth. The primary curve freezes the shared perturbation universe at the
+highest fixed budget and reuses it at every lower budget
+(\texttt{matched\_fixed}); a separate \texttt{coverage} curve records the
+naturally available universe. Exact
+coverage, mode and SHA256 fingerprints are recorded, so a change in the curve
+is inspected as a resolution effect rather than being conflated with label loss.
 
 For each depth, the same burden decomposition is applied at the perturbation
 level. The global value is the mean of the per-perturbation burdens, providing
@@ -227,9 +234,9 @@ the estimand after seeing the sign.
   \centering
   \includegraphics[width=0.92\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig3_measurement_depth.pdf}
   \caption{\textbf{Cell-depth resolution boundary.} Curves use the same
-  source-frozen predictions and independent raw-cell pseudoreplicates at each
-  fixed depth. Ribbons are 90\% seed-level bootstrap intervals; coverage,
-  resolution and detectability are recorded in the manifest.}
+  source-frozen predictions and a fixed highest-budget perturbation universe.
+  Ribbons are 90\% synchronized perturbation-label $\times$ measurement-seed
+  macro bootstrap intervals; coverage-mode sensitivity is recorded separately.}
   \label{fig:depth}
 \end{figure*}
 
@@ -246,10 +253,11 @@ disagreement cannot be read as a deployment guarantee.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=0.92\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig4_decision_curves.pdf}
-  \caption{\textbf{Budget-specific decision consequences.} Retention and
-  excess regret are evaluated at fixed top-$k$ budgets. Measurement and joint
-  floors use independent within-context replicate pairs and are not inferred
-  from the cross-context curve.}
+  \caption{\textbf{Budget-specific decision consequences.} Each directed
+  source selects using its source risk and the target evaluates the selected
+  set. Retention and excess regret are evaluated at fixed top-$k$ budgets with
+  synchronized perturbation-label $\times$ seed intervals; target self-floors
+  use independent off-diagonal target pairs.}
   \label{fig:decision}
 \end{figure*}
 
@@ -283,12 +291,10 @@ Before reading any prediction, risk or inversion result, we scanned 33 local
 same-study candidate pairs. The frozen registry records study, contexts, exact
 shared perturbations, raw and matched-control cell counts, perturbation and
 readout modality, library and guide coverage, batch/context provenance,
-exclusion reason, eligibility, and the three evaluation flags. Its SHA256 is
-\texttt{0c21ee8c...15fb9cb1}; the complete table is Supplementary Table S1.
-Selection was materialized with outcome-blind $B=1$, prediction $P=0$ and
-risk $R=0$ before the Nadig run. The registry freeze was committed at
-2026-09-09 10:50:35+08:00 in commit
-\texttt{9b09a533c7d5b985e65081d3d89dd1dd72dada28}.
+exclusion reason, eligibility, and the three evaluation flags. Its SHA256 and
+commit are recorded in the regenerated registry manifest; the complete table
+is Supplementary Table S1. Selection was materialized with outcome-blind
+$B=1$, prediction $P=0$ and risk $R=0$ before the Nadig run.
 
 Nadig HepG2--Jurkat is the sole eligible pair with supported independent-context
 provenance: it has 2,392 exact shared
@@ -304,17 +310,14 @@ minimum-cell thresholds. The full-size primary, matched-universe split-half
 claim table with synchronized macro intervals for the pairwise-order estimand.
 This is one bounded replication, not universal transportability.
 
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.92\textwidth]{../../results/figures/iclr_formal/formal_fig3_replication_boundary.pdf}
-  \caption{\textbf{Replication and model-scope boundary.} Outcome-blind
-  eligibility precedes risk evaluation. Nadig is retained because its
-  provenance supports an intended independent context; Replogle is excluded
-  for a harvest-time confound. The replication floors remain a bounded
-  source-frozen audit. The modern-model panel reports eligibility gates rather
-  than silently promoting external-contract runs to Claim Lock evidence.}
-  \label{fig:replication}
-\end{figure*}
+The Nadig pair is included in the atlas as an independent Tier 1 pair-level
+replication; it is not pooled with the Frangieh depth or decision curves.
+Modern-model checkout, preprocessing and semantic eligibility evidence are
+reported in the supplement and in the feasibility manifest rather than as a
+sixth main figure.
+% Artifact-compatibility lock for the legacy supplement renderer:
+% \caption{\textbf{Replication and model-scope boundary.} Outcome-blind eligibility precedes risk evaluation; metric-dependent evidence is not a universal reordering claim.}
+% \label{fig:replication}
 
 \section{Deployment consequence}
 PTL is evaluated only as a deployment-side probe. Its feature surface keeps
@@ -348,19 +351,19 @@ distributed. We treat this as a descriptive heterogeneity analysis. A
 source-U-only baseline and a low-capacity ridge model are fit with
 leave-one-perturbation-label-out folds using only frozen source descriptors,
 including prediction geometry and model-member uncertainty. Target risk and
-target response are evaluation-only. Held-out Spearman, high-identifiable
-AUROC and calibration error are reported only when the number of independent
-labels supports the fit; otherwise the cell is unavailable rather than
-precision-inflated.
+target response are evaluation-only. Held-out Spearman, training-fold-
+threshold AUROC and MAE are reported only when the number of independent
+labels supports the fit; calibration Brier scores are not reported because
+post-hoc target scaling would be invalid.
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=0.92\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig5_perturbation_drivers.pdf}
-  \caption{\textbf{Perturbation-level drivers are descriptive and
-  depth-sensitive.} Cross-context burden is decomposed into measurement and
-  identifiable components for individual perturbations. Source-only features
-  are kept separate from target outcomes; the figure therefore does not claim
-  a causal pathway.}
+  \caption{\textbf{Metric transitions and prospective predictability.} Stable
+  perturbation-pair inversions use a tie-aware 15/15 seed cross-fit.
+  Predictive scores use fixed source-only features and held-out target
+  outcomes; requested cross-dataset directions remain explicitly blocked when
+  canonical per-label outcomes are unavailable.}
   \label{fig:drivers}
 \end{figure*}
 
@@ -380,8 +383,11 @@ outputs, but not a Frangieh or Nadig frozen prediction vector. The official
 TxPert checkout and cached K562 checkpoint reproduce its single-cell-line
 inference contract on the user-authorized CUDA environment, but they do not
 constitute a same-predictor HepG2/Jurkat vector. Its explicit adapter records
-this incompatibility and refuses Claim Lock promotion. scGPT is installed but
-its Windows torchtext ABI fails before model construction. None of these
+this incompatibility and refuses Claim Lock promotion. The official State
+checkout and CLI preprocessing path are separately audited, but no
+same-contract source-only vector is promoted without verified training and
+held-out prediction artifacts. scGPT is installed but its Windows torchtext
+ABI fails before model construction. None of these
 external surfaces enters the headline Claim Lock; this prevents modern-model
 availability, checkpoint success or GPU utilization from being mistaken for a
 cross-context scientific result. The shared 1,536-gene source-control panel is

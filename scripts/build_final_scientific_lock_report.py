@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import subprocess
 
 import pandas as pd
 
@@ -20,40 +21,56 @@ def _status(path: Path) -> str:
     return _load_json(path).get("status", "unavailable")
 
 
+def _git_release_clean(root: Path) -> bool:
+    result = subprocess.run(["git", "-C", str(root), "status", "--porcelain"], capture_output=True, text=True, check=False)
+    branch = subprocess.run(["git", "-C", str(root), "branch", "--show-current"], capture_output=True, text=True, check=False).stdout.strip()
+    return result.returncode == 0 and not result.stdout.strip() and bool(branch)
+
+
 def run(root: Path = ROOT) -> Path:
     root = root.resolve()
     manifests = root / "artifacts/manifests"
     audit = _load_json(manifests / "canonical_artifact_audit.json")
     atlas = _load_json(manifests / "reliability_transport_atlas.json")
-    depth = _load_json(manifests / "reliability_transport_measurement_depth.json")
+    depth = _load_json(manifests / "reliability_transport_measurement_depth_matched_fixed.json")
+    if depth.get("status") == "unavailable":
+        depth = _load_json(manifests / "reliability_transport_measurement_depth.json")
     predictability = _load_json(manifests / "reliability_transport_predictability.json")
     figures = _load_json(manifests / "reliability_transport_figures.json")
     metric_dependence = _load_json(manifests / "reliability_transport_metric_dependence.json")
+    decision_bootstrap = _load_json(manifests / "reliability_transport_measurement_depth_decision_macro_bootstrap.json")
     state = _load_json(manifests / "state_claim_lock.json")
     txpert = _load_json(manifests / "txpert_claim_lock.json")
     scgpt = _load_json(manifests / "scgpt_claim_lock.json")
     pathway = _load_json(manifests / "pathway_explanation_audit.json")
     master_path = manifests / "reliability_transport_master.csv"
     master = pd.read_csv(master_path) if master_path.is_file() else pd.DataFrame()
+    split_seeds = depth.get("split_seeds") or depth.get("checks", {}).get("all_seeds", [])
+    metrics = depth.get("metrics", [])
+    if not metrics:
+        summary_name = depth.get("outputs", {}).get("summary")
+        summary_path = root / summary_name if summary_name else None
+        if summary_path is not None and summary_path.is_file():
+            metrics = sorted(pd.read_csv(summary_path, usecols=["metric"])["metric"].dropna().astype(str).unique().tolist())
     rows = [
         ("Canonical artifact audit", audit.get("status", "unavailable"), "No duplicated canonical keys; declared 30-seed coverage and metric grid are checked."),
         ("Metadata-frozen atlas", atlas.get("status", "unavailable"), "Evidence tier is determined from registry metadata, never from observed effect."),
         ("Measurement depth", depth.get("status", "unavailable"), "Fixed budgets 10/20/40/80/160 plus full matched depth."),
-        ("Decision theory", "available" if depth.get("status") == "executed" else "unavailable", "Top-k retention, target regret, floors and excess regret are budget-specific."),
+        ("Decision theory", "available" if decision_bootstrap.get("status") == "executed" else "unavailable", "Directed source-select/target-evaluate retention, target floors and excess regret are budget-specific."),
         ("Prospective predictability", predictability.get("status", "unavailable"), "Source-only leave-one-label-out prediction; target values are evaluation-only."),
         ("Metric dependence", metric_dependence.get("status", "unavailable"), "Pairwise burden ranking, top-20% overlap and transition states are descriptive."),
         ("Pathway explanation layer", pathway.get("status", "unavailable"), "Fixed gene-set resource is checksum-frozen and cannot select primary claims."),
         ("Modern-model State", state.get("status", "unavailable"), "Promotion requires verified source-only training, vectors, panel and blindness."),
         ("Modern-model TxPert", txpert.get("status", "unavailable"), "Official checkpoint context is recorded; K562 is not relabelled as HepG2/Jurkat."),
         ("Modern-model scGPT", scgpt.get("status", "unavailable"), "One bounded package/contract attempt; no unverified model enters Claim Lock."),
-        ("Figures 1–5", figures.get("status", "unavailable"), "Each figure has PNG/PDF/SVG/TIFF and a source table."),
+        ("Figures 1–5", figures.get("status", "unavailable"), "Each figure has PNG/PDF/SVG/TIFF and a source table; no sixth main figure is used."),
         ("Paper linkage", "available" if master_path.is_file() else "unavailable", "Numbers must be read from the master table or its declared provenance."),
     ]
     checklist = [
         ("01", "source-frozen predictions unchanged", True),
-        ("02", "fixed split schedule declared", bool(depth.get("split_seeds"))),
-        ("03", "30 seeds required for final depth run", len(depth.get("split_seeds", [])) == 30),
-        ("04", "three metrics retained", len(depth.get("metrics", [])) == 3),
+        ("02", "fixed split schedule declared", bool(split_seeds)),
+        ("03", "30 seeds required for final depth run", len(split_seeds) == 30),
+        ("04", "three metrics retained", len(metrics) == 3),
         ("05", "tie-aware ordering retained", True),
         ("06", "U-statistic measurement floor", True),
         ("07", "joint floor separate", True),
@@ -63,9 +80,9 @@ def run(root: Path = ROOT) -> Path:
         ("11", "90% resolution rule recorded", (manifests / "reliability_transport_measurement_depth_resolution.csv").is_file()),
         ("12", "detectability rule recorded", (manifests / "reliability_transport_measurement_depth_resolution.csv").is_file()),
         ("13", "top-k budgets fixed", depth.get("decision_budgets") == [0.05, 0.1, 0.2, 0.5]),
-        ("14", "retention reported", (manifests / "reliability_transport_measurement_depth_decision.csv").is_file()),
-        ("15", "regret reported", (manifests / "reliability_transport_measurement_depth_decision.csv").is_file()),
-        ("16", "excess regret floor reported", (manifests / "reliability_transport_measurement_depth_decision.csv").is_file()),
+        ("14", "directed retention reported", (manifests / "reliability_transport_measurement_depth_matched_fixed_decision.csv").is_file()),
+        ("15", "directed regret reported", (manifests / "reliability_transport_measurement_depth_matched_fixed_decision.csv").is_file()),
+        ("16", "hierarchical excess-regret bootstrap reported", decision_bootstrap.get("status") == "executed"),
         ("17", "source-only heterogeneity", (manifests / "reliability_transport_heterogeneity.json").is_file()),
         ("18", "source-only predictability", predictability.get("status") == "executed"),
         ("19", "nested/leave-out separation", predictability.get("status") == "executed"),
@@ -79,7 +96,7 @@ def run(root: Path = ROOT) -> Path:
         ("27", "story claims locked", (manifests / "story_claims.json").is_file()),
         ("28", "canonical audit status", audit.get("status") == "pass"),
         ("29", "compile/test evidence must be rerun after final edits", True),
-        ("30", "git clean/commit/push remains release boundary", False),
+        ("30", "git clean/commit/push release boundary", _git_release_clean(root)),
     ]
     report = []
     report.append("# Final Scientific Lock Report\n")

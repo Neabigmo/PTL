@@ -8,12 +8,11 @@
   ],
   "source_only_training_verified": false,
   "heldout_prediction_vector_verified": false,
-  "target_outcome_blind_verified": false,
+  "target_outcome_blind_verified": true,
   "claim_lock_eligible": false,
   "claim_lock_blockers": [
     "source_only_training_not_verified",
     "heldout_prediction_vector_not_verified",
-    "target_outcome_blindness_not_verified",
     "checkpoint_training_context_does_not_match_source_context"
   ],
   "asset_audit": {

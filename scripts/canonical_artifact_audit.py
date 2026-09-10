@@ -101,7 +101,9 @@ def _read(path: Path) -> pd.DataFrame:
         if isinstance(payload, list):
             return pd.DataFrame(payload)
         return pd.DataFrame([payload])
-    return pd.read_csv(path)
+    header = pd.read_csv(path, nrows=0)
+    dtype = {"cell_budget_label": "string"} if "cell_budget_label" in header.columns else None
+    return pd.read_csv(path, dtype=dtype)
 
 
 def _audit_canonical_table(
@@ -139,7 +141,9 @@ def _audit_canonical_table(
 
 def _audit_seed_coverage(path: Path, key_columns: list[str]) -> dict[str, Any]:
     name = path.relative_to(ROOT).as_posix()
-    frame = pd.read_csv(path)
+    header = pd.read_csv(path, nrows=0)
+    dtype = {"cell_budget_label": "string"} if "cell_budget_label" in header.columns else None
+    frame = pd.read_csv(path, dtype=dtype)
     if "split_seed" not in frame:
         return {"name": name, "status": "fail", "reason": "missing_split_seed"}
     observed = tuple(sorted(pd.to_numeric(frame["split_seed"], errors="raise").astype(int).unique()))
@@ -186,9 +190,34 @@ def run(root: Path = ROOT) -> dict[str, Any]:
     ROOT = root.resolve()
     MANIFESTS = ROOT / "artifacts/manifests"
     atlas_frame = pd.read_csv(MANIFESTS / "reliability_transport_atlas.csv")
-    atlas_metadata_mask = atlas_frame["availability"].eq("registered_metadata_only").to_numpy()
+    atlas_metadata_mask = atlas_frame["availability"].astype(str).str.contains("metadata_only|broad_observed", regex=True).to_numpy()
+    atlas_non_canonical_observed_mask = ~atlas_frame["availability"].astype(str).eq("tier2_broad_observed_transfer_surface").to_numpy()
     master_frame = pd.read_csv(MANIFESTS / "reliability_transport_master.csv")
     master_unavailable_mask = master_frame["status"].eq("unavailable").to_numpy()
+    master_regime = master_frame["regime"].astype(str)
+    master_decision_mask = master_regime.eq("decision_transport_directed").to_numpy()
+    master_non_decision_mask = ~master_decision_mask
+    master_joint_observed_mask = master_regime.isin(("canonical_fullsize_claim_lock", "canonical_nadig_replication")).to_numpy()
+    master_stability_observed_mask = master_regime.isin(("canonical_fullsize_claim_lock", "measurement_depth_matched_fixed")).to_numpy()
+    master_predictability_executed_mask = (master_regime.eq("prospective_source_only") & master_frame["status"].eq("executed")).to_numpy()
+    master_modern_mask = master_regime.eq("modern_predictor_feasibility").to_numpy()
+    atlas_allowed_missing = {
+        "observed_value": atlas_non_canonical_observed_mask,
+        "observed_value_ci_low": atlas_non_canonical_observed_mask,
+        "observed_value_ci_high": atlas_non_canonical_observed_mask,
+    }
+    atlas_allowed_missing.update({
+        column: (
+            atlas_frame["availability"].astype(str).str.contains("metadata_only|broad_observed|nadig", regex=True).to_numpy()
+            if column == "stable_fraction_both" else atlas_metadata_mask
+        )
+        for column in (
+            "observed_D", "observed_D_ci_low", "observed_D_ci_high",
+            "measurement_identifiable", "measurement_identifiable_ci_low", "measurement_identifiable_ci_high",
+            "joint_identifiable", "joint_identifiable_ci_low", "joint_identifiable_ci_high",
+            "stable_fraction_both",
+        )
+    })
     canonical = [
         _audit_canonical_table(
             MANIFESTS / "formal_v2_claim_lock_measurement_fullsize_summary.csv",
@@ -215,23 +244,20 @@ def run(root: Path = ROOT) -> dict[str, Any]:
         ),
         _audit_canonical_table(
             MANIFESTS / "reliability_transport_atlas.csv",
-            ["dataset", "evidence_tier", "source_environment_id", "left_target_environment_id", "right_target_environment_id", "metric"],
-            allowed_missing_numeric_by_column={
-                column: (
-                    atlas_frame["availability"].isin(["registered_metadata_only", "canonical_nadig_replication"]).to_numpy()
-                    if column == "stable_fraction_both" else atlas_metadata_mask
-                )
-                for column in (
-                    "observed_D", "observed_D_ci_low", "observed_D_ci_high",
-                    "measurement_identifiable", "measurement_identifiable_ci_low", "measurement_identifiable_ci_high",
-                    "joint_identifiable", "joint_identifiable_ci_low", "joint_identifiable_ci_high",
-                    "stable_fraction_both",
-                )
-            },
+            ["dataset", "evidence_tier", "source_environment_id", "target_environment_id", "left_target_environment_id", "right_target_environment_id", "predictor", "metric"],
+            allowed_missing_numeric_by_column=atlas_allowed_missing,
         ),
         _audit_seed_coverage(
             MANIFESTS / "reliability_transport_measurement_depth_items.csv",
             ["source_environment_id", "left_target_environment_id", "right_target_environment_id", "metric", "split_seed", "cell_budget_label", "perturbation_label"],
+        ),
+        _audit_canonical_table(
+            MANIFESTS / "reliability_transport_measurement_depth_matched_fixed_summary.csv",
+            ["source_environment_id", "left_target_environment_id", "right_target_environment_id", "metric", "cell_budget_label", "universe_mode"],
+        ),
+        _audit_canonical_table(
+            MANIFESTS / "reliability_transport_measurement_depth_matched_fixed_decision.csv",
+            ["source_environment_id", "target_environment_id", "left_target_environment_id", "right_target_environment_id", "metric", "split_seed", "cell_budget_label", "decision_budget_fraction", "universe_mode"],
         ),
         _audit_seed_coverage(
             MANIFESTS / "reliability_transport_measurement_depth_decision.csv",
@@ -253,36 +279,57 @@ def run(root: Path = ROOT) -> dict[str, Any]:
         ),
         _audit_canonical_table(
             MANIFESTS / "reliability_transport_master.csv",
-            ["dataset", "source_environment_id", "left_target_environment_id", "right_target_environment_id", "predictor", "regime", "metric", "cell_budget_label"],
+            ["dataset", "dataset_split", "source_environment_id", "target_environment_id", "left_target_environment_id", "right_target_environment_id", "predictor", "regime", "metric", "cell_budget_label", "decision_budget_fraction", "predictability_model"],
             allowed_missing_numeric_by_column={
-                "n": master_frame["regime"].isin(
-                    ["canonical_fullsize_claim_lock", "canonical_nadig_replication", "registered_metadata_only"]
-                ).to_numpy(),
-                "observed_D": master_unavailable_mask,
-                "observed_D_ci_low": master_unavailable_mask,
-                "observed_D_ci_high": master_unavailable_mask,
-                "measurement_identifiable": master_unavailable_mask,
-                "measurement_identifiable_ci_low": master_unavailable_mask,
-                "measurement_identifiable_ci_high": master_unavailable_mask,
-                "stable_fraction_both": master_frame["regime"].isin(
-                    ["canonical_nadig_replication", "registered_metadata_only"]
-                ).to_numpy(),
-                "joint_identifiable": master_frame["regime"].isin(
-                    ["measurement_depth", "registered_metadata_only"]
-                ).to_numpy(),
-                "joint_identifiable_ci_low": master_frame["regime"].isin(
-                    ["measurement_depth", "registered_metadata_only"]
-                ).to_numpy(),
-                "joint_identifiable_ci_high": master_frame["regime"].isin(
-                    ["measurement_depth", "registered_metadata_only"]
-                ).to_numpy(),
-                "stable_inversion_fraction": master_frame["regime"].isin(
-                    ["measurement_depth", "canonical_nadig_replication", "registered_metadata_only"]
-                ).to_numpy(),
-                "top_k_retention": np.ones(len(master_frame), dtype=bool),
-                "normalized_regret": np.ones(len(master_frame), dtype=bool),
-                "excess_regret": np.ones(len(master_frame), dtype=bool),
+                "n": np.ones(len(master_frame), dtype=bool),
+                "observed_D": ~master_regime.eq("canonical_fullsize_claim_lock").to_numpy(),
+                "observed_D_ci_low": ~master_regime.eq("canonical_fullsize_claim_lock").to_numpy(),
+                "observed_D_ci_high": ~master_regime.eq("canonical_fullsize_claim_lock").to_numpy(),
+                "measurement_identifiable": ~master_joint_observed_mask,
+                "measurement_identifiable_ci_low": ~master_joint_observed_mask,
+                "measurement_identifiable_ci_high": ~master_joint_observed_mask,
+                "joint_identifiable": ~master_joint_observed_mask,
+                "joint_identifiable_ci_low": ~master_joint_observed_mask,
+                "joint_identifiable_ci_high": ~master_joint_observed_mask,
+                "stable_fraction_both": ~master_stability_observed_mask,
+                "decision_budget_fraction": np.ones(len(master_frame), dtype=bool),
+                "decision_budget_ci_low": np.ones(len(master_frame), dtype=bool),
+                "decision_budget_ci_high": np.ones(len(master_frame), dtype=bool),
+                "retention": master_non_decision_mask,
+                "retention_ci_low": master_non_decision_mask,
+                "retention_ci_high": master_non_decision_mask,
+                "regret": master_non_decision_mask,
+                "regret_ci_low": master_non_decision_mask,
+                "regret_ci_high": master_non_decision_mask,
+                "normalized_regret": master_non_decision_mask,
+                "normalized_regret_ci_low": master_non_decision_mask,
+                "normalized_regret_ci_high": master_non_decision_mask,
+                "boundary_inversion": master_non_decision_mask,
+                "boundary_inversion_ci_low": master_non_decision_mask,
+                "boundary_inversion_ci_high": master_non_decision_mask,
+                "measurement_floor_regret": master_non_decision_mask,
+                "joint_floor_regret": master_non_decision_mask,
+                "excess_regret": master_non_decision_mask,
+                "joint_excess_regret": master_non_decision_mask,
+                "predictability_spearman": ~master_predictability_executed_mask,
+                "predictability_auroc": ~master_predictability_executed_mask,
+                "predictability_mae": ~master_predictability_executed_mask,
+                "calibration_brier": np.ones(len(master_frame), dtype=bool),
+                "modern_claim_lock_status": ~master_modern_mask,
             },
+        ),
+        _audit_canonical_table(
+            MANIFESTS / "reliability_transport_metric_pair_states.csv",
+            ["source_environment_id", "target_environment_id", "metric", "perturbation_p", "perturbation_q", "crossfit_split"],
+        ),
+        _audit_canonical_table(
+            MANIFESTS / "reliability_transport_metric_transitions.csv",
+            ["source_environment_id", "target_environment_id", "metric_from", "metric_to", "state_from", "state_to"],
+        ),
+        _audit_canonical_table(
+            MANIFESTS / "reliability_transport_predictability.csv",
+            ["dataset", "dataset_split", "source_environment_id", "left_target_environment_id", "right_target_environment_id", "metric", "cell_budget_label", "model"],
+            allowed_missing_numeric={"n_labels", "spearman", "auroc_high_identifiable", "calibration_brier", "calibration_threshold", "mean_absolute_error"},
         ),
     ]
     checks: list[dict[str, Any]] = []
