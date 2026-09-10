@@ -91,7 +91,7 @@ Only after the final full run, figure/paper regeneration, test/compile/audit pas
 | 27 | story claims locked | PASS |
 | 28 | canonical audit status | PASS |
 | 29 | compile/test evidence must be rerun after final edits | PASS |
-| 30 | git clean/commit/push release boundary | PASS |
+| 30 | git clean/commit/push release boundary | PENDING |
 
 ## Current canonical counts
 

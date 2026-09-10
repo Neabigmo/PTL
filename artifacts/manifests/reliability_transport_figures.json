@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "status": "executed",
   "figure_count": 6,
   "figure_order": [
@@ -10,6 +10,14 @@
     "failure_anatomy",
     "prospective_limit"
   ],
+  "render_order": [
+    "fig4",
+    "fig5",
+    "fig1",
+    "fig3",
+    "fig2",
+    "fig6"
+  ],
   "formats": [
     "png",
     "pdf",
@@ -18,37 +26,8 @@
   ],
   "source_tables_directory": "results/figures/reliability_transportability/source_tables",
   "exemplar_registry": "artifacts/manifests/figure_exemplar_registry.json",
+  "visual_architecture": "paper/iclr2027/FIGURE_ARCHITECTURE.md",
   "outputs": {
-    "fig1": {
-      "files": [
-        "reliability_transportability_fig1_graphical_abstract.png",
-        "reliability_transportability_fig1_graphical_abstract.pdf",
-        "reliability_transportability_fig1_graphical_abstract.svg",
-        "reliability_transportability_fig1_graphical_abstract.tiff"
-      ],
-      "source_table": "results/figures/reliability_transportability/source_tables/fig1_source.csv",
-      "rows": 49
-    },
-    "fig2": {
-      "files": [
-        "reliability_transportability_fig2_transport_atlas.png",
-        "reliability_transportability_fig2_transport_atlas.pdf",
-        "reliability_transportability_fig2_transport_atlas.svg",
-        "reliability_transportability_fig2_transport_atlas.tiff"
-      ],
-      "source_table": "results/figures/reliability_transportability/source_tables/fig2_transport_atlas.csv",
-      "rows": 83
-    },
-    "fig3": {
-      "files": [
-        "reliability_transportability_fig3_measurement_boundary.png",
-        "reliability_transportability_fig3_measurement_boundary.pdf",
-        "reliability_transportability_fig3_measurement_boundary.svg",
-        "reliability_transportability_fig3_measurement_boundary.tiff"
-      ],
-      "source_table": "results/figures/reliability_transportability/source_tables/fig3_measurement_boundary.csv",
-      "rows": 247
-    },
     "fig4": {
       "files": [
         "reliability_transportability_fig4_decision_consequence.png",
@@ -57,7 +36,7 @@
         "reliability_transportability_fig4_decision_consequence.tiff"
       ],
       "source_table": "results/figures/reliability_transportability/source_tables/fig4_decision_consequence.csv",
-      "rows": 78
+      "rows": 62
     },
     "fig5": {
       "files": [
@@ -67,7 +46,37 @@
         "reliability_transportability_fig5_failure_anatomy.tiff"
       ],
       "source_table": "results/figures/reliability_transportability/source_tables/fig5_failure_anatomy.csv",
-      "rows": 58
+      "rows": 60
+    },
+    "fig1": {
+      "files": [
+        "reliability_transportability_fig1_graphical_abstract.png",
+        "reliability_transportability_fig1_graphical_abstract.pdf",
+        "reliability_transportability_fig1_graphical_abstract.svg",
+        "reliability_transportability_fig1_graphical_abstract.tiff"
+      ],
+      "source_table": "results/figures/reliability_transportability/source_tables/fig1_source.csv",
+      "rows": 30
+    },
+    "fig3": {
+      "files": [
+        "reliability_transportability_fig3_measurement_boundary.png",
+        "reliability_transportability_fig3_measurement_boundary.pdf",
+        "reliability_transportability_fig3_measurement_boundary.svg",
+        "reliability_transportability_fig3_measurement_boundary.tiff"
+      ],
+      "source_table": "results/figures/reliability_transportability/source_tables/fig3_measurement_boundary.csv",
+      "rows": 90
+    },
+    "fig2": {
+      "files": [
+        "reliability_transportability_fig2_transport_atlas.png",
+        "reliability_transportability_fig2_transport_atlas.pdf",
+        "reliability_transportability_fig2_transport_atlas.svg",
+        "reliability_transportability_fig2_transport_atlas.tiff"
+      ],
+      "source_table": "results/figures/reliability_transportability/source_tables/fig2_transport_atlas.csv",
+      "rows": 41
     },
     "fig6": {
       "files": [
@@ -77,12 +86,12 @@
         "reliability_transportability_fig6_prospective_limit.tiff"
       ],
       "source_table": "results/figures/reliability_transportability/source_tables/fig6_prospective_limit.csv",
-      "rows": 122
+      "rows": 14
     }
   },
   "data_policy": "Frozen Frangieh/Nadig data and existing matched-fixed/bootstrap summaries; unavailable cells stay gray/NA; target-informed explanatory quantities never enter prospective prediction.",
   "selection_policy": "Fig1/2/4 displayed labels use source-only rank quantiles; Fig5 cases use complete burden quantiles; all selections are registered deterministically.",
-  "style_policy": "Centralized ptl_figure_style.py; colorblind-safe palette; diverging maps centered at zero; no rainbow, 3-D, decorative gradients, or long-ID axes.",
+  "style_policy": "Centralized ptl_figure_style.py; metric colors are stable; biological context uses position/line style; no equal-grid heatmap dominance.",
   "anti_fabrication_checks": [
     "strict support >= 8",
     "219/2784 complete failure rows with no imputation",

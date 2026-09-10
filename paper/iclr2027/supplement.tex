@@ -121,13 +121,13 @@ as a valid estimate.
 
 For Figure 2, the correct atlas unit is source context crossed with a
 left/right biological contrast. Each metric therefore has a 3-by-3 Frangieh
-block: rows are source control, co-culture and IFN$\gamma$; columns are
-control--co-culture, control--IFN$\gamma$ and co-culture--IFN$\gamma$. A dot
-marks a measurement-identifiable interval with lower endpoint above zero; a
-ring marks the corresponding joint-floor condition. Tier 1 borders are solid,
-Tier 2 borders dashed, and unavailable cells are hatched and labelled NA. The
-Nadig HepG2/Jurkat directions are a separate independent block and are not
-pooled with depth or decision results.
+glyph block: rows are source control, co-culture and IFN$\gamma$; columns are
+control--co-culture, control--IFN$\gamma$ and co-culture--IFN$\gamma$. A filled
+mark indicates a measurement-identifiable interval with lower endpoint above
+zero; a ring indicates the corresponding joint-floor condition. The lower
+burden distributions use complete canonical rows. The Nadig HepG2/Jurkat
+direction is shown as a limitation inset rather than a fabricated independent
+per-label replication and is not pooled with depth or decision results.
 
 \section{Measurement depth}
 The matched-fixed depth summary uses 10, 20, 40, 80, 160 and full cells per
@@ -139,12 +139,12 @@ The resolution summary is the first budget within ten percent of the full value;
 a full-depth ``not reached'' value is not treated as resolved. Detectability is
 the first budget with a
 positive 90\% seed-bootstrap lower interval; no threshold is encoded as
-unavailable. The lower curves in Figure 3 are medians with IQR across the
-available source-by-contrast point estimates (up to nine cells) at each depth.
-They are descriptive and do not create a universal cutoff. Dots mark
-detectability and triangles mark the 90\% resolution budget in the threshold
-map; the exact source-by-contrast rows, signed estimates and threshold
-availability are in the Figure 3 source table.
+unavailable. Figure 3 uses the primary signed trajectory as its hero and shows
+six raw seed-level ridge distributions for the three metrics at low and full
+depth. The ridges are descriptive and do not create a universal cutoff.
+Circles mark detectability and squares mark the 90\% resolution budget in the
+threshold strip; the exact source-by-contrast rows, signed estimates and
+threshold availability are in the Figure 3 source table.
 
 \section{Decision consequence and fixed primary association}
 At budgets $k/n\in\{0.05,0.10,0.20,0.50\}$, source risk selects the set and target
@@ -158,9 +158,9 @@ $y=\text{normalized regret}$. Its unit is six directed biological transfers
 times three metrics, exactly 18 points. The canonical decision summary has
 2,000 synchronized perturbation-label-by-measurement-seed draws for each
 group--budget key. Figure 4 preserves each directed-transfer group interval in
-its source table, while Panel B uses the median point estimate and IQR across
-the six directed transfers. That band is descriptive transfer heterogeneity,
-not an aggregate confidence interval. The overall
+its source table. Its four-budget curves use medians and IQR across the six
+directed transfers; that band is descriptive transfer heterogeneity, not an
+aggregate confidence interval. The overall
 Spearman value is 0.7998 with cluster-bootstrap $q_{.05}=0.7388$ and
 $q_{.95}=0.9003$. This is descriptive, not causal. Metric-specific values are
 reported in the JSON report and are not headline significance tests because
@@ -169,24 +169,23 @@ each metric has only six transfers.
 \section{Heterogeneous failure anatomy}
 The failure anatomy table reuses the existing per-perturbation
 \texttt{identifiable\_divergence} as reordering burden, the existing
-\texttt{response\_program\_shift} as response displacement, and the existing
+\texttt{response\_displacement} as response displacement, and the existing
 response-magnitude change. Response displacement is one minus cosine
 similarity between matched perturbation response vectors; it is descriptive
 and target-informed. Model disagreement and source uncertainty retain their
 source-side definitions from the frozen model members.
 
 Figure 5 uses the existing pair-state table and maps stable strict directions to
-$-1$ and $+1$, ties to the explicit tie state, and unresolved rows with positive
-strict observations to unstable. The three-by-three transition fractions retain
-all corrected state counts over the six directed Frangieh transfers; unresolved
-and unstable states remain visible rather than being silently removed or
-relabelled. The failure anatomy has 219 complete explanatory rows out of 2,784,
-with 2,565 rows missing matched legacy response fields. The coverage report
-compares complete and missing distributions for existing burden and source-side
-fields; no rows are imputed. Explanatory scatter plots use the fixed
-response-displacement versus burden association, with model disagreement as
-marker size. These quantities are explicitly post-hoc explanatory and cannot
-enter a prospective predictor.
+$-1$ and $+1$, ties to the explicit tie state, and any row below the frozen
+minimum strict support of eight to unstable. The state alluvial retains all
+corrected state counts over the six directed Frangieh transfers; unstable
+branches remain visible rather than being silently removed or relabelled. The
+failure anatomy has 219 complete explanatory rows out of 2,784, with 2,565
+rows missing matched legacy response fields. The coverage report compares
+complete and missing distributions for existing burden and source-side fields;
+no rows are imputed. The response-displacement relation uses raw points,
+density structure and metric-specific summaries. These quantities are
+explicitly post-hoc explanatory and cannot enter a prospective predictor.
 
 The prospective feature boundary is frozen to
 \texttt{uq\_cosine\_disagreement}, \texttt{uq\_mean\_gene\_variance},
