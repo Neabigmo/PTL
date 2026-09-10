@@ -128,6 +128,37 @@ def _decision_bootstrap_lock(root: Path, manifests: Path, master: pd.DataFrame) 
         return {"status": "fail", "reason": f"bootstrap_lock_error:{type(exc).__name__}:{exc}"}
 
 
+def _metric_pair_state_lock(manifests: Path) -> dict:
+    """Check the frozen support floor that defines a stable pair state."""
+    path = manifests / "reliability_transport_metric_pair_states.csv"
+    required = {
+        "source_state_discovery", "target_state_validation",
+        "source_strict_count", "target_strict_count",
+    }
+    if not path.is_file():
+        return {"status": "fail", "reason": "missing_metric_pair_states"}
+    try:
+        invalid_source = 0
+        invalid_target = 0
+        rows = 0
+        for chunk in pd.read_csv(path, usecols=sorted(required), chunksize=250_000):
+            rows += len(chunk)
+            source_stable = chunk["source_state_discovery"].astype(str).str.startswith("stable_")
+            target_stable = chunk["target_state_validation"].astype(str).str.startswith("stable_")
+            invalid_source += int((source_stable & chunk["source_strict_count"].lt(8)).sum())
+            invalid_target += int((target_stable & chunk["target_strict_count"].lt(8)).sum())
+        invalid = invalid_source + invalid_target
+        return {
+            "status": "pass" if invalid == 0 else "fail",
+            "minimum_strict_support": 8,
+            "rows": rows,
+            "invalid_source_stable_rows": invalid_source,
+            "invalid_target_stable_rows": invalid_target,
+        }
+    except (OSError, ValueError, KeyError, pd.errors.ParserError) as exc:
+        return {"status": "fail", "reason": f"metric_pair_state_lock_error:{type(exc).__name__}:{exc}"}
+
+
 def run(root: Path = ROOT) -> Path:
     root = root.resolve()
     manifests = root / "artifacts/manifests"
@@ -147,6 +178,7 @@ def run(root: Path = ROOT) -> Path:
     master_path = manifests / "reliability_transport_master.csv"
     master = pd.read_csv(master_path) if master_path.is_file() else pd.DataFrame()
     decision_lock = _decision_bootstrap_lock(root, manifests, master)
+    metric_pair_state_lock = _metric_pair_state_lock(manifests)
     split_seeds = depth.get("split_seeds") or depth.get("checks", {}).get("all_seeds", [])
     metrics = depth.get("metrics", [])
     if not metrics:
@@ -160,7 +192,8 @@ def run(root: Path = ROOT) -> Path:
         ("Measurement depth", depth.get("status", "unavailable"), "Fixed budgets 10/20/40/80/160 plus full matched depth."),
         ("Decision theory", "available" if decision_lock.get("status") == "pass" else "unavailable", "Directed source-select/target-evaluate retention, target floors and excess regret are budget-specific; inferential intervals are consumed from the canonical 2,000-draw summary."),
         ("Prospective predictability", predictability.get("status", "unavailable"), "Source-only leave-one-label-out prediction; target values are evaluation-only."),
-        ("Metric dependence", metric_dependence.get("status", "unavailable"), "Pairwise burden ranking, top-20% overlap and transition states are descriptive."),
+        ("Metric dependence", metric_dependence.get("status", "unavailable"), "Pairwise burden ranking, top-20% overlap and transition states are descriptive; stable states require 8 strict observations."),
+        ("Metric pair-state support", metric_pair_state_lock.get("status", "unavailable"), "Stable source/target states require at least 8 non-tie pairwise observations in addition to the Beta posterior threshold."),
         ("Pathway explanation layer", pathway.get("status", "unavailable"), "Fixed gene-set resource is checksum-frozen and cannot select primary claims."),
         ("Modern-model State", state.get("status", "unavailable"), "Promotion requires verified source-only training, vectors, panel and blindness."),
         ("Modern-model TxPert", txpert.get("status", "unavailable"), "Official checkpoint context is recorded; K562 is not relabelled as HepG2/Jurkat."),
@@ -173,7 +206,7 @@ def run(root: Path = ROOT) -> Path:
         ("02", "fixed split schedule declared", bool(split_seeds)),
         ("03", "30 seeds required for final depth run", len(split_seeds) == 30),
         ("04", "three metrics retained", len(metrics) == 3),
-        ("05", "tie-aware ordering retained", True),
+        ("05", "tie-aware ordering and minimum strict support 8", metric_pair_state_lock.get("status") == "pass"),
         ("06", "U-statistic measurement floor", True),
         ("07", "joint floor separate", True),
         ("08", "per-perturbation burden identity", True),

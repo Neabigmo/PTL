@@ -38,7 +38,7 @@
       20260937
     ]
   },
-  "tie_policy": "strict signs only; ties excluded from Beta posterior; stable if posterior direction >=0.95",
+  "tie_policy": "tie-aware Beta(1+strict-sign counts) posterior >=0.95 with minimum strict support 8; ties excluded; risk p-q",
   "source_margin_definition": "mean absolute source-context pairwise risk difference, not per-perturbation burden magnitude",
   "outputs": {
     "pair_states": "artifacts/manifests/reliability_transport_metric_pair_states.csv",

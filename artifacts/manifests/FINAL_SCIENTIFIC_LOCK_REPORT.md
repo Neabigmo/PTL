@@ -11,7 +11,8 @@ This report is generated from canonical manifests. A missing or blocked analysis
 | Measurement depth | executed | Fixed budgets 10/20/40/80/160 plus full matched depth. |
 | Decision theory | available | Directed source-select/target-evaluate retention, target floors and excess regret are budget-specific; inferential intervals are consumed from the canonical 2,000-draw summary. |
 | Prospective predictability | executed | Source-only leave-one-label-out prediction; target values are evaluation-only. |
-| Metric dependence | executed | Pairwise burden ranking, top-20% overlap and transition states are descriptive. |
+| Metric dependence | executed | Pairwise burden ranking, top-20% overlap and transition states are descriptive; stable states require 8 strict observations. |
+| Metric pair-state support | pass | Stable source/target states require at least 8 non-tie pairwise observations in addition to the Beta posterior threshold. |
 | Pathway explanation layer | executed | Fixed gene-set resource is checksum-frozen and cannot select primary claims. |
 | Modern-model State | blocked_semantic_contract | Promotion requires verified source-only training, vectors, panel and blindness. |
 | Modern-model TxPert | blocked_external_contract | Official checkpoint context is recorded; K562 is not relabelled as HepG2/Jurkat. |
@@ -65,7 +66,7 @@ Only after the final full run, figure/paper regeneration, test/compile/audit pas
 | 02 | fixed split schedule declared | PASS |
 | 03 | 30 seeds required for final depth run | PASS |
 | 04 | three metrics retained | PASS |
-| 05 | tie-aware ordering retained | PASS |
+| 05 | tie-aware ordering and minimum strict support 8 | PASS |
 | 06 | U-statistic measurement floor | PASS |
 | 07 | joint floor separate | PASS |
 | 08 | per-perturbation burden identity | PASS |
@@ -90,7 +91,7 @@ Only after the final full run, figure/paper regeneration, test/compile/audit pas
 | 27 | story claims locked | PASS |
 | 28 | canonical audit status | PASS |
 | 29 | compile/test evidence must be rerun after final edits | PASS |
-| 30 | git clean/commit/push release boundary | PASS |
+| 30 | git clean/commit/push release boundary | PENDING |
 
 ## Current canonical counts
 

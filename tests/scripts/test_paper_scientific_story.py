@@ -101,6 +101,24 @@ def test_failure_state_transitions_and_coverage_contract() -> None:
     assert "complete_vs_missing_distribution" in coverage
 
 
+def test_metric_pair_states_enforce_frozen_strict_support() -> None:
+    states_path = MANIFESTS / "reliability_transport_metric_pair_states.csv"
+    required = {
+        "source_state_discovery", "target_state_validation",
+        "source_strict_count", "target_strict_count",
+    }
+    invalid = 0
+    for chunk in pd.read_csv(states_path, usecols=sorted(required), chunksize=250_000):
+        source_stable = chunk["source_state_discovery"].astype(str).str.startswith("stable_")
+        target_stable = chunk["target_state_validation"].astype(str).str.startswith("stable_")
+        invalid += int((source_stable & chunk["source_strict_count"].lt(8)).sum())
+        invalid += int((target_stable & chunk["target_strict_count"].lt(8)).sum())
+    assert invalid == 0
+
+    report = json.loads((MANIFESTS / "reliability_transport_metric_dependence.json").read_text(encoding="utf-8"))
+    assert "minimum strict support 8" in report["tie_policy"]
+
+
 def test_main_reduces_engineering_detail_but_keeps_blockers() -> None:
     main = MAIN.read_text(encoding="utf-8").lower()
     supplement = SUPPLEMENT.read_text(encoding="utf-8").lower()

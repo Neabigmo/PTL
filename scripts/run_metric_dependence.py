@@ -20,6 +20,8 @@ from scipy.stats import beta
 ROOT = Path(__file__).resolve().parents[1]
 METRICS = ("delta_cosine", "systema_centroid_accuracy", "absolute_effect_rank_agreement")
 STATE_NAMES = ("stable_p<q", "unresolved", "stable_p>q")
+MIN_STRICT_SUPPORT = 8
+STATE_DEFINITION = "tie-aware Beta(1+strict-sign counts) posterior >=0.95 with minimum strict support 8; ties excluded; risk p-q"
 _POSTERIOR_CACHE: dict[tuple[int, int], tuple[str, float, float]] = {}
 
 
@@ -36,9 +38,9 @@ def _posterior_state(values: np.ndarray, tolerance: float = 1e-8) -> tuple[str, 
     if cache_key not in _POSTERIOR_CACHE:
         p_lower_cached = float(1.0 - beta.cdf(0.5, 1 + lower, 1 + higher))
         p_higher_cached = float(1.0 - beta.cdf(0.5, 1 + higher, 1 + lower))
-        if p_lower_cached >= 0.95 and p_lower_cached > p_higher_cached:
+        if lower + higher >= MIN_STRICT_SUPPORT and p_lower_cached >= 0.95 and p_lower_cached > p_higher_cached:
             state_cached = "stable_p<q"
-        elif p_higher_cached >= 0.95 and p_higher_cached > p_lower_cached:
+        elif lower + higher >= MIN_STRICT_SUPPORT and p_higher_cached >= 0.95 and p_higher_cached > p_lower_cached:
             state_cached = "stable_p>q"
         else:
             state_cached = "unresolved"
@@ -150,21 +152,21 @@ def run(root: Path = ROOT) -> dict:
                 "unresolved_to_stable_fraction": float((~source_stable & target_stable).mean()), "unresolved_both_fraction": float((~source_stable & ~target_stable).mean()),
                 "source_pairwise_risk_margin_mean": float(merged["margin_first"].mean()), "source_pairwise_risk_margin_median": float(merged["margin_first"].median()),
                 "stable_inversion_set_size": int(len(inversion_set)), "stable_inversion_set_jaccard": float(len(inversion_set & reverse_set) / len(union)) if union else float("nan"),
-                "crossfit_split": "15_seed_discovery_15_seed_validation", "state_definition": "tie-aware Beta(1+strict-sign counts) posterior >=0.95; ties excluded; risk p-q", "status": "executed",
+                "crossfit_split": "15_seed_discovery_15_seed_validation", "state_definition": STATE_DEFINITION, "status": "executed",
             })
             for from_state, to_state in itertools.product(STATE_NAMES, repeat=2):
                 mask = merged["source_first"].eq(from_state) & merged["target_second"].eq(to_state)
                 transitions.append({
                     "source_environment_id": key[0], "target_environment_id": key[1], "metric_from": first, "metric_to": second,
                     "state_from": from_state, "state_to": to_state, "n_perturbation_pairs": int(len(merged)), "count": int(mask.sum()), "fraction": float(mask.mean()),
-                    "state_definition": "tie-aware Beta posterior over source discovery and target validation pairwise risks", "crossfit_split": "15_seed_discovery_15_seed_validation",
+                    "state_definition": STATE_DEFINITION, "crossfit_split": "15_seed_discovery_15_seed_validation",
                 })
     pd.DataFrame(summaries).to_csv(summary_path, index=False)
     pd.DataFrame(transitions).to_csv(transition_path, index=False)
     report = {
         "schema_version": 2, "status": "executed", "ranking_unit": "perturbation-label pair",
         "seed_schedule": {"discovery": seeds[:15], "validation": seeds[15:]},
-        "tie_policy": "strict signs only; ties excluded from Beta posterior; stable if posterior direction >=0.95",
+        "tie_policy": STATE_DEFINITION,
         "source_margin_definition": "mean absolute source-context pairwise risk difference, not per-perturbation burden magnitude",
         "outputs": {"pair_states": pair_path.relative_to(root).as_posix(), "pairwise": summary_path.relative_to(root).as_posix(), "transitions": transition_path.relative_to(root).as_posix()},
         "pair_state_rows": int(len(pair_states)), "pairwise_rows": len(summaries), "transition_rows": len(transitions),
