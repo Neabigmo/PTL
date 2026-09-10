@@ -350,6 +350,15 @@ def run(root: Path = ROOT) -> dict[str, Any]:
             ["dataset", "dataset_split", "source_environment_id", "left_target_environment_id", "right_target_environment_id", "metric", "cell_budget_label", "model"],
             allowed_missing_numeric={"n_labels", "spearman", "auroc_high_identifiable", "calibration_brier", "calibration_threshold", "mean_absolute_error"},
         ),
+        _audit_canonical_table(
+            MANIFESTS / "reliability_transport_decision_link.csv",
+            ["source_environment_id", "target_environment_id", "metric", "cell_budget_label", "decision_budget_fraction"],
+        ),
+        _audit_canonical_table(
+            MANIFESTS / "reliability_transport_failure_anatomy.csv",
+            ["source_environment_id", "target_environment_id", "metric", "perturbation_label", "cell_budget_label"],
+            allowed_missing_numeric={"effect_magnitude", "normalized_risk_rank_displacement", "model_disagreement", "source_uncertainty", "prediction_norm", "prediction_sparsity", "prediction_concentration", "uq_effect_norm_variance"},
+        ),
     ]
     checks: list[dict[str, Any]] = []
     summary_path = MANIFESTS / "formal_v2_claim_lock_measurement_fullsize_summary.csv"

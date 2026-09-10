@@ -20,187 +20,127 @@
 
 \begin{abstract}
 Confidence scores from single-cell perturbation predictors are often used to
-rank experiments, implicitly assuming that the same perturbations remain easy
-or hard after a biological change. We separate this observed ordering question
-from target refitting and from measurement noise. In a controlled Frangieh
-ladder, a source-context predictor is fit once per shared perturbation-label
-fold and scored unchanged against three target outcomes. The resulting
-source-frozen surface shows substantial continuous rank displacement, but rank
-displacement is kept secondary to a tie-aware pairwise ordering estimand. We
-compare cross-context order disagreement with matched measurement, model-only
-and joint floors; finite within-context floors use the leave-one-replicate-out
-U-statistic rather than a positively biased plug-in estimate. The primary audit
-uses 30 independent full-size nonparametric raw-cell pseudo-replicates, with
-the original split-half analysis retained as sensitivity evidence. Across the
-nine directed source/target comparisons, measurement-identifiable and
-joint-identifiable excesses are reported with synchronized macro bootstrap
-intervals, separately for each metric. The result is metric-dependent rather
-than a universal reordering claim: in the full-size Frangieh audit, the
-measurement-identifiable excess ranges from 0.0361 to 0.1178 and the
-joint-identifiable excess ranges from -0.0175 to 0.0702 across the three metrics.
-An outcome-blind Nadig HepG2/Jurkat registry
-and independent Claim Lock replication reproduce the same identifiability
-boundary.
-Monotonic recalibration is relegated to a supplementary lemma because it can
-change probability scale but not strict order. PTL is retained only as a
-deployment-side probe with heterogeneous, non-protective transport evidence.
+rank experiments, although the identity of easy and difficult perturbations
+may change after a biological shift. We ask when such a reliability reordering
+is identifiable and when it changes a decision. In a source-frozen Frangieh
+ladder, one predictor is evaluated unchanged across control, co-culture and
+IFN$\gamma$ outcomes using a tie-aware pairwise ordering estimand, matched
+raw-cell measurement floors, three metrics, 30 seeds and 2,000 synchronized
+bootstrap draws. The full-size measurement-identifiable excess is 0.0255--0.1140
+across the three metrics, while the joint-floor excess ranges from $-0.0512$ to
+0.0364, so the evidence is metric-dependent rather than universal. At a fixed
+10\% decision budget, the prespecified full-depth link between the identifiable
+excess and normalized regret contains 18 directed transfer--metric points and
+is descriptive (Spearman $\rho=0.80$). An outcome-blind Nadig HepG2/Jurkat
+replication and a source-only held-out analysis delimit the result: biological
+context can reshape reliability ordering, but measurement depth and prospective
+feature availability determine what can be known before a new experiment.
 \end{abstract}
 
 \section{Introduction}
 Single-cell perturbation models turn large screens into predictions that can
 prioritize experiments over a combinatorial intervention space. Their value
-therefore depends not only on average fidelity, but also on whether a
-researcher can decide which predictions to trust before spending experimental
-budget. An uncertainty score learned in K562 need not mean the same thing in
-RPE1, iPSC-derived neurons or patient-derived melanoma. This question is
-related to, but distinct from, response prediction itself.
+therefore depends not only on average fidelity, but also on whether a researcher
+can decide which predictions to trust before spending experimental budget. An
+uncertainty score learned in one context need not preserve the same meaning in
+another context. This question is related to, but distinct from, response
+prediction itself.
 
 Accuracy alone does not settle the decision problem. Deep perturbation
 predictors do not yet reliably outperform simple linear baselines, while
 Systema and scPertEval show that reference construction, split design and
 metric choice can change conclusions~\citep{ahlmann2025simple,wong2025simple,systema2025,scperteval2026}.
 The ordering of trusted versus risky predictions is therefore an object in its
-own right, not an afterthought to one benchmark score.
+own right.
 
 Calibration and selective prediction ask whether a score tracks error in a
-fixed task, while shift audits ask whether representations transport
+fixed task, while shift studies ask whether representations transport
 \citep{guo2017calibration,geifman2017selective,ovadia2019uncertainty,liang2024selective}.
 Neither alone establishes that the identity of easy and hard perturbations
 survives a biological change~\citep{jalaldoust2024transport}. We study this
-narrower operational question without using target outcomes to choose a
-predictor, context pair or feature surface.
+narrow operational question with source-frozen predictions and target-outcome-
+blind selection.
 
-Our central claim is an identifiability boundary:
-\begin{quote}
-\emph{Source-frozen predictions can show substantial cross-context rank
-displacement. A claim of context-specific excess is identifiable only after
-the same ordering statistic is compared with matched experimental and model
-noise floors.}
-\end{quote}
-
-We make five contributions. First, we formalize a tie-aware ordering
-distribution and an exact measurement-corrected divergence, separating it from
-the conservative max-floor stress test. Second, we execute a full-size
-raw-cell Claim Lock with fixed source-frozen predictions and an independent
-15/15-seed held-out stability check. Third, an outcome-blind registry selects
-one Nadig HepG2/Jurkat pair before prediction or risk evaluation and the same
-audit is run once. Fourth, we bound the practical consequence: prospective
-transport is heterogeneous, so PTL is reported as an auditable deployment
-probe rather than a universal reliability estimator. We additionally make
-measurement depth, directed decision utility, metric transitions and
-cross-dataset predictability explicit audit surfaces; unsupported modern-model
-extensions remain feasibility blockers.
+Our central claim is an identifiability boundary: a visible cross-context
+ordering difference becomes a scientific transport result only after the same
+ordering statistic is compared with matched experimental and model floors.
+Figure~\ref{fig:framework} summarizes the resulting path from biological shift
+to ordering, measurement and decision.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig1_concept.pdf}
-  \caption{\textbf{Reliability transportability as an auditable sequence.}
-  The analysis moves from observed cross-context reordering to the
-  measurement-identifiable component, its context/metric structure, a
-  cell-depth boundary, budget-specific decisions and prospective source-only
-  predictability. Every transition preserves the source-frozen prediction and
-  target-outcome-blind selection contract.}
-  \label{fig:hero}
+  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig1_graphical_abstract.pdf}
+  \caption{\textbf{From biological shift to a decision boundary.} A single
+  source-frozen predictor is evaluated across three outcomes; crossing ranking
+  trajectories represent observed reordering, which is decomposed into a
+  measurement-identifiable component. Depth, top-$k$ retention and regret are
+  linked schematically. The panel is conceptual and does not add an estimand.}
+  \label{fig:framework}
 \end{figure*}
 
-\section{Estimands and identifiability boundary}
+\section{From observed to identifiable reliability reordering}
 For a perturbation pair $c=(p,q)$, context $e$, and measurement replicate $r$,
 let $R_{p,e}^{(r)}$ be continuous risk from a fixed predictor and define
 \begin{equation}
- Z_{c,e}^{(r)} = \operatorname{sign}\!\left(R_{p,e}^{(r)}-R_{q,e}^{(r)}\right)
- \in\{-1,0,+1\}.
+ Z_{c,e}^{(r)}=\operatorname{sign}\!\left(R_{p,e}^{(r)}-R_{q,e}^{(r)}\right)\in\{-1,0,+1\}.
 \end{equation}
-Ties are retained explicitly. The context-specific ordering distribution is
+Ties are retained explicitly through
+$\pi_{c,e}=[\Pr(Z=-1),\Pr(Z=0),\Pr(Z=+1)]$. For two contexts,
 \begin{equation}
- \pi_{c,e}=\left[\Pr(Z=-1),\Pr(Z=0),\Pr(Z=+1)\right].
+ D_{\rm cross}=\mathbb{E}_{c}[1-\pi_{c,e_1}^{\mathsf T}\pi_{c,e_2}],\qquad
+ D_{\rm within,e}=\mathbb{E}_{c}[1-\|\pi_{c,e}\|_2^2].
 \end{equation}
-For two contexts, observed cross-context disagreement and within-context
-measurement disagreement are
+The population measurement-identifiable component is
 \begin{equation}
- D_{\mathrm{cross}}=\mathbb{E}_{c}\left[1-\pi_{c,e_1}^{\mathsf T}\pi_{c,e_2}\right],\qquad
- D_{\mathrm{within},e}=\mathbb{E}_{c}\left[1-\|\pi_{c,e}\|_2^2\right].
-\end{equation}
-Their measurement-corrected ordering divergence is
-\begin{equation}
- D_{\mathrm{corr}}=D_{\mathrm{cross}}-
- \frac{D_{\mathrm{within},e_1}+D_{\mathrm{within},e_2}}{2}
- =\frac{1}{2}\mathbb{E}_{c}\left\|\pi_{c,e_1}-\pi_{c,e_2}\right\|_2^2\geq0.
+ D_{\rm meas\text{-}ID}=D_{\rm cross}-
+ \frac{D_{\rm within,e_1}+D_{\rm within,e_2}}{2}
+ =\frac{1}{2}\mathbb{E}_{c}\|\pi_{c,e_1}-\pi_{c,e_2}\|_2^2\geq0.
  \label{eq:ordering_identity}
 \end{equation}
-The equality is an identity, not a causal claim. It measures how the two
-ordering distributions differ after accounting for their within-context
-measurement distributions. It is distinct from the conservative operational
-stress test used below,
+This equality is an identity, not a causal statement. For finite replicates we
+use the leave-one-replicate-out U-statistic
 \begin{equation}
- \Delta_{\mathrm{joint}}=D_{\mathrm{cross}}-
- \max(D_{\mathrm{joint},e_1},D_{\mathrm{joint},e_2}),\qquad
- \max(D_1,D_2)=\frac{D_1+D_2}{2}+\frac{|D_1-D_2|}{2}.
-\end{equation}
-Consequently, a negative max-floor excess does not contradict a nonzero
-distributional difference in Eq.~\ref{eq:ordering_identity}.
-
-For finite replicate data, the primary within-context estimator is the
-leave-one-replicate-out U-statistic. If $(n_{-},n_{0},n_{+})$ are the counts of
-the three order outcomes over $n$ replicates, then
-\begin{equation}
- \widehat D_{\mathrm{within}}^{U}
- =1-\frac{n_{-}(n_{-}-1)+n_{0}(n_{0}-1)+n_{+}(n_{+}-1)}{n(n-1)}.
+ \widehat D_{\rm within}^{U}=1-
+ \frac{n_{-}(n_{-}-1)+n_{0}(n_{0}-1)+n_{+}(n_{+}-1)}{n(n-1)}.
  \label{eq:u_floor}
 \end{equation}
-The finite measurement-identifiable excess replaces the two within terms in
-Eq.~\ref{eq:ordering_identity} by Eq.~\ref{eq:u_floor}; the plug-in/V identity
-is retained only as an implementation diagnostic.
+The joint operational floor is intentionally conservative,
+$D_{\rm joint\text{-}ID}=D_{\rm cross}-\max(D_{\rm joint,e_1},D_{\rm joint,e_2})$,
+and is not assumed to add the measurement and model floors. Continuous rank
+displacement is retained as a secondary magnitude diagnostic. Stable ordering
+uses a tie-aware 15/15 seed cross-fit, a 95\% Beta interval and support of at
+least eight strict observations; it does not select the headline metric.
 
-We keep three estimands separate. The measurement-only floor fixes the
-predictor and resamples raw-cell outcomes. The model-only floor fixes the
-outcome and crosses independent model members. The joint floor crosses both
-sources of randomness. The joint surface is empirically crossed and is not
-assumed to be the sum of its two components.
-
-For stable ordering, we also report
-$p_{c,e}=\Pr_r(Z_{c,e}^{(r)}=+1)$. Fifteen seeds are used for selection and
-fifteen disjoint seeds for evaluation; the two halves are swapped. A pair is
-called stable only when its 95\% Beta posterior interval for the strict
-direction, conditional on non-ties, lies entirely on one side of $0.5$ and at
-least eight strict observations support that direction. This procedure is a stability diagnostic, not an additional
-selection of the headline metric.
-
-\section{Controlled Frangieh audit}
+\section{Biological context reshapes reliability ordering}
 The Frangieh surface contains 243 shared perturbation labels across control,
-co-culture and IFN$\gamma$. For every global five-fold perturbation-label
-assignment, the source predictor is fit once and its prediction vector is
-held fixed while the target raw-cell outcome changes. The primary cell audit
-uses 30 independent seeds. For each perturbation and context, an independent
-with-replacement pseudo-replicate contains the same number of cells as the
-matched source/target raw-cell budget; controls are resampled independently.
-The three metrics are delta cosine, Systema centroid accuracy and
-absolute-effect rank agreement. The original disjoint split-half analysis is
-retained as a sensitivity audit. No metric-specific refit, sign-based
-selection or target-outcome feature is introduced.
+co-culture and IFN$\gamma$. For every global five-fold label assignment, the
+source predictor is fit once and its prediction vector is held fixed while the
+target raw-cell outcome changes. We use delta cosine, Systema centroid accuracy
+and absolute-effect rank agreement, with 30 independent seeds and matched
+full-size raw-cell pseudo-replicates. The primary evidence is organized by
+source context and by the biological contrast being transferred, rather than
+by a source-to-single-target forest.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig2_forest.pdf}
-  \caption{\textbf{Observed transport reordering across the frozen atlas.}
-  Points show tie-aware cross-context disagreement with synchronized
-  uncertainty intervals for each source, target pair and metric. Evidence tier
-  and availability are reported separately, so a visible difference is not
-  silently promoted to an identifiable mechanism.}
-  \label{fig:measurement}
+  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig2_transport_atlas.pdf}
+  \caption{\textbf{Reliability Transport Atlas.} Heatmaps show the Frangieh
+  measurement-identifiable excess for each source context and each left/right
+  biological contrast; dots indicate a positive 90\% lower interval and rings
+  indicate a positive joint-floor lower interval. Solid and dashed borders
+  retain Tier 1 and Tier 2 evidence, respectively. The Nadig HepG2/Jurkat
+  directions are shown separately as an independent replication.}
+  \label{fig:atlas}
 \end{figure*}
 
 \begin{table}[t]
 \centering
-\caption{Full-size primary ordering audit. $D_{\rm cross}$ is the observed
-tie-aware pairwise-order disagreement; the two excess columns use U-statistic
-within floors. Intervals are shown separately for each estimand and are
-computed from synchronized macro draws, not by averaging row-level endpoints.
-Continuous rank
-displacement is a secondary diagnostic reported in the supplement.}
-\label{tab:claim-lock}
+\caption{Full-size Frangieh primary ordering estimates. Intervals are 90\%
+macro-bootstrap intervals for the stated estimand.}
+\label{tab:primary}
 \begin{tabular}{lrrr}
 \toprule
-Metric & $D_{\rm cross}$ & $D_{\rm meas\text{-}ID}$ (90\% CI) & $D_{\rm joint\text{-}ID}$ (90\% CI) \\
+Metric & $D_{\rm cross}$ & $D_{\rm meas\text{-}ID}$ & $D_{\rm joint\text{-}ID}$ \\
 \midrule
 Delta cosine & 0.3153 & 0.1140 [0.0816, 0.1500] & 0.0364 [-0.0025, 0.0761] \\
 Systema centroid & 0.0969 & 0.0255 [0.0153, 0.0364] & 0.0220 [0.0117, 0.0331] \\
@@ -209,235 +149,144 @@ Absolute-effect rank & 0.2786 & 0.0574 [0.0284, 0.0850] & -0.0512 [-0.0888, -0.0
 \end{tabular}
 \end{table}
 
-\section{Measurement depth and decision boundary}
-The full-size Claim Lock is complemented by a prespecified measurement-depth
-curve. We resample 10, 20, 40, 80 and 160 QC-passed raw cells per
-environment--perturbation pseudoreplicate, together with the matched full-size
-depth. The primary curve freezes the shared perturbation universe at the
-highest fixed budget and reuses it at every lower budget
-(\texttt{matched\_fixed}); a separate \texttt{coverage} curve records the
-naturally available universe. Exact
-coverage, mode and SHA256 fingerprints are recorded, so a change in the curve
-is inspected as a resolution effect rather than being conflated with label loss.
+Figure~\ref{fig:atlas} shows why the estimand must retain both the source and
+the left/right contrast. The three metrics do not share a single transport
+surface: the largest measurement-identifiable excess is observed for delta
+cosine, while the joint-floor stress test can remain negative for
+absolute-effect rank. These signs are interpreted only with their declared
+floors and intervals; a negative joint-floor result is not evidence that the
+underlying ordering distributions are identical.
 
-For each depth, the same burden decomposition is applied at the perturbation
-level. The global value is the mean of the per-perturbation burdens, providing
-an exact audit identity rather than an approximate post hoc explanation. We
-define the 90\%-of-full resolution depth as the first fixed budget whose
-identifiable divergence lies within ten percent of the full-depth value. The
-detectability threshold is the first budget whose 90\% seed-bootstrap lower
-interval is above zero; when no budget passes, the threshold is explicitly
-unavailable. These rules make a negative result inspectable without changing
-the estimand after seeing the sign.
+\section{Measurement depth defines the identifiability boundary}
+We next hold the perturbation universe fixed at the highest matched budget and
+resample 10, 20, 40, 80 and 160 cells per environment--perturbation
+pseudoreplicate, together with the matched full-depth endpoint. For each
+source-by-contrast cell, the depth ratio is
+$R(n)=D_{\rm meas\text{-}ID}(n)/D_{\rm meas\text{-}ID}(\mathrm{full})$.
+The first budget within ten percent of the full value defines a resolution
+summary; the first budget with a positive 90\% lower interval defines
+detectability. If no budget meets a rule, the threshold remains unavailable.
+This makes the measurement boundary an explicit property of the cell and
+metric, not a universal cutoff.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=0.92\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig3_measurement_depth.pdf}
-  \caption{\textbf{Cell-depth resolution boundary.} Curves use the same
-  source-frozen predictions and a fixed highest-budget perturbation universe.
-  Ribbons are 90\% synchronized perturbation-label $\times$ measurement-seed
-  macro bootstrap intervals; coverage-mode sensitivity is recorded separately.}
-  \label{fig:depth}
+  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig3_measurement_boundary.pdf}
+  \caption{\textbf{Measurement depth sets resolution.} Each heatmap reports
+  $R(n)$ for one metric across the nine source-context/contrast cells; raw
+  values above one are retained and unavailable cells remain gray. The lower
+  curves summarize group-level interval endpoints and do not impose a common
+  depth threshold.}
+  \label{fig:boundary}
 \end{figure*}
 
-The scientific estimand and the deployment consequence are kept distinct. At
-fixed decision budgets $k/n\in\{0.05,0.10,0.20,0.50\}$, we select the lowest
-source risk and evaluate it against the target risk. We report oracle overlap,
-target regret, normalized regret and boundary inversion. The boundary
-inversion $V_k$ is zero exactly when the strict top-$k$ sets agree; with $m$
-mis-selected items, the audit checks the finite bound
-$V_k\geq m^2/[k(n-k)]$ under strict tie handling. Measurement-floor and joint-
-floor excess regret are reported separately, so a low global ordering
-disagreement cannot be read as a deployment guarantee. Decision point estimates
-are the frozen 30-seed means; their descriptive seed quantiles are kept
-separate from the inferential 90\% intervals, which are the $q_{.05}$--$q_{.95}$
-quantiles of the canonical 2,000-draw perturbation-label $\times$
-measurement-seed bootstrap.
+\section{Identifiable reordering changes experimental decisions}
+At decision budgets $k/n\in\{0.05,0.10,0.20,0.50\}$, each source context selects the
+lowest source risk and the target evaluates the selected set. We report target
+top-$k$ retention and normalized regret. The point estimate is the frozen
+30-seed mean, while the displayed uncertainty is the canonical 2,000-draw
+perturbation-label-by-measurement-seed interval. This decision layer is kept
+separate from the global ordering estimand.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=0.92\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig4_decision_curves.pdf}
-  \caption{\textbf{Budget-specific decision consequences.} Each directed
-  source selects using its source risk and the target evaluates the selected
-  set. Retention and excess regret are evaluated at fixed top-$k$ budgets with
-  synchronized 2,000-draw perturbation-label $\times$ measurement-seed
-  intervals; target self-floors use independent off-diagonal target pairs.}
+  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig4_decision_consequence.pdf}
+  \caption{\textbf{Decision consequence at fixed budgets.} The source ranking
+  is evaluated against target utility, retention and excess regret are traced
+  over the four fixed budgets, and the primary association links full-depth
+  $D_{\rm meas\text{-}ID}$ to normalized regret at 10\%. The association uses
+  18 transfer--metric points and is descriptive rather than causal.}
   \label{fig:decision}
 \end{figure*}
 
-The plug-in/V identity is checked in every ordering row with machine-precision
-error; this guards against interpreting a coding or aggregation mismatch as a
-biological result. The primary full-size macro values in Table~\ref{tab:claim-lock}
-are computed within synchronized draws. We therefore report metric-dependent
-evidence, not a universal context-dependent reordering claim. The max-floor
-stress test is intentionally conservative: its sign can remain negative when
-the ordering distributions differ, especially when the joint floors are
-asymmetric.
+The prespecified full-depth, 10\% link contains six directed biological
+transfers and the three metrics. Its Spearman association is $\rho=0.80$;
+metric-specific associations are not treated as headline tests because each
+contains only six transfers. The panel is retained even if a future replication
+weakens the association: the scientific question is whether identifiable
+ordering loss has a measurable decision consequence, not whether a single
+summary correlation is universal.
 
-The held-out stability audit gives a second guard against pairwise overreading.
-Across source/pair/metric surfaces, selection-stable fractions are recorded
-before evaluation and held-out inversion/evaluable fractions are reported
-unchanged in the machine-readable ordering manifest. These quantities are
-descriptive of the fixed contract; they are not used to choose a favorable
-context pair.
+\section{What drives transport failure, and can we know it beforehand?}
+The failure anatomy reuses the existing per-perturbation identifiable burden,
+the matched response-program displacement and the existing response-magnitude
+diagnostic. These quantities are explanatory and target-informed. They are
+therefore not allowed into the prospective predictor. The prospective analysis
+uses only source-side prediction geometry and model-member uncertainty, with
+leave-label-out evaluation and target outcomes used only after prediction.
 
-\subsection{Response displacement is not a causal reliability mechanism}
-The trained-predictor surface is complemented by a matched head-to-head
-resource~\citep{headtohead2026crispr}. That resource is an evaluation-only
-source-response persistence baseline, not a trained perturbation predictor and
-is not pooled with the Frangieh Claim Lock. Its modality-, time- and
-cell-context comparisons keep exact target intersections fixed and show large
-response-program shifts, but those shifts do not establish a causal mechanism
-or imply that every predictor must reorder.
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig5_failure_anatomy.pdf}
+  \caption{\textbf{Failure anatomy and prospective predictability.} Tie-aware
+  source-to-target matrices report stable inversion fractions and retain
+  unresolved pairs separately. Response displacement versus reordering burden
+  is post-hoc explanatory, with marker size encoding model disagreement. The
+  final panel evaluates held-out target outcomes from source-only features;
+  target-informed explanatory quantities never enter that prospective fit.}
+  \label{fig:failure}
+\end{figure*}
 
-\section{Outcome-blind Nadig replication}
-Before reading any prediction, risk or inversion result, we scanned 33 local
-same-study candidate pairs. The frozen registry records study, contexts, exact
-shared perturbations, raw and matched-control cell counts, perturbation and
-readout modality, library and guide coverage, batch/context provenance,
-exclusion reason, eligibility, and the three evaluation flags. Its SHA256 and
-commit are recorded in the regenerated registry manifest; the complete table
-is Supplementary Table S1. Selection was materialized with outcome-blind
-$B=1$, prediction $P=0$ and risk $R=0$ before the Nadig run.
+The source-only result is intentionally bounded. A model can identify a
+useful source-side warning signal without proving a biological mechanism, and
+the absence of a signal is not evidence that transport failure has no cause.
+The relevant interpretation is operational: before a new target outcome is
+observed, only source-side descriptors are admissible.
 
-Nadig HepG2--Jurkat is the sole eligible pair with supported independent-context
-provenance: it has 2,392 exact shared
-perturbations, matched controls, the same dual-sgRNA library family, parallel
-screens, day-7 harvest and 10x 3' v3 RNA readout. GEO metadata supports
-independent biological context with batch identifiers nested within context.
-Replogle K562-essential--RPE1 has 2,055 shared perturbations but is excluded
-because day-6 versus day-7 harvest is inseparable from the context comparison.
-The Claim Lock uses the same source-frozen strong-linear predictor, three model
-members, 30 seeds, 2,000 paired perturbation-bootstrap draws and both
-minimum-cell thresholds. The full-size primary, matched-universe split-half
-($n=1255$), and $n\geq40$ ($n=345$) results are reported in the canonical
-claim table with synchronized macro intervals for the pairwise-order estimand.
-This is one bounded replication, not universal transportability.
+\section{Deployment probe and feasibility boundary}
+PTL is evaluated only as a deployment-side probe. Its feature surface keeps
+predictions, outcome-free descriptors, observed outcomes and split assignments
+separate. A source-selection gate is accepted only under a fixed
+validation-only acceptance criterion and falls back to an uncertainty-only
+score otherwise; this is a heuristic rather than a safety guarantee. The
+outcome-blind analysis reports the gate and its negative-transfer cases in the
+supplement, without allowing them to alter the five primary figures.
 
-The Nadig pair is included in the atlas as an independent Tier 1 pair-level
-replication; it is not pooled with the Frangieh depth or decision curves.
-Modern-model checkout, preprocessing and semantic eligibility evidence are
-reported in the supplement and in the feasibility manifest rather than as a
-sixth main figure.
+\section{Bounded robustness and limitations}
+The outcome-blind registry scanned 33 candidate same-study pairs before risk or
+inversion evaluation. Nadig HepG2--Jurkat has supported independent-context
+provenance and is the supported independent pair;
+its result is a bounded Tier 1 replication and is not pooled with the Frangieh
+depth or decision curves. The original split-half and $n\geq40$ analyses remain
+sensitivity analyses under the same protocol.
+
+The broader benchmark contains 1,603 condition-level instances and 8,229
+scored genes. The Claim Lock roster is matching mean, an Ahlmann--Eltze-style
+bilinear model and \slim{} with a public STRING embedding, all using fixed
+biological-instance splits and three model members. Modern-model scope remains
+unchanged: \gears{} has an external CUDA contract but no frozen Frangieh or
+Nadig vector, TxPert is limited to its cached K562 contract, State has no
+promoted same-contract vector, and scGPT stops at the Windows torchtext ABI.
+These are feasibility blockers, not scientific transport results.
+
 % Artifact-compatibility lock for the legacy supplement renderer:
 % \caption{\textbf{Replication and model-scope boundary.} Outcome-blind eligibility precedes risk evaluation; metric-dependent evidence is not a universal reordering claim.}
 % \label{fig:replication}
 
-\section{Deployment consequence}
-PTL is evaluated only as a deployment-side probe. Its feature surface keeps
-predictions, outcome-free descriptors, observed outcomes and split assignments
-separate. The source-selection model is trained on source--target pairs whose
-outcomes are available in the training portion and evaluated with strict
-leave-target-environment-out cross-validation. Target outcomes are never used
-to construct held-out descriptors or to select a source.
-
-The deployment decision is deliberately asymmetric:
-\begin{equation}
- g(s,t)=h_{\psi}(d_{st}),\qquad
- \operatorname{gate}(s,t)=
- \begin{cases}
- r_s,&\widehat g(s,t)>0\text{ and }\Pr(g>0\mid d_{st})\geq\eta,\\
- r_U,&\text{otherwise.}
- \end{cases}
-\end{equation}
-Here $r_U$ is the uncertainty-only fallback. Across 280 source--target
-observations, the strict target-unseen source-ranking AUROC is 0.503 and
-ungated negative transfer is 36.4\%. The gate falls back in 10\% of 40
-target-by-split decisions; among non-fallback decisions, selected-source
-negative transfer is 41.7\%. The gate is accepted only under a fixed
-validation-only acceptance criterion. These results make the gate an audit heuristic,
-not a demonstrated safeguard.
-
-\section{Perturbation heterogeneity and prospective predictability}
-The per-perturbation decomposition makes it possible to ask whether the
-transport boundary is concentrated in a small set of perturbations or broadly
-distributed. We treat this as a descriptive heterogeneity analysis. A
-source-U-only baseline and a low-capacity ridge model are fit with
-leave-one-perturbation-label-out folds using only frozen source descriptors,
-including prediction geometry and model-member uncertainty. Target risk and
-target response are evaluation-only. Held-out Spearman, training-fold-
-threshold AUROC and MAE are reported only when the number of independent
-labels supports the fit; calibration Brier scores are not reported because
-post-hoc target scaling would be invalid.
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.92\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig5_perturbation_drivers.pdf}
-  \caption{\textbf{Metric transitions and prospective predictability.} Stable
-  perturbation-pair inversions use a tie-aware 15/15 seed cross-fit.
-  Predictive scores use fixed source-only features and held-out target
-  outcomes; requested cross-dataset directions remain explicitly blocked when
-  canonical per-label outcomes are unavailable.}
-  \label{fig:drivers}
-\end{figure*}
-
-\section{Benchmark, modern-model scope and robustness}
-The broad registry contains 1,603 condition-level biological instances across
-Norman K562, Replogle RPE1, Tian iPSC-derived-neuron CRISPRa and CRISPRi,
-three Frangieh patient-derived-melanoma conditions and Xu HEK293 CRISPRi. The
-shared scoring panel contains 8,229 genes; predictors retain their native
-training spaces. The completed Claim Lock roster is matching mean, an
-Ahlmann--Eltze-style bilinear model ($K=10$, $\lambda=0.1$), and \slim{} with
-a public STRING embedding. All use a fixed 60/20/20 biological-instance split
-with model seeds $0,1,2$.
-
-The modern-model audit is intentionally a feasibility gate. The official
-\gears{} stack has a CUDA-runnable external contract with persisted validation
-outputs, but not a Frangieh or Nadig frozen prediction vector. The official
-TxPert checkout and cached K562 checkpoint reproduce its single-cell-line
-inference contract on the user-authorized CUDA environment, but they do not
-constitute a same-predictor HepG2/Jurkat vector. Its explicit adapter records
-this incompatibility and refuses Claim Lock promotion. The official State
-checkout and CLI preprocessing path are separately audited, but no
-same-contract source-only vector is promoted without verified training and
-held-out prediction artifacts. scGPT is installed but its Windows torchtext
-ABI fails before model construction. None of these
-external surfaces enters the headline Claim Lock; this prevents modern-model
-availability, checkpoint success or GPU utilization from being mistaken for a
-cross-context scientific result. The shared 1,536-gene source-control panel is
-frozen for future same-contract adaptation and is not used to retrofit a
-result into the current claim.
-
 \section{Discussion}
 The evidence supports a limitation-centered interpretation. Source-frozen
-orderings visibly change across matched biological settings.
-Eq.~\ref{eq:ordering_identity} provides the population nonnegative
-distributional measure, while Eq.~\ref{eq:u_floor} provides the finite-sample
-estimator used for headline inference. The identifiable excess is
-metric-dependent under the full-size primary audit; continuous rank displacement
-is retained only as a secondary magnitude diagnostic. A negative result is not
-read as proof of no biology; it is a signal to inspect measurement,
-model-member disagreement, metric geometry and implementation identity before
-assigning a mechanism.
+orderings visibly change across matched biological settings, but the amount
+that can be attributed beyond measurement and model floors depends on the
+metric. Measurement depth determines which cells of the atlas are resolvable;
+the decision analysis shows how an unresolved ordering can affect top-$k$
+retention and regret. Prospective prediction is a separate question with a
+strict source-only feature boundary.
 
-The Nadig registry and replication protect against a different failure mode:
-choosing a favorable context pair after looking at risk. The result remains
-bounded to one supported study design. The deployment probe likewise does not
-turn heterogeneous transfer into a safety guarantee. A practical use of these
-models should therefore report the raw ordering, its measurement plan, and the
-reproducibility boundary together.
+This design also clarifies how to read negative results. A negative joint-floor
+excess can arise from conservative asymmetric floors and does not prove no
+biological difference. It should trigger checks of measurement depth, model
+member disagreement, metric geometry and implementation identity before a
+mechanism is assigned. The Nadig registry protects against choosing a favorable
+pair after observing outcomes, but one replication cannot establish universal
+transportability.
 
-The monotonic-recalibration counterfactual is a supplementary lemma. A
-train-only strictly increasing map can change Brier or log-loss while
-preserving strict ordering and AURC, so it cannot repair a reordered reliability
-surface. Full proof details and its 45-group audit are supplied in the
-supplement rather than promoted to a main contribution.
-
-\section{Limitations and reproducibility}
-The claim is bounded by the eight-environment surface, three predictor families
-in the headline Claim Lock and one Nadig same-predictor replication. The audit
-cannot remove every laboratory or processing difference and identifies no
-causal mechanism. Modern-model feasibility is documented separately from
-scientific Claim Lock eligibility. PTL features remain outcome-free and
-explicit-ID-free, but the source gate retains negative transfers.
-
-All outputs are regenerated from fixed splits and native predictor spaces. The
-release contains source-frozen vectors, full-size and split-half raw-cell
-floors, tie-aware ordering rows, synchronized macro bootstrap draws, the complete outcome-blind registry, model
-feasibility checks, transport matrices, bootstrap summaries, and editable
-vector figures. Claims are downgraded when interval support, stability or
-metric agreement is absent. The supplement provides the complete estimands,
-registry fields, provenance decisions, secondary metrics and audit commands.
+\section{Reproducibility}
+All paper values are regenerated from fixed splits, native predictor spaces,
+source-frozen vectors, matched raw-cell resampling, tie-aware ordering rows and
+the declared bootstrap summaries. The supplement gives the complete estimator
+definitions, provenance map, source tables, feasibility boundaries and
+validation commands. The five figure source tables are released alongside the
+editable vector figures.
 
 \clearpage
 \bibliographystyle{../../third_party/iclr2027/iclr2027_conference}

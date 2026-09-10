@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "status": "executed",
+  "primary_contract": {
+    "measurement_depth": "full",
+    "decision_budget_fraction": 0.1,
+    "x": "D_meas-ID",
+    "y": "normalized_regret",
+    "unit": "6 directed biological transfers × 3 metrics = 18 points",
+    "interpretation": "descriptive association; not causal; metric-specific values are carried together in cluster bootstrap"
+  },
+  "correlations": {
+    "overall": {
+      "n": 18,
+      "spearman": 0.7997936016511867,
+      "cluster_bootstrap_q05": 0.7387669801462905,
+      "cluster_bootstrap_q95": 0.9003115264797509
+    },
+    "metric_specific": {
+      "absolute_effect_rank_agreement": {
+        "n": 6,
+        "spearman": 0.7714285714285715,
+        "cluster_bootstrap_q05": 0.0909090909090909,
+        "cluster_bootstrap_q95": 1.0
+      },
+      "delta_cosine": {
+        "n": 6,
+        "spearman": 0.08571428571428573,
+        "cluster_bootstrap_q05": -0.818181818181818,
+        "cluster_bootstrap_q95": 0.9393939393939392
+      },
+      "systema_centroid_accuracy": {
+        "n": 6,
+        "spearman": -0.08571428571428573,
+        "cluster_bootstrap_q05": -0.7506451612903214,
+        "cluster_bootstrap_q95": 1.0
+      }
+    }
+  },
+  "rows": 18,
+  "unique_keys": true,
+  "outputs": {
+    "table": "artifacts/manifests/reliability_transport_decision_link.csv",
+    "report": "artifacts/manifests/reliability_transport_decision_link.json"
+  }
+}

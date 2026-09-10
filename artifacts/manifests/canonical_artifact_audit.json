@@ -1164,6 +1164,137 @@
       ],
       "allowed_missing_numeric_by_column": [],
       "sha256": "85be632a4e8a2565beab40efb7eb4e4e3517bb37957307537a68ad81dd31b202"
+    },
+    {
+      "name": "artifacts/manifests/reliability_transport_decision_link.csv",
+      "status": "pass",
+      "rows": 18,
+      "expected_rows": null,
+      "columns": [
+        "source_environment_id",
+        "target_environment_id",
+        "transfer_id",
+        "metric",
+        "cell_budget_label",
+        "decision_budget_fraction",
+        "d_meas_id",
+        "d_meas_id_ci_low",
+        "d_meas_id_ci_high",
+        "d_joint_id",
+        "d_joint_id_ci_low",
+        "d_joint_id_ci_high",
+        "normalized_regret",
+        "normalized_regret_ci_low",
+        "normalized_regret_ci_high",
+        "draw_count",
+        "raw_bootstrap_sha256",
+        "analysis_unit",
+        "analysis_contract",
+        "provenance"
+      ],
+      "key": {
+        "name": "artifacts/manifests/reliability_transport_decision_link.csv",
+        "status": "pass",
+        "rows": 18,
+        "key_columns": [
+          "source_environment_id",
+          "target_environment_id",
+          "metric",
+          "cell_budget_label",
+          "decision_budget_fraction"
+        ],
+        "duplicate_rows": 0,
+        "unique_keys": 18
+      },
+      "finite_numeric": {
+        "name": "artifacts/manifests/reliability_transport_decision_link.csv",
+        "status": "pass",
+        "nonfinite_by_column": {},
+        "allowed_missing_columns": [],
+        "allowed_missing_by_column": []
+      },
+      "allowed_missing_numeric": [],
+      "allowed_missing_numeric_by_column": [],
+      "sha256": "ceba41c5460a076897534d8ab139de4f9b082897ae75cbf7ec0f212201950d12"
+    },
+    {
+      "name": "artifacts/manifests/reliability_transport_failure_anatomy.csv",
+      "status": "pass",
+      "rows": 2784,
+      "expected_rows": null,
+      "columns": [
+        "source_environment_id",
+        "target_environment_id",
+        "left_target_environment_id",
+        "right_target_environment_id",
+        "metric",
+        "perturbation_label",
+        "cell_budget_label",
+        "reordering_burden",
+        "cross_burden",
+        "within_burden_left",
+        "within_burden_right",
+        "response_displacement",
+        "effect_magnitude",
+        "normalized_risk_rank_displacement",
+        "model_disagreement",
+        "source_uncertainty",
+        "prediction_norm",
+        "prediction_sparsity",
+        "prediction_concentration",
+        "uq_effect_norm_variance",
+        "target_informed_explanatory",
+        "source_only_features",
+        "response_displacement_definition",
+        "effect_magnitude_definition",
+        "model_disagreement_definition",
+        "source_uncertainty_definition",
+        "n_measurement_seeds",
+        "provenance",
+        "status"
+      ],
+      "key": {
+        "name": "artifacts/manifests/reliability_transport_failure_anatomy.csv",
+        "status": "pass",
+        "rows": 2784,
+        "key_columns": [
+          "source_environment_id",
+          "target_environment_id",
+          "metric",
+          "perturbation_label",
+          "cell_budget_label"
+        ],
+        "duplicate_rows": 0,
+        "unique_keys": 2784
+      },
+      "finite_numeric": {
+        "name": "artifacts/manifests/reliability_transport_failure_anatomy.csv",
+        "status": "pass",
+        "nonfinite_by_column": {},
+        "allowed_missing_columns": [
+          "effect_magnitude",
+          "model_disagreement",
+          "normalized_risk_rank_displacement",
+          "prediction_concentration",
+          "prediction_norm",
+          "prediction_sparsity",
+          "source_uncertainty",
+          "uq_effect_norm_variance"
+        ],
+        "allowed_missing_by_column": []
+      },
+      "allowed_missing_numeric": [
+        "effect_magnitude",
+        "model_disagreement",
+        "normalized_risk_rank_displacement",
+        "prediction_concentration",
+        "prediction_norm",
+        "prediction_sparsity",
+        "source_uncertainty",
+        "uq_effect_norm_variance"
+      ],
+      "allowed_missing_numeric_by_column": [],
+      "sha256": "664d88d43ecc26b0e41c8aaa43a8bce92c5d77a70013cbd7b922a265918d4acc"
     }
   ],
   "checks": [

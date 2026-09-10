@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "executed",
+  "rows": 2784,
+  "executed_rows": 219,
+  "missing_explanatory_rows": 2565,
+  "analysis_unit": "directed source-target × metric × perturbation label at full matched-fixed depth",
+  "burden_identity": "existing per-perturbation identifiable burden from the matched-fixed canonical table; no new transport score",
+  "response_displacement": "existing response_program_shift = 1 minus cosine similarity; descriptive and target-informed",
+  "effect_magnitude": "existing response_magnitude_change; descriptive and target-informed",
+  "prospective_feature_boundary": "uq_cosine_disagreement, uq_mean_gene_variance, uq_effect_norm_variance, prediction_norm, prediction_sparsity, prediction_concentration; target outcomes excluded",
+  "outputs": {
+    "table": "artifacts/manifests/reliability_transport_failure_anatomy.csv",
+    "report": "artifacts/manifests/reliability_transport_failure_anatomy.json"
+  }
+}

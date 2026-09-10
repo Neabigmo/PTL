@@ -10,142 +10,191 @@
 \title{Supplement to ``Reliability Transportability Has a Measurement and Decision Boundary in Single-Cell Perturbation Prediction''}
 \author{Anonymous Authors}
 
+\newcommand{\gears}{\textsc{GEARS}}
+
+
 \begin{document}
 \maketitle
 
-\section{Scope and artifact map}
-This supplement is an audit companion, not a second analysis surface. Every
-number is generated from the same fixed splits, native predictor spaces and
-source-frozen artifacts. The principal files are
+\section{Scope, story map and artifact map}
+This supplement contains the complete computational specification behind the
+five-figure main story. The narrative follows observed reordering, identifiable
+reordering, measurement depth, decision consequence and prospective
+predictability. The main paper is intentionally compact; this document retains
+the implementation details needed to reproduce every panel and to distinguish
+scientific evidence from feasibility boundaries.
+
+The primary files are
 \texttt{artifacts/manifests/formal\_v2\_claim\_lock\_measurement\_fullsize\_floors.csv},
 \texttt{formal\_v2\_claim\_lock\_measurement\_fullsize\_ordering.csv},
 \texttt{formal\_v2\_claim\_lock\_replication\_nadig\_fullsize.csv},
 \texttt{formal\_v2\_claim\_lock\_replication\_nadig.csv},
 \texttt{reordering\_replication\_candidate\_registry.csv},
-\texttt{claim\_table.csv}, and their JSON
-reports. The original split-half files remain tracked as sensitivity audits;
-they are never silently substituted for the full-size primary analysis.
+\texttt{reliability\_transport\_decision\_link.csv},
+\texttt{reliability\_transport\_failure\_anatomy.csv}, and
+\texttt{reliability\_transport\_master.csv}. The figure source tables are
+\texttt{results/figures/reliability\_transportability/source\_tables/fig1\_source.csv}
+through \texttt{fig5\_failure\_anatomy.csv}. Their JSON reports record the
+source paths, analysis units, unavailable states and SHA256 provenance.
 
-\section{Ordering estimands}
+\section{Ordering estimands and finite-sample identities}
 For perturbation pair $c=(p,q)$, context $e$, and measurement replicate $r$,
 the fixed-predictor risk difference defines
 \[
  Z_{c,e}^{(r)}=\operatorname{sign}(R_{p,e}^{(r)}-R_{q,e}^{(r)})
  \in\{-1,0,+1\}.
 \]
-The probability vector
+The ordering distribution retains ties:
 \[
- \pi_{c,e}=\left[\Pr(Z=-1),\Pr(Z=0),\Pr(Z=+1)\right]
+ \pi_{c,e}=[\Pr(Z=-1),\Pr(Z=0),\Pr(Z=+1)].
 \]
-retains ties rather than dropping them. For contexts $e_1,e_2$,
+For contexts $e_1,e_2$,
 \[
- D_{\rm cross}=\mathbb{E}_c[1-\pi_{c,e_1}^{\mathsf T}\pi_{c,e_2}],\qquad
+ D_{\rm cross}=\mathbb{E}_c[1-\pi_{c,e_1}^{\mathsf T}\pi_{c,e_2}],\quad
  D_{\rm within,e}=\mathbb{E}_c[1-\|\pi_{c,e}\|_2^2].
 \]
-Expanding the squared distance gives the exact identity
+Expanding the squared distance yields
 \[
  D_{\rm cross}-\frac{D_{\rm within,e_1}+D_{\rm within,e_2}}{2}
  =\frac12\mathbb{E}_c\|\pi_{c,e_1}-\pi_{c,e_2}\|_2^2\geq0.
 \]
-We call the left side the measurement-corrected ordering divergence. It is a
-distributional quantity, not a causal effect and not the same as the
-conservative max-floor excess used for operational stress testing.
-
-For finite replicate data, if $(n_{-},n_{0},n_{+})$ are the counts of the three
-order outcomes over $n$ replicates, the primary within-context estimate is
+This is a distributional identity, not a causal effect. In finite samples the
+primary within-context estimate is the leave-one-replicate-out U-statistic
 \[
  \widehat D_{\rm within}^{U}=1-
  \frac{n_{-}(n_{-}-1)+n_{0}(n_{0}-1)+n_{+}(n_{+}-1)}{n(n-1)}.
 \]
-This leave-one-replicate-out U-statistic replaces the positively biased
-plug-in/V within estimate for finite-sample Claim Lock inference. The plug-in/V
-quantity is retained only to verify the population squared-distance identity.
+The operational joint-floor excess is
+$D_{\rm cross}-\max(D_{\rm joint,e_1},D_{\rm joint,e_2})$. The joint surface is
+empirically crossed and is not assumed to be additive.
 
-The legacy strict inversion statistic is retained only as a secondary
-descriptive summary:
+The strict inversion diagnostic excludes tied pairs only in its denominator.
+The continuous secondary displacement is
 \[
- D_{\rm strict}=\frac{\#\{(p,q):\operatorname{sign}(R_{p,e_1}-R_{q,e_1})
- \neq\operatorname{sign}(R_{p,e_2}-R_{q,e_2})\}}
- {\#\{(p,q):\text{both risk differences are strict}\}}.
+ d_p=\frac{|\operatorname{rank}_{e_1}(R_p)-\operatorname{rank}_{e_2}(R_p)|}{n-1}.
 \]
-Ties are excluded only for this strict statistic. The perturbation-level
-normalized rank displacement is
-\[
- d_p=\frac{|\operatorname{rank}_{e_1}(R_p)-
- \operatorname{rank}_{e_2}(R_p)|}{n-1}.
-\]
+None of these secondary quantities changes the primary metric, context or
+budget after results are observed.
 
-\section{Separate noise estimands}
-The measurement-only estimand fixes the source predictor and resamples raw-cell
-outcomes. The model-only estimand fixes the outcome and compares independent
-model members. The joint estimand crosses an independent model-member pair with
-independent outcome replicates. The joint surface is empirically crossed; it is
-not assumed to be additive. For the operational floor,
-\[
- \Delta_{\rm joint}=D_{\rm cross}-\max(D_{\rm joint,e_1},D_{\rm joint,e_2}).
-\]
-This max-floor convention is deliberately conservative and can be negative
-even when the ordering distributions differ. It should not be substituted for
-the exact corrected divergence above.
+\section{Frozen Frangieh protocol}
+The shared Frangieh surface contains 243 perturbation labels across control,
+co-culture and IFN$\gamma$, scored over 8,229 genes. A global five-fold
+perturbation-label assignment is fixed before fitting. For each source context,
+the source-frozen predictor is fit once per fold and its prediction vector is
+held fixed while target raw-cell outcomes are resampled. The three pinned
+metrics are delta cosine, Systema centroid accuracy and absolute-effect rank
+agreement. The primary audit uses 30 seeds, three model members and a minimum
+of 20 cells; the $n\geq40$ and original split-half runs are sensitivity
+analyses, not replacement endpoints.
 
-\subsection{Full-size primary resampling}
-For every split seed, context, perturbation and threshold $b$, we sample with
-replacement exactly the matched raw-cell count available for the two contexts,
-creating two independent full-size pseudo-replicates. Controls are resampled
-with the same matched-count rule. The primary Frangieh audit uses 30 seeds
-($20260908$--$20260937$), 2,000 paired perturbation-bootstrap draws, three
-model members, and three pinned metric entrypoints. The cell threshold $n\geq20$
-defines eligibility; the $n\geq40$ split-half audit is retained as a
-pre-specified sensitivity analysis. Every run checks finite outputs, exact
-label coverage, disjoint or independent sampling as appropriate, and the
-source-frozen prediction checksum.
+For each context, perturbation and threshold, with-replacement raw-cell
+pseudoreplicates use the matched available count. The measurement-only floor
+keeps the predictor fixed. The model-only floor keeps outcomes fixed and
+crosses independent members. The joint floor crosses independent members and
+measurement replicates. The exact identity residual is checked for every row;
+the source table records the residual and the input lineage.
 
-\subsection{Stable-ordering cross-fit}
-For each pair and metric, $p_{c,e}=\Pr_r(Z_{c,e}^{(r)}=+1)$ is estimated on
-15 selection seeds and evaluated on 15 disjoint seeds. The two seed groups are
-swapped. A pair is selection-stable only when its 95\% Beta$(n_{+}+1,n_{-}+1)$ posterior
-interval for the strict direction conditional on non-ties lies entirely above
-or below $0.5$ and at least eight strict observations are present. We report
-selection-stable, held-out-evaluable and held-out-inversion fractions without
-using them to choose a metric or context pair.
+Stable ordering is cross-fit with 15 selection and 15 disjoint evaluation seeds,
+with the two halves swapped. A pair is stable only when the 95\% Beta posterior
+interval for its strict direction, conditional on non-ties, is entirely on one
+side of 0.5 and at least eight strict observations support that direction.
+Selection-stable, held-out-evaluable and held-out-inversion fractions are
+descriptive and cannot choose the headline metric.
 
-\section{Controlled Frangieh Claim Lock}
-The shared source-frozen surface has 243 perturbation labels across control,
-co-culture and IFN$\gamma$. A global five-fold perturbation-label assignment
-is fixed before model fitting. For each source context, the Ahlmann--Eltze-style
-bilinear ridge predictor is fit once per fold and its predictions are scored
-unchanged against each target outcome. The evaluation panel contains 8,229
-genes. The full-size summary contains 27 rows (three source contexts, three
-target pairs, three metrics) and the exact identity residual is below
-$8.4\times10^{-17}$ for every row.
-
-The primary macro summaries are generated from synchronized bootstrap draws;
-row-level endpoint averages are not used:
+\section{Primary estimates and atlas construction}
+The full-size primary estimates are:
 \begin{center}
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrr}
 \toprule
-Metric & $D_{\rm cross}$ & $D_{\rm meas\text{-}ID}$ & $D_{\rm joint\text{-}ID}$ & synchronized macro CI \\
+Metric & $D_{\rm cross}$ & $D_{\rm meas\text{-}ID}$ & $D_{\rm joint\text{-}ID}$ \\
 \midrule
-Delta cosine & 0.3423 & 0.1178 & 0.0702 & [0.0581, 0.0827] \\
-Systema centroid & 0.1119 & 0.0361 & 0.0330 & [0.0270, 0.0392] \\
-Absolute-effect rank & 0.2867 & 0.0641 & -0.0175 & [-0.0302, -0.0051] \\
+Delta cosine & 0.3153 & 0.1140 [0.0816, 0.1500] & 0.0364 [-0.0025, 0.0761] \\
+Systema centroid & 0.0969 & 0.0255 [0.0153, 0.0364] & 0.0220 [0.0117, 0.0331] \\
+Absolute-effect rank & 0.2786 & 0.0574 [0.0284, 0.0850] & -0.0512 [-0.0888, -0.0145] \\
 \bottomrule
 \end{tabular}
 \end{center}
-Full-size bootstrap uncertainty is raw-cell/pseudoreplicate sampling
-uncertainty; it does not represent all biological or laboratory variation. The
-result is therefore reported as metric-dependent identifiable excess, not as a
-universal context-specific reordering effect.
+The intervals are 90\% synchronized macro-bootstrap intervals and are kept
+separate by estimand. A negative conservative joint-floor excess is retained
+as a valid estimate.
 
-\section{Outcome-blind replication registry}
+For Figure 2, the correct atlas unit is source context crossed with a
+left/right biological contrast. Each metric therefore has a 3-by-3 Frangieh
+block: rows are source control, co-culture and IFN$\gamma$; columns are
+control--co-culture, control--IFN$\gamma$ and co-culture--IFN$\gamma$. A dot
+marks a measurement-identifiable interval with lower endpoint above zero; a
+ring marks the corresponding joint-floor condition. Tier 1 borders are solid,
+Tier 2 borders dashed, and unavailable cells are hatched and labelled NA. The
+Nadig HepG2/Jurkat directions are a separate independent block and are not
+pooled with depth or decision results.
+
+\section{Measurement depth}
+The matched-fixed depth summary uses 10, 20, 40, 80, 160 and full cells per
+pseudoreplicate. The perturbation universe is frozen at the highest fixed
+budget and reused at lower budgets. For each source-by-contrast cell,
+\[
+ R(n)=D_{\rm meas\text{-}ID}(n)/D_{\rm meas\text{-}ID}(\mathrm{full}).
+\]
+Raw ratios above one remain visible. The resolution summary is the first budget
+within ten percent of the full value. Detectability is the first budget with a
+positive 90\% seed-bootstrap lower interval; no threshold is encoded as
+unavailable. The lower curves in Figure 3 are compact descriptive summaries of
+cell-specific values and do not create a universal cutoff. The exact
+source-by-contrast rows and thresholds are in the Figure 3 source table.
+
+\section{Decision consequence and fixed primary association}
+At budgets $k/n\in\{0.05,0.10,0.20,0.50\}$, source risk selects the set and target
+risk evaluates it. Retention, target regret, normalized regret and boundary
+inversion use deterministic tie handling. The finite inversion check requires
+$V_k\geq m^2/[k(n-k)]$ when $m$ items are mis-selected under strict ties.
+
+The Figure 4 link is fixed before reading its value: full measurement depth,
+decision budget 0.10, $x=D_{\rm meas\text{-}ID}$ and
+$y=\text{normalized regret}$. Its unit is six directed biological transfers
+times three metrics, exactly 18 points. The canonical decision summary has
+2,000 synchronized perturbation-label-by-measurement-seed draws for each
+group--budget key. Figure 4 displays those group-level interval endpoints and
+labels the aggregation; it does not pool incompatible intervals. The overall
+Spearman value is 0.7998 with cluster-bootstrap $q_{.05}=0.7388$ and
+$q_{.95}=0.9003$. This is descriptive, not causal. Metric-specific values are
+reported in the JSON report and are not headline significance tests because
+each metric has only six transfers.
+
+\section{Failure anatomy and prospective boundary}
+The failure anatomy table reuses the existing per-perturbation
+\texttt{identifiable\_divergence} as reordering burden, the existing
+\texttt{response\_program\_shift} as response displacement, and the existing
+response-magnitude change. Response displacement is one minus cosine
+similarity between matched perturbation response vectors; it is descriptive
+and target-informed. Model disagreement and source uncertainty retain their
+source-side definitions from the frozen model members.
+
+Figure 5 matrices use the existing pair-state table and map stable strict
+directions to a tie-aware three-state representation. A source-to-target
+inversion is counted only when both states are resolved and disagree; any tie
+or unresolved state is retained in a separate unresolved count. Explanatory
+scatter plots use response displacement and burden, with model disagreement as
+marker size. These quantities are explicitly post-hoc explanatory and cannot
+enter a prospective predictor.
+
+The prospective feature boundary is frozen to
+\texttt{uq\_cosine\_disagreement}, \texttt{uq\_mean\_gene\_variance},
+\texttt{uq\_effect\_norm\_variance}, \texttt{prediction\_norm},
+\texttt{prediction\_sparsity} and \texttt{prediction\_concentration}. Target
+outcomes, response displacement, effect magnitude, target risk and realized
+cell counts are excluded from the feature matrix. Leave-label-out evaluation
+uses target outcomes only after predictions are made. Requested
+cross-dataset directions remain blocked when canonical per-label outcomes are
+unavailable; no zero imputation is performed.
+
+\section{Outcome-blind Nadig registry}
 The candidate registry was frozen before prediction, risk or inversion
 evaluation. Eligibility requires at least 200 exact shared perturbations, raw
-cell observations, matched controls, the same RNA readout, same or demonstrably
-matched library evidence, median matched cells of at least 20, and no obvious
-batch/context confound. Provenance is tri-state: supported independent context,
-unresolved, or confounded. The complete 33-row registry is below; its
-unabridged fields, exact candidate identifiers, provenance notes and file paths
-are in the canonical CSV.
+cell observations, matched controls, the same RNA readout, matched library
+evidence, median matched cells of at least 20 and no obvious batch/context
+confound. Provenance is tri-state: supported independent context, unresolved or
+confounded. The complete 33-row registry is below; exact identifiers and
+provenance notes are in the registry CSV.
 
 \clearpage
 \section*{Supplementary Table S1. Complete candidate registry}
@@ -156,144 +205,59 @@ are in the canonical CSV.
 The selected pair is Nadig HepG2--Jurkat, with 2,392 exact shared perturbations,
 raw shapes $145{,}473\times9{,}624$ and $262{,}956\times8{,}882$, and 6,606
 common evaluation genes. The registry reports 4,976 and 12,013 control cells,
-median matched cells 41, same dual-sgRNA library family, parallel screens,
-day-7 harvest and 10x 3-prime v3 RNA readout. GEO series design and sample
-metadata support the intended independent context and context-local batch
-nesting (\href{https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE264667}{GSE264667}).
+median matched cells 41, the same dual-sgRNA library family, parallel screens,
+day-7 harvest and 10x 3-prime v3 RNA readout. GEO metadata supports independent
+context with context-local batch nesting
+(\href{https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE264667}{GSE264667}).
 
 The selection hash is
 \texttt{0c21ee8cbc39e39d7100876dfd58b781bc3757c361422031bf137abb15fb9cb1}.
 The registry freeze time is 2026-09-09 10:50:35+08:00 (Asia/Shanghai), commit
-\texttt{9b09a533c7d5b985e65081d3d89dd1dd72dada28}. The execution report records
-the exact source-frozen gene and prediction checksums. Replogle
-K562-essential--RPE1 is excluded despite 2,055
-shared perturbations because public metadata couples harvest day 6 versus day 7
-to the context comparison~\citep{replogle2022genome}.
-
-The Nadig primary uses full-size nonparametric raw-cell resampling: 30 split
-seeds, three model members, three metrics and 2,000 paired bootstrap draws,
-with $n\geq20$ primary eligibility. The full-size and split-half sensitivity
-audits use matched perturbation universes of 2,086/1,255 labels at $n\geq20$
-and 345 labels at $n\geq40$, respectively. Their pairwise-order summaries and
-synchronized macro intervals are in the canonical claim table. No result from
-this pair is pooled with the Frangieh surface or promoted to universal
-transportability.
-
-\section{Recalibration lemma}
-Let $C$ be a calibration-side confidence score and let
-$g(C)=\sigma(aC+b)$ with $a>0$ be a train-only Platt map. For any two strict
-scores $C_i<C_j$, $g(C_i)<g(C_j)$. Thus AURC and every strict ordering are
-unchanged, although Brier or log-loss can change. The 45-group counterfactual
-audit records zero strict order disagreements and zero AURC change. This is a
-mathematical safeguard, not a claim that all non-monotonic recalibration or
-learned ranking methods are harmless.
+\texttt{9b09a533c7d5b985e65081d3d89dd1dd72dada28}. Replogle
+K562-essential--RPE1 is excluded because harvest day 6 versus day 7 is coupled
+to the context comparison~\citep{replogle2022genome}. Nadig is not pooled with
+Frangieh and is not used to tune the primary association.
 
 \section{PTL deployment probe}
-The headline feature matrix contains only outcome-free blocks: uncertainty
-($U$), prediction geometry ($P$), training support ($S$), novelty ($N$), and
-declared context descriptors ($C$). Environment and predictor identifiers,
-fidelity, continuous risk, realized cell counts, QC outcomes, target
-reproducibility and reference membership are excluded. Normalizers, nearest
-neighbor transforms and categorical encoders are fit on calibration-side rows
-only. The information ladder is
-\[
- U\rightarrow U+P\rightarrow U+P+S\rightarrow U+P+S+N\rightarrow U+P+S+N+C.
-\]
-The row-level random-forest probe and the U-only capacity-matched baseline are
-evaluated under in-domain, leave-environment-out and leave-predictor-out
-protocols. The source-selection gate is evaluated separately and falls back to
-U-only when its validation-only acceptance rule is not met. The gate is not a
-safety mechanism: its selected-source negative-transfer rate is 41.7\% among
-non-fallback decisions.
+The deployment feature matrix separates uncertainty ($U$), prediction geometry
+($P$), training support ($S$), novelty ($N$) and declared context descriptors
+($C$). Environment and predictor identifiers, fidelity, continuous risk,
+realized cell counts, QC outcomes, target reproducibility and reference
+membership are excluded. Normalizers, nearest-neighbour transforms and
+categorical encoders are fit on calibration-side rows only. The information
+ladder is $U\rightarrow U+P\rightarrow U+P+S\rightarrow U+P+S+N\rightarrow
+U+P+S+N+C$. The source-selection gate falls back to uncertainty-only when its
+validation-only acceptance rule is not met; its selected-source negative
+transfer rate is 41.7\% among non-fallback decisions. It is not a safety
+mechanism.
 
-\section{Modern predictor feasibility gate}
-Modern models are tracked as external feasibility contracts until all Claim
-Lock conditions are satisfied. The shared source-control gene panel contains
-1,536 genes selected from QC-passed source control cells and is checksum-frozen
-at
-\texttt{5a0113470a7ddd1912643bc00c60c0fa4b4fa346968fc5116d9196e7c3608e35}.
-It is not used to retrofit a result into the current Claim Lock.
+\section{Modern predictor feasibility boundary}
+Modern models remain external feasibility contracts until every Claim Lock
+condition is satisfied. The shared 1,536-gene source-control panel is checksum-
+frozen at
+\texttt{5a0113470a7ddd1912643bc00c60c0fa4b4fa346968fc5116d9196e7c3608e35} and
+is not used to retrofit a result. The official \gears{} stack has a runnable
+CUDA contract but no frozen Frangieh/Nadig vector. The TxPert checkout at
+\texttt{08d82eea86746b044cf7531f4ec8c5f60e1cb73f} reproduces cached K562
+single-cell inference but cannot be promoted to the Nadig contract. State has
+no promoted same-contract vector, and scGPT stops at its Windows torchtext ABI
+before model construction. These blockers are preserved in the feasibility
+manifest and are not scientific transport outcomes.
 
-The official GEARS source imports and its CUDA external contract is runnable,
-but its current artifacts are not frozen Frangieh/Nadig prediction vectors.
-The official TxPert checkout (commit
-\texttt{08d82eea86746b044cf7531f4ec8c5f60e1cb73f}) reproduces cached K562
-single-cell-line inference on the CUDA runtime, with test fast-retrieval
-$0.79968$ and test Pearson delta $0.59549$ over 38,475 perturbations. This is a
-successful external contract, not a HepG2/Jurkat Claim Lock. The installed
-scGPT package fails at Windows torchtext ABI loading before model construction.
-The feasibility manifest records these states, checkpoint/data hashes and
-explicit false Claim Lock flags. The TxPert adapter materializes the
-checkpoint/data provenance and explicitly rejects promotion of its K562
-checkpoint to a Nadig source-only vector. No modern result is included in the
-main scientific comparison.
+\section{Reproducibility, manifests and validation}
+The canonical master table is the only table permitted to supply paper numbers
+after final regeneration. Its provenance points from risk inputs through raw
+draws, summaries and source tables. The release records exact split assignments,
+prediction contracts, native gene spaces, data hashes, bootstrap hashes and
+the complete candidate registry. Large local NPZ inputs remain available for
+reproducibility; reviewable CSV and JSON manifests carry their checksums.
 
-\section{Measurement-depth and decision manifests}
-The depth manifest fixes cell budgets at 10, 20, 40, 80 and 160 cells per
-pseudoreplicate and adds a full matched-depth endpoint. For every target pair,
-the coverage table records the number of labels passing in both target
-contexts, the control eligibility decision and the SHA256 fingerprint of the
-matched universe. The summary table first averages perturbation burdens within
-each seed and only then bootstraps seeds. The resolution table defines the
-first budget within ten percent of full-depth identifiable divergence and the
-first budget with a positive 90\% lower interval; null thresholds are valid
-outputs, not missing analysis.
-
-Decision rows use top-$k$ budgets of 5, 10, 20 and 50 percent. The selected
-set is formed from source risk with deterministic index tie-breaking and is
-evaluated using target risk. Retention, target regret, normalized regret,
-boundary inversion and the finite inversion bound are stored for each seed and
-depth. Measurement floors use off-diagonal within-context replicate pairs;
-joint floors use the six source-frozen member/measurement combinations. For
-each of the 432 directed group--budget keys, the frozen 30-seed decision-table
-mean is the point estimator and its seed quantiles are descriptive only. The
-inferential intervals in the master table and Figure 4 are instead the
-$q_{.05}$--$q_{.95}$ quantiles of exactly 2,000 synchronized perturbation-label
-$\times$ measurement-seed draws. The committed summary records the complete
-lineage $\text{risk input}\rightarrow864{,}000$ raw draws$\rightarrow432$
-group--budget summaries$\rightarrow\text{master}$, including SHA256 digests.
-No decision quantity is substituted for the global ordering estimand.
-
-\section{Perturbation heterogeneity and source-only predictability}
-The heterogeneity and predictability manifests use source prediction geometry
-and member uncertainty as features. The target burden is used only as a held-
-out evaluation value. A source-U-only baseline and low-capacity ridge model
-are evaluated by leave-one-perturbation-label-out cross-fitting. Spearman,
-high-identifiable AUROC, Brier calibration error and mean absolute error are
-reported only for groups with enough independent labels. Coefficients are
-descriptive; they are not pathway effects. The corresponding pathway layer,
-when used, is explanation-only, uses the frozen gene-set checksum and applies
-FDR without entering the primary Claim Lock.
-
-\section{Master table and final lock}
-The canonical \texttt{reliability\_transport\_master.csv} is the only table
-permitted to supply paper numbers after final regeneration. It stores dataset,
-evidence tier, source/target pair, predictor and regime, metric, cell budget,
-label-universe size, observed disagreement, measurement and joint excesses,
-stable ordering, decision retention/regret fields, checksums and provenance.
-The decision fields carry separate descriptive seed quantiles and inferential
-bootstrap intervals; their provenance points to the frozen risk input, raw
-draws and 432-row bootstrap summary. \texttt{story\_claims.json} maps each
-narrative claim to a support filter and records its scope. The final scientific
-lock report answers the eight release questions and keeps incomplete modern-
-model contracts, unresolved registry cells and negative excess estimates
-explicit.
-
-\section{Secondary metrics and reproducibility}
-The broad benchmark reports environment-first macro averages, paired
-hierarchical bootstrap intervals, risk at 50/80\% coverage, false-trust rate,
-Brier score, AUROC and AUPRC. Alternative metrics reuse saved predictions and
-do not refit per metric. Fixed-budget analyses reuse the same learned scores at
-20, 50 and 80\% budgets. These are robustness diagnostics, not additional
-training or pooled superiority claims.
-
-The release contains fixed split assignments, prediction contracts,
-outcome-free deployment features, transport matrices, source-frozen vectors,
-full-size and matched-universe split-half measurement/joint floors, tie-aware ordering rows,
-registry and guide-coverage manifests, model feasibility checks and editable
-vector figures with source-data manifests. Large local NPZ files are retained
-for reproducibility but excluded from the remote repository when they exceed
-hosting limits; CSV summaries, JSON provenance and checksums remain reviewable.
+Validation consists of the full pytest suite, Python compile checks, the
+canonical artifact audit, narrative QA, figure audit, manuscript warning checks,
+main and supplement LaTeX compilation, and the final scientific lock report.
+The lock keeps the eight release questions, unresolved registry cells, blocked
+modern-model contracts and negative excess estimates explicit. No validation
+step changes a split, metric, context, budget or target-blindness boundary.
 
 \bibliographystyle{../../third_party/iclr2027/iclr2027_conference}
 \bibliography{../../manuscript/references}
