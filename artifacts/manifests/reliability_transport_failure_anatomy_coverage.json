@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "status": "executed",
+  "no_imputation": true,
+  "analysis_unit": "directed source-target × metric at full matched-fixed depth",
+  "coverage_by_source_target_metric": [
+    {
+      "source_environment_id": "frangieh_melanoma_coculture",
+      "target_environment_id": "frangieh_melanoma_control",
+      "metric": "absolute_effect_rank_agreement",
+      "total": 139,
+      "complete": 9,
+      "missing": 130,
+      "coverage_fraction": 0.06474820143884892
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_coculture",
+      "target_environment_id": "frangieh_melanoma_control",
+      "metric": "delta_cosine",
+      "total": 139,
+      "complete": 9,
+      "missing": 130,
+      "coverage_fraction": 0.06474820143884892
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_coculture",
+      "target_environment_id": "frangieh_melanoma_control",
+      "metric": "systema_centroid_accuracy",
+      "total": 139,
+      "complete": 9,
+      "missing": 130,
+      "coverage_fraction": 0.06474820143884892
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_coculture",
+      "target_environment_id": "frangieh_melanoma_ifng",
+      "metric": "absolute_effect_rank_agreement",
+      "total": 186,
+      "complete": 18,
+      "missing": 168,
+      "coverage_fraction": 0.0967741935483871
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_coculture",
+      "target_environment_id": "frangieh_melanoma_ifng",
+      "metric": "delta_cosine",
+      "total": 186,
+      "complete": 18,
+      "missing": 168,
+      "coverage_fraction": 0.0967741935483871
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_coculture",
+      "target_environment_id": "frangieh_melanoma_ifng",
+      "metric": "systema_centroid_accuracy",
+      "total": 186,
+      "complete": 18,
+      "missing": 168,
+      "coverage_fraction": 0.0967741935483871
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_control",
+      "target_environment_id": "frangieh_melanoma_coculture",
+      "metric": "absolute_effect_rank_agreement",
+      "total": 139,
+      "complete": 8,
+      "missing": 131,
+      "coverage_fraction": 0.05755395683453238
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_control",
+      "target_environment_id": "frangieh_melanoma_coculture",
+      "metric": "delta_cosine",
+      "total": 139,
+      "complete": 8,
+      "missing": 131,
+      "coverage_fraction": 0.05755395683453238
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_control",
+      "target_environment_id": "frangieh_melanoma_coculture",
+      "metric": "systema_centroid_accuracy",
+      "total": 139,
+      "complete": 8,
+      "missing": 131,
+      "coverage_fraction": 0.05755395683453238
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_control",
+      "target_environment_id": "frangieh_melanoma_ifng",
+      "metric": "absolute_effect_rank_agreement",
+      "total": 139,
+      "complete": 10,
+      "missing": 129,
+      "coverage_fraction": 0.07194244604316546
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_control",
+      "target_environment_id": "frangieh_melanoma_ifng",
+      "metric": "delta_cosine",
+      "total": 139,
+      "complete": 10,
+      "missing": 129,
+      "coverage_fraction": 0.07194244604316546
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_control",
+      "target_environment_id": "frangieh_melanoma_ifng",
+      "metric": "systema_centroid_accuracy",
+      "total": 139,
+      "complete": 10,
+      "missing": 129,
+      "coverage_fraction": 0.07194244604316546
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_ifng",
+      "target_environment_id": "frangieh_melanoma_coculture",
+      "metric": "absolute_effect_rank_agreement",
+      "total": 186,
+      "complete": 17,
+      "missing": 169,
+      "coverage_fraction": 0.0913978494623656
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_ifng",
+      "target_environment_id": "frangieh_melanoma_coculture",
+      "metric": "delta_cosine",
+      "total": 186,
+      "complete": 17,
+      "missing": 169,
+      "coverage_fraction": 0.0913978494623656
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_ifng",
+      "target_environment_id": "frangieh_melanoma_coculture",
+      "metric": "systema_centroid_accuracy",
+      "total": 186,
+      "complete": 17,
+      "missing": 169,
+      "coverage_fraction": 0.0913978494623656
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_ifng",
+      "target_environment_id": "frangieh_melanoma_control",
+      "metric": "absolute_effect_rank_agreement",
+      "total": 139,
+      "complete": 11,
+      "missing": 128,
+      "coverage_fraction": 0.07913669064748201
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_ifng",
+      "target_environment_id": "frangieh_melanoma_control",
+      "metric": "delta_cosine",
+      "total": 139,
+      "complete": 11,
+      "missing": 128,
+      "coverage_fraction": 0.07913669064748201
+    },
+    {
+      "source_environment_id": "frangieh_melanoma_ifng",
+      "target_environment_id": "frangieh_melanoma_control",
+      "metric": "systema_centroid_accuracy",
+      "total": 139,
+      "complete": 11,
+      "missing": 128,
+      "coverage_fraction": 0.07913669064748201
+    }
+  ],
+  "complete_vs_missing_distribution": {
+    "reordering_burden": {
+      "complete": {
+        "n": 219,
+        "median": 0.06228070175438595,
+        "q25": 0.022807017543859644,
+        "q75": 0.11140350877192978,
+        "mean": 0.08146779620283585,
+        "std": 0.08128163899254036
+      },
+      "missing": {
+        "n": 2565,
+        "median": 0.06052631578947368,
+        "q25": 0.02368421052631577,
+        "q75": 0.12192982456140353,
+        "mean": 0.08677909442221537,
+        "std": 0.0920043307474943
+      },
+      "standardized_mean_difference_complete_minus_missing": -0.05823177542621246
+    },
+    "model_disagreement": {
+      "complete": {
+        "n": 219,
+        "median": 0.4589905362776025,
+        "q25": 0.2902208201892744,
+        "q75": 0.4589905362776025,
+        "mean": 0.46462987770623565,
+        "std": 0.17153425572903588
+      },
+      "missing": {
+        "n": 414,
+        "median": 0.4589905362776025,
+        "q25": 0.2902208201892744,
+        "q75": 0.7350157728706624,
+        "mean": 0.46895716179765007,
+        "std": 0.17917492640107696
+      },
+      "standardized_mean_difference_complete_minus_missing": -0.02450711153018439
+    },
+    "source_uncertainty": {
+      "complete": {
+        "n": 219,
+        "median": 0.7728706624605678,
+        "q25": 0.6198738170347002,
+        "q75": 0.9242902208201892,
+        "mean": 0.7701914351151635,
+        "std": 0.1324064733419905
+      },
+      "missing": {
+        "n": 414,
+        "median": 0.7728706624605678,
+        "q25": 0.6198738170347002,
+        "q75": 0.9242902208201892,
+        "mean": 0.7811228455173044,
+        "std": 0.12940947073154357
+      },
+      "standardized_mean_difference_complete_minus_missing": -0.08379598815408283
+    },
+    "prediction_norm": {
+      "complete": {
+        "n": 219,
+        "median": 0.976554274559021,
+        "q25": 0.6105071306228638,
+        "q75": 0.976554274559021,
+        "mean": 0.8571192548699575,
+        "std": 0.1910290016490464
+      },
+      "missing": {
+        "n": 414,
+        "median": 0.976554274559021,
+        "q25": 0.6105071306228638,
+        "q75": 1.0412496328353882,
+        "mean": 0.8511330995006837,
+        "std": 0.19479419579107038
+      },
+      "standardized_mean_difference_complete_minus_missing": 0.03093593687709861
+    },
+    "prediction_sparsity": {
+      "complete": {
+        "n": 219,
+        "median": 0.0,
+        "q25": 0.0,
+        "q75": 0.0,
+        "mean": 0.0,
+        "std": 0.0
+      },
+      "missing": {
+        "n": 414,
+        "median": 0.0,
+        "q25": 0.0,
+        "q75": 0.0,
+        "mean": 0.0,
+        "std": 0.0
+      },
+      "standardized_mean_difference_complete_minus_missing": null
+    },
+    "prediction_concentration": {
+      "complete": {
+        "n": 219,
+        "median": 0.050931218440508,
+        "q25": 0.0476374161940437,
+        "q75": 0.050931218440508,
+        "mean": 0.051008652514711705,
+        "std": 0.0032961830433103157
+      },
+      "missing": {
+        "n": 414,
+        "median": 0.050931218440508,
+        "q25": 0.0476374161940437,
+        "q75": 0.0561859600000306,
+        "mean": 0.05108929712132529,
+        "std": 0.003442723105188403
+      },
+      "standardized_mean_difference_complete_minus_missing": -0.02376925554444985
+    }
+  },
+  "interpretation": "Coverage is descriptive. Complete rows are restricted to matched legacy response-displacement/effect fields; missing rows are not imputed.",
+  "outputs": {
+    "table": "artifacts/manifests/reliability_transport_failure_anatomy_coverage.csv",
+    "report": "artifacts/manifests/reliability_transport_failure_anatomy_coverage.json"
+  }
+}

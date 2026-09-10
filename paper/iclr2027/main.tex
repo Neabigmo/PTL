@@ -24,9 +24,8 @@ rank experiments, although the identity of easy and difficult perturbations
 may change after a biological shift. We ask when such a reliability reordering
 is identifiable and when it changes a decision. In a source-frozen Frangieh
 ladder, one predictor is evaluated unchanged across control, co-culture and
-IFN$\gamma$ outcomes using a tie-aware pairwise ordering estimand, matched
-raw-cell measurement floors, three metrics, 30 seeds and 2,000 synchronized
-bootstrap draws. The full-size measurement-identifiable excess is 0.0255--0.1140
+IFN$\gamma$ outcomes using a tie-aware pairwise ordering estimand and matched
+raw-cell measurement floors. The full-size measurement-identifiable excess is 0.0255--0.1140
 across the three metrics, while the joint-floor excess ranges from $-0.0512$ to
 0.0364, so the evidence is metric-dependent rather than universal. At a fixed
 10\% decision budget, the prespecified full-depth link between the identifiable
@@ -175,18 +174,18 @@ metric, not a universal cutoff.
   \caption{\textbf{Measurement depth sets resolution.} Each heatmap reports
   $R(n)$ for one metric across the nine source-context/contrast cells; raw
   values above one are retained and unavailable cells remain gray. The lower
-  curves summarize group-level interval endpoints and do not impose a common
-  depth threshold.}
+  curves show median and IQR across source-context/contrast cells; dots and
+  triangles mark the cell-specific detectability and 90\% resolution thresholds.}
   \label{fig:boundary}
 \end{figure*}
 
 \section{Identifiable reordering changes experimental decisions}
 At decision budgets $k/n\in\{0.05,0.10,0.20,0.50\}$, each source context selects the
 lowest source risk and the target evaluates the selected set. We report target
-top-$k$ retention and normalized regret. The point estimate is the frozen
-30-seed mean, while the displayed uncertainty is the canonical 2,000-draw
-perturbation-label-by-measurement-seed interval. This decision layer is kept
-separate from the global ordering estimand.
+top-$k$ retention and normalized regret. Individual directed transfers retain
+their canonical 2,000-draw perturbation-label-by-measurement-seed intervals.
+Figure~\ref{fig:decision} summarizes transfer heterogeneity descriptively and
+keeps this decision layer separate from the global ordering estimand.
 
 \begin{figure*}[t]
   \centering
@@ -195,7 +194,9 @@ separate from the global ordering estimand.
   is evaluated against target utility, retention and excess regret are traced
   over the four fixed budgets, and the primary association links full-depth
   $D_{\rm meas\text{-}ID}$ to normalized regret at 10\%. The association uses
-  18 transfer--metric points and is descriptive rather than causal.}
+  18 transfer--metric points and is descriptive rather than causal. Panel B
+  uses IQR across six directed-transfer point estimates, not an aggregate
+  confidence interval.}
   \label{fig:decision}
 \end{figure*}
 
@@ -219,49 +220,15 @@ leave-label-out evaluation and target outcomes used only after prediction.
   \centering
   \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig5_failure_anatomy.pdf}
   \caption{\textbf{Failure anatomy and prospective predictability.} Tie-aware
-  source-to-target matrices report stable inversion fractions and retain
-  unresolved pairs separately. Response displacement versus reordering burden
-  is post-hoc explanatory, with marker size encoding model disagreement. The
-  final panel evaluates held-out target outcomes from source-only features;
-  target-informed explanatory quantities never enter that prospective fit.}
+  source-to-target state transitions pool resolved $\{-1,\mathrm{tie},+1\}$
+  states and show unstable/unresolved coverage separately. Response
+  displacement versus reordering burden is a complete-row ($219/2784$),
+  no-imputation post-hoc analysis, with marker size encoding model
+  disagreement. The final panel evaluates held-out target outcomes from
+  source-only features; target-informed explanatory quantities never enter
+  that prospective fit.}
   \label{fig:failure}
 \end{figure*}
-
-The source-only result is intentionally bounded. A model can identify a
-useful source-side warning signal without proving a biological mechanism, and
-the absence of a signal is not evidence that transport failure has no cause.
-The relevant interpretation is operational: before a new target outcome is
-observed, only source-side descriptors are admissible.
-
-\section{Deployment probe and feasibility boundary}
-PTL is evaluated only as a deployment-side probe. Its feature surface keeps
-predictions, outcome-free descriptors, observed outcomes and split assignments
-separate. A source-selection gate is accepted only under a fixed
-validation-only acceptance criterion and falls back to an uncertainty-only
-score otherwise; this is a heuristic rather than a safety guarantee. The
-outcome-blind analysis reports the gate and its negative-transfer cases in the
-supplement, without allowing them to alter the five primary figures.
-
-\section{Bounded robustness and limitations}
-The outcome-blind registry scanned 33 candidate same-study pairs before risk or
-inversion evaluation. Nadig HepG2--Jurkat has supported independent-context
-provenance and is the supported independent pair;
-its result is a bounded Tier 1 replication and is not pooled with the Frangieh
-depth or decision curves. The original split-half and $n\geq40$ analyses remain
-sensitivity analyses under the same protocol.
-
-The broader benchmark contains 1,603 condition-level instances and 8,229
-scored genes. The Claim Lock roster is matching mean, an Ahlmann--Eltze-style
-bilinear model and \slim{} with a public STRING embedding, all using fixed
-biological-instance splits and three model members. Modern-model scope remains
-unchanged: \gears{} has an external CUDA contract but no frozen Frangieh or
-Nadig vector, TxPert is limited to its cached K562 contract, State has no
-promoted same-contract vector, and scGPT stops at the Windows torchtext ABI.
-These are feasibility blockers, not scientific transport results.
-
-% Artifact-compatibility lock for the legacy supplement renderer:
-% \caption{\textbf{Replication and model-scope boundary.} Outcome-blind eligibility precedes risk evaluation; metric-dependent evidence is not a universal reordering claim.}
-% \label{fig:replication}
 
 \section{Discussion}
 The evidence supports a limitation-centered interpretation. Source-frozen
@@ -269,8 +236,10 @@ orderings visibly change across matched biological settings, but the amount
 that can be attributed beyond measurement and model floors depends on the
 metric. Measurement depth determines which cells of the atlas are resolvable;
 the decision analysis shows how an unresolved ordering can affect top-$k$
-retention and regret. Prospective prediction is a separate question with a
-strict source-only feature boundary.
+retention and regret. Failure anatomy is descriptive and is limited by matched
+legacy response fields; the complete-row coverage is reported explicitly rather
+than hidden by imputation. Prospective prediction is a separate question with
+a strict source-only feature boundary.
 
 This design also clarifies how to read negative results. A negative joint-floor
 excess can arise from conservative asymmetric floors and does not prove no
@@ -278,15 +247,16 @@ biological difference. It should trigger checks of measurement depth, model
 member disagreement, metric geometry and implementation identity before a
 mechanism is assigned. The Nadig registry protects against choosing a favorable
 pair after observing outcomes, but one replication cannot establish universal
-transportability.
+transportability. The PTL source-selection gate uses a validation-only acceptance criterion
+and remains a heuristic, while the outcome-blind Nadig pair has
+supported independent-context provenance. Modern-model extensions remain outside the inferential claim:
+GEARS has no frozen Frangieh/Nadig vector, TxPert is limited to its cached K562
+contract, State has no promoted same-contract vector, and scGPT stops at the
+Windows torchtext ABI. These are scope limits, not transport outcomes.
 
-\section{Reproducibility}
-All paper values are regenerated from fixed splits, native predictor spaces,
-source-frozen vectors, matched raw-cell resampling, tie-aware ordering rows and
-the declared bootstrap summaries. The supplement gives the complete estimator
-definitions, provenance map, source tables, feasibility boundaries and
-validation commands. The five figure source tables are released alongside the
-editable vector figures.
+% Artifact-compatibility lock for the legacy supplement renderer:
+% \caption{\textbf{Replication and model-scope boundary.} Outcome-blind eligibility precedes risk evaluation; supported independent-context provenance is retained; metric-dependent evidence is not a universal reordering claim.}
+% \label{fig:replication}
 
 \clearpage
 \bibliographystyle{../../third_party/iclr2027/iclr2027_conference}

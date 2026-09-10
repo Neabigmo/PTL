@@ -55,7 +55,7 @@
         "reliability_transportability_fig4_decision_consequence.tiff"
       ],
       "source_table": "results/figures/reliability_transportability/source_tables/fig4_decision_consequence.csv",
-      "rows": 31
+      "rows": 103
     },
     "fig5": {
       "files": [
@@ -65,7 +65,7 @@
         "reliability_transportability_fig5_failure_anatomy.tiff"
       ],
       "source_table": "results/figures/reliability_transportability/source_tables/fig5_failure_anatomy.csv",
-      "rows": 252
+      "rows": 255
     }
   },
   "data_policy": "Frozen Frangieh/Nadig data and existing matched-fixed/bootstrap summaries; unavailable cells stay gray/NA; target-informed explanatory quantities never enter prospective prediction.",

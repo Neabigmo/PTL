@@ -12,5 +12,14 @@
   "outputs": {
     "table": "artifacts/manifests/reliability_transport_failure_anatomy.csv",
     "report": "artifacts/manifests/reliability_transport_failure_anatomy.json"
+  },
+  "coverage": {
+    "total_rows": 2784,
+    "complete_rows": 219,
+    "missing_rows": 2565,
+    "coverage_fraction": 0.07866379310344827,
+    "no_imputation": true,
+    "report": "artifacts/manifests/reliability_transport_failure_anatomy_coverage.json",
+    "table": "artifacts/manifests/reliability_transport_failure_anatomy_coverage.csv"
   }
 }

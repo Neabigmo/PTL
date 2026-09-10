@@ -19,6 +19,59 @@ ITEM_COLUMNS = [
 FEATURE_COLUMNS = ["prediction_norm", "prediction_sparsity", "prediction_concentration", "uq_mean_gene_variance", "uq_cosine_disagreement", "uq_effect_norm_variance"]
 
 
+def _summary(values: pd.Series) -> dict[str, Any]:
+    numeric = pd.to_numeric(values, errors="coerce").dropna()
+    if numeric.empty:
+        return {"n": 0, "median": None, "q25": None, "q75": None, "mean": None, "std": None}
+    return {
+        "n": int(numeric.size),
+        "median": float(numeric.median()),
+        "q25": float(numeric.quantile(0.25)),
+        "q75": float(numeric.quantile(0.75)),
+        "mean": float(numeric.mean()),
+        "std": float(numeric.std(ddof=1)) if numeric.size > 1 else 0.0,
+    }
+
+
+def _coverage_report(table: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, Any]]:
+    group_columns = ["source_environment_id", "target_environment_id", "metric"]
+    coverage = table.groupby(group_columns, as_index=False, sort=True).agg(
+        total=("status", "size"),
+        complete=("status", lambda values: int(values.eq("executed").sum())),
+    )
+    coverage["missing"] = coverage["total"] - coverage["complete"]
+    coverage["coverage_fraction"] = coverage["complete"] / coverage["total"]
+    fields = ["reordering_burden", "model_disagreement", "source_uncertainty", "prediction_norm", "prediction_sparsity", "prediction_concentration"]
+    distributions: dict[str, Any] = {}
+    complete_mask = table["status"].eq("executed")
+    missing_mask = ~complete_mask
+    for field in fields:
+        complete = _summary(table.loc[complete_mask, field])
+        missing = _summary(table.loc[missing_mask, field])
+        pooled = np.sqrt(((max(complete["n"] - 1, 0) * (complete["std"] or 0.0) ** 2) + (max(missing["n"] - 1, 0) * (missing["std"] or 0.0) ** 2)) / max(complete["n"] + missing["n"] - 2, 1))
+        difference = None
+        if complete["mean"] is not None and missing["mean"] is not None and pooled > 0:
+            difference = float((complete["mean"] - missing["mean"]) / pooled)
+        distributions[field] = {
+            "complete": complete,
+            "missing": missing,
+            "standardized_mean_difference_complete_minus_missing": difference,
+        }
+    return coverage, {
+        "schema_version": 1,
+        "status": "executed",
+        "no_imputation": True,
+        "analysis_unit": "directed source-target × metric at full matched-fixed depth",
+        "coverage_by_source_target_metric": coverage.to_dict(orient="records"),
+        "complete_vs_missing_distribution": distributions,
+        "interpretation": "Coverage is descriptive. Complete rows are restricted to matched legacy response-displacement/effect fields; missing rows are not imputed.",
+        "outputs": {
+            "table": "artifacts/manifests/reliability_transport_failure_anatomy_coverage.csv",
+            "report": "artifacts/manifests/reliability_transport_failure_anatomy_coverage.json",
+        },
+    }
+
+
 def _pair_key(left: str, right: str) -> str:
     return "|".join(sorted((str(left), str(right))))
 
@@ -170,6 +223,20 @@ def main() -> int:
     table_path = manifests / "reliability_transport_failure_anatomy.csv"
     report_path = manifests / "reliability_transport_failure_anatomy.json"
     table.to_csv(table_path, index=False)
+    coverage_table, coverage_report = _coverage_report(table)
+    coverage_table.to_csv(manifests / "reliability_transport_failure_anatomy_coverage.csv", index=False)
+    (manifests / "reliability_transport_failure_anatomy_coverage.json").write_text(
+        json.dumps(coverage_report, indent=2, ensure_ascii=False, allow_nan=True) + "\n", encoding="utf-8"
+    )
+    report["coverage"] = {
+        "total_rows": int(len(table)),
+        "complete_rows": int(table["status"].eq("executed").sum()),
+        "missing_rows": int(table["status"].ne("executed").sum()),
+        "coverage_fraction": float(table["status"].eq("executed").mean()),
+        "no_imputation": True,
+        "report": "artifacts/manifests/reliability_transport_failure_anatomy_coverage.json",
+        "table": "artifacts/manifests/reliability_transport_failure_anatomy_coverage.csv",
+    }
     report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=True) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=True))
     return 0

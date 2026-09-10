@@ -65,6 +65,42 @@ def test_failure_anatomy_preserves_prospective_boundary() -> None:
     assert "response_displacement" in table.columns
 
 
+def test_measurement_boundary_exposes_cell_thresholds_and_descriptive_iqr() -> None:
+    table = pd.read_csv(SOURCE_DIR / "fig3_measurement_boundary.csv")
+    required = {"detectability_threshold_budget", "resolution_90pct_full_budget", "detectability_marker", "resolution_marker", "uncertainty_type"}
+    assert required.issubset(table.columns)
+    heatmap = table.loc[table["panel"].eq("A")]
+    assert heatmap["detectability_marker"].isin({"dot", "none"}).all()
+    assert heatmap["resolution_marker"].isin({"triangle", "none"}).all()
+    assert not table.astype(str).apply(lambda column: column.str.contains("mean of .*CI|mean of source×contrast intervals", regex=True).any()).any()
+    curve = table.loc[table["panel"].eq("D")]
+    assert set(curve["uncertainty_type"].dropna()) == {"descriptive IQR across source×contrast cells"}
+
+
+def test_decision_curves_use_transfer_iqr_and_keep_group_intervals() -> None:
+    table = pd.read_csv(SOURCE_DIR / "fig4_decision_consequence.csv")
+    assert not table.astype(str).apply(lambda column: column.str.contains("mean of canonical group-level 90% intervals", case=False).any()).any()
+    assert "descriptive IQR across directed transfers" in set(table.get("uncertainty_unit", pd.Series(dtype=str)).dropna())
+    group_rows = table.loc[table.get("aggregation", pd.Series(dtype=str)).eq("canonical group row")]
+    assert {"retention_ci_low", "retention_ci_high", "normalized_regret_ci_low", "normalized_regret_ci_high"}.issubset(group_rows.columns)
+    contract = pd.read_csv(MANIFESTS / "reliability_transport_decision_link.csv")
+    assert len(contract) == 18
+
+
+def test_failure_state_transitions_and_coverage_contract() -> None:
+    table = pd.read_csv(SOURCE_DIR / "fig5_failure_anatomy.csv")
+    required = {"source_state", "target_state", "transition_fraction", "unresolved_fraction"}
+    assert required.issubset(table.columns)
+    state_rows = table.loc[table["panel"].eq("A")]
+    assert set(state_rows["source_state"].dropna()).issubset({"-1", "tie", "+1"})
+    assert set(state_rows["target_state"].dropna()).issubset({"-1", "tie", "+1"})
+    coverage = json.loads((MANIFESTS / "reliability_transport_failure_anatomy_coverage.json").read_text(encoding="utf-8"))
+    assert coverage["no_imputation"] is True
+    assert sum(item["total"] for item in coverage["coverage_by_source_target_metric"]) == 2784
+    assert sum(item["complete"] for item in coverage["coverage_by_source_target_metric"]) == 219
+    assert "complete_vs_missing_distribution" in coverage
+
+
 def test_main_reduces_engineering_detail_but_keeps_blockers() -> None:
     main = MAIN.read_text(encoding="utf-8").lower()
     supplement = SUPPLEMENT.read_text(encoding="utf-8").lower()
@@ -74,3 +110,5 @@ def test_main_reduces_engineering_detail_but_keeps_blockers() -> None:
         assert blocker in main
     assert "source-frozen" in main
     assert "target outcomes" in supplement
+    assert "deployment probe" not in main
+    assert "feasibility boundary" not in main
