@@ -1,0 +1,30 @@
+# Raw and derived data are obtained locally from the public source records.
+data/
+results/
+**/*.h5ad
+**/*.h5
+**/*.loom
+**/*.npz
+**/*.npy
+**/*.parquet
+**/*.feather
+**/*.pkl
+**/*.pickle
+
+# Local execution outputs and caches.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.cache/
+tmp/
+*.log
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.out
+.env
+.env.*
+!.env.example

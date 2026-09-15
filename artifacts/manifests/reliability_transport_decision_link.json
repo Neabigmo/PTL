@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "status": "executed",
+  "primary_contract": {
+    "measurement_depth": "full",
+    "decision_budget_fraction": 0.1,
+    "x": "D_meas-ID",
+    "y": "normalized_regret",
+    "unit": "18 directed rows (three unordered context pairs × both directions × three metrics)",
+    "independent_cluster_claim": "none; the 18 rows are retained only as a descriptive point-estimate surface",
+    "interpretation": "descriptive association; not causal; sensitivity blocks are unordered context pairs or source contexts"
+  },
+  "correlations": {
+    "overall": {
+      "n": 18,
+      "spearman": 0.7750257997936018,
+      "unordered_pair_bootstrap_q05": 0.7341640706126688,
+      "unordered_pair_bootstrap_q95": 0.8857142857142857
+    },
+    "metric_specific": {
+      "absolute_effect_rank_agreement": {
+        "n": 6,
+        "spearman": 0.8857142857142858,
+        "unordered_pair_bootstrap_q05": 0.5151515151515151,
+        "unordered_pair_bootstrap_q95": 1.0
+      },
+      "delta_cosine": {
+        "n": 6,
+        "spearman": -0.028571428571428574,
+        "unordered_pair_bootstrap_q05": -0.4545454545454545,
+        "unordered_pair_bootstrap_q95": 1.0
+      },
+      "systema_centroid_accuracy": {
+        "n": 6,
+        "spearman": -0.08571428571428573,
+        "unordered_pair_bootstrap_q05": -1.0,
+        "unordered_pair_bootstrap_q95": 0.0909090909090909
+      }
+    },
+    "leave_one_unordered_context_pair_out": {
+      "frangieh_melanoma_coculture<->frangieh_melanoma_control": 0.8111888111888113,
+      "frangieh_melanoma_coculture<->frangieh_melanoma_ifng": 0.8111888111888113,
+      "frangieh_melanoma_control<->frangieh_melanoma_ifng": 0.7552447552447553
+    },
+    "leave_one_source_context_out": {
+      "frangieh_melanoma_coculture": 0.8461538461538463,
+      "frangieh_melanoma_control": 0.7482517482517484,
+      "frangieh_melanoma_ifng": 0.7412587412587414
+    }
+  },
+  "rows": 18,
+  "unique_keys": true,
+  "outputs": {
+    "table": "artifacts/manifests/reliability_transport_decision_link.csv",
+    "report": "artifacts/manifests/reliability_transport_decision_link.json"
+  }
+}

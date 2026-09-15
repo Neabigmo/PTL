@@ -1,0 +1,21 @@
+\begin{table}[H]
+\centering
+\caption{Finite-measurement discrimination at full depth. Each comparator is
+evaluated on the same 18 directed transfer--metric surfaces. The margin is the
+cross-context estimate minus the matched same-context pseudo-context null; the
+interval is a 90\% unordered-context-pair bootstrap interval. These results do
+not rank $D_{\rm adj}$ as the universally best comparator.}
+\label{tab:finite-measurement}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Comparator & Cross & Same-context null & Margin [90\% CI] & Recovery \\
+\midrule
+Kendall distance & 0.256 & 0.028 & 0.229 [0.216, 0.242] & 1.00 \\
+Spearman distance & 0.177 & 0.003 & 0.174 [0.157, 0.191] & 1.00 \\
+Top-10 Jaccard distance & 0.738 & 0.131 & 0.607 [0.594, 0.620] & 1.00 \\
+Stable inversion & 0.147 & 0.000 & 0.147 [0.134, 0.160] & 1.00 \\
+$D_{\rm adj}$ & 0.106 & $-0.005$ & 0.111 [0.105, 0.116] & 1.00 \\
+\bottomrule
+\end{tabular}
+\end{table}

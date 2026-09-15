@@ -1,0 +1,25 @@
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\caption{\textbf{Scope-limited external GEARS audit on public cohorts.}
+Each row aggregates three CUDA runs (20 epochs; seeds 0--2) under a
+random-condition-holdout split with zero perturbation overlap and a
+dataset-native frozen 4,096-gene panel. Cosine similarity is reported on
+non-control test cells (higher is better); MSE and MAE use the same cells
+(lower is better). ``Validation'' counts runs with held-out validation
+predictions. These conventional response-prediction results are not pooled
+with the Frangieh source-to-target reliability-transport estimand.}
+\label{tab:external-gears}
+\begin{tabular}{@{}lrrrrll@{}}
+\toprule
+Dataset & Runs & Test cells & Cosine & MSE & MAE & Validation \\
+\midrule
+Norman filtered & 3 & 1,069 & 0.159 $\pm$ 0.058 & 0.01258 & 0.07552 & 3/3 \\
+Replogle RPE1 & 3 & 983 & 0.136 $\pm$ 0.018 & 0.02245 & 0.11218 & 3/3 \\
+Replogle K562 GWPS & 3 & 64 & 0.069 $\pm$ 0.021 & 0.02716 & 0.12828 & 0/3$^{\dagger}$ \\
+\bottomrule
+\end{tabular}
+\par\noindent
+\raggedright\footnotesize $^{\dagger}$Test-only external audit surface; no validation vector was available.
+\end{table}

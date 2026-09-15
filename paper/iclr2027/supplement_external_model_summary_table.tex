@@ -1,0 +1,36 @@
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{3.5pt}
+\caption{\textbf{Comparable external model-family audit on public cohorts.}
+Each entry is an equal-weight mean across nine runs (three cohorts $\times$
+three seeds) on the corresponding cohort-specific frozen 4,096-gene panel and
+condition-disjoint
+holdout construction. Per-seed test-cell counts match across the audited
+model outputs. Cosine is higher-is-better; MSE and MAE are lower-is-better.
+The GEARS rows are the verified CUDA runs in Table~\ref{tab:external-gears};
+the remaining rows are deterministic or fitted baselines evaluated with the
+same split construction. These summaries are conventional response-prediction
+controls and are not pooled with the Frangieh reliability-transport claim.}
+\label{tab:external-model-summary}
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Model family & Runs & Cohorts & Cosine & MSE & MAE \\
+\midrule
+Ridge regression & 9 & 3 & 0.233 & 0.01887 & 0.09970 \\
+Perturbation mean $\Delta$ & 9 & 3 & 0.202 & 0.01705 & 0.09548 \\
+Global mean $\Delta$ & 9 & 3 & 0.185 & 0.01737 & 0.09624 \\
+Context $k$NN $\Delta$ (fallback) & 9 & 3 & 0.185 & 0.01737 & 0.09624 \\
+GEARS & 9 & 3 & 0.122 & 0.02073 & 0.10533 \\
+Control mean & 9 & 3 & 0.000 & 0.01823 & 0.09852 \\
+\bottomrule
+\end{tabular}
+\par\noindent
+\raggedright\footnotesize Equal-run means are not test-cell-weighted; the K562
+GWPS cohort contributes only 64 non-control test cells per three-run cohort.
+Under the perturbation-disjoint holdout, the $k$NN control falls back to the
+global mean for unseen test perturbations; it is retained as a protocol
+control, not as evidence of context-neighbour transfer. Full run-level values
+and output paths are in
+\texttt{results/tables/external\_condition\_holdout\_shared\_panel\_metrics.csv}.
+\end{table}

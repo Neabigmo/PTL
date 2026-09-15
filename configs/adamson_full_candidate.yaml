@@ -1,0 +1,23 @@
+schema_version: 1
+dataset_id: AdamsonWeissman2016_full_candidate
+role: common_core_candidate
+status: pending_source_metadata_review
+inputs:
+  - dataset_id: AdamsonWeissman2016_GSM2406675_10X001
+    path: data/raw/scperturb_v1.4/AdamsonWeissman2016_GSM2406675_10X001.h5ad
+    accession: GSM2406675
+  - dataset_id: AdamsonWeissman2016_GSM2406677_10X005
+    path: data/raw/scperturb_v1.4/AdamsonWeissman2016_GSM2406677_10X005.h5ad
+    accession: GSM2406677
+  - dataset_id: AdamsonWeissman2016_GSM2406681_10X010
+    path: data/raw/scperturb_v1.4/AdamsonWeissman2016_GSM2406681_10X010.h5ad
+    accession: GSM2406681
+merge_policy:
+  decision: pending_source_metadata_review
+  never_assume_replicate: true
+  require_same_gene_vocabulary: true
+  require_control_semantics_review: true
+  require_biological_instance_review: true
+headline_eligibility:
+  current_10x005_processed_signatures: false
+  full_surface: false

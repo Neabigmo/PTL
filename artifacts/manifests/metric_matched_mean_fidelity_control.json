@@ -1,0 +1,15 @@
+{
+  "status": "executed",
+  "surface": "3 unordered context pairs x 2 directions x 3 metrics = 18 directed rows",
+  "depth": "full",
+  "decision_budget_fraction": 0.1,
+  "mean_risk_definition": "absolute difference between target and source mean metric risk over the exact matched-fixed perturbation universe",
+  "d_adj_source": "corrected canonical summary only",
+  "metric_policy": "metric-specific risk vectors; no mean-risk value is replicated across metrics",
+  "universe_policy": "the same full-depth matched-fixed label universe used by D_meas-ID for each transfer",
+  "outputs": {
+    "csv": "artifacts/manifests/metric_matched_mean_fidelity_control.csv",
+    "json": "artifacts/manifests/metric_matched_mean_fidelity_control.json"
+  },
+  "rows": 18
+}

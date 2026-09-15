@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "status": "executed",
+  "estimand": "finite-measurement cross-product estimator for the population pair-law squared separation",
+  "population_identity": "D_tie + D_strength + D_flip = 1/2 ||pi_source-pi_target||^2",
+  "finite_sample_report": "D_tie^CF + D_direction^CF; no unbiased empirical strength/flip split claimed",
+  "canonical_comparison": "per-seed two-replicate U-corrected D_adj on the identical matched-fixed universe",
+  "stable_diagnostic": "cross-fitted held-out stable inversion fraction; minimum strict support = 8",
+  "directed_transfer_metric_rows": 18,
+  "pair_count_by_surface": [
+    9591,
+    17205
+  ],
+  "max_canonical_reconstruction_error": 8.326672684688674e-17,
+  "max_cf_minus_canonical": 0.022131164633510586,
+  "synthetic_regimes": [
+    "same_direction_same_uncertainty",
+    "same_direction_different_uncertainty",
+    "tie_shift",
+    "genuine_reversal",
+    "near_tie",
+    "shortlist_boundary_flips"
+  ],
+  "outputs": {
+    "summary": "artifacts/manifests/reliability_transport_decomposition.csv",
+    "synthetic_validation": "artifacts/manifests/transport_decomposition_synthetic_validation.csv"
+  }
+}

@@ -1,0 +1,48 @@
+schema_version: 1
+gene_space_policy: native_predictor_then_shared_evaluation_panel
+predictors:
+  mean_global:
+    family: simple_baseline
+    implementation: legacy_global_delta_baseline_replayed
+    headline_status: pilot
+    native_uq: bootstrap_across_training_instances
+  mean_matching:
+    family: simple_baseline
+    implementation: legacy_perturbation_mean_delta_baseline_replayed
+    headline_status: pilot
+    native_uq: bootstrap_across_training_instances
+  ridge:
+    family: linear
+    implementation: legacy_ridge_regression_baseline_replayed
+    headline_status: pilot
+    native_uq: bootstrap_across_training_instances
+  strong_linear:
+    family: bilinear_linear
+    implementation: ahlmann_eltze_bilinear_ridge
+    headline_status: formal_execution_and_oracle_audit
+    native_uq: bootstrap_across_training_instances
+  slim_string:
+    family: string_embedding_bilinear
+    implementation: published_slim_string_bilinear_ridge
+    headline_status: formal_execution
+    native_uq: bootstrap_across_training_instances
+    embedding_artifact: data/external/slim/gene_string_embeddings.v0.3.h5
+  official_gears:
+    family: graph_neural_network
+    implementation: official_cell_gears
+    repository: https://github.com/snap-stanford/GEARS.git
+    headline_status: formal_validation_backed_reliability_shift_supported_norman_rpe1
+    environment_check: pytorch-clean_plus_sw_mgli_site_packages
+    status_reason: official package ran remotely for 3 datasets x 3 seeds at 20 epochs with native uncertainty; validation predictions are persisted for Norman/RPE1 and enter the independent Reliability Shift audit, while GWPS remains test-only and outside the canonical headline surface
+    forbidden_fallbacks:
+      - self_loop_graph_replacement
+      - zero_vector_prediction_fallback
+  cpa:
+    family: latent_compositional
+    headline_status: planned_g5
+  scgpt:
+    family: foundation_style
+    headline_status: planned_g5
+  prescribe:
+    family: uncertainty_aware_predictor
+    headline_status: planned_g5

@@ -1,0 +1,28 @@
+\begin{table}[H]
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\caption{\textbf{Source-only predictor-family sensitivity on the matched
+Frangieh surface.} The RBF kernel-ridge family was tuned using source-only
+inner cross-validation; because all 15 initial source-by-outer-fold choices
+hit the initial largest penalty, the grid was extended to
+$\{30,100,300,1000\}$. The comparison uses the same full-size minimum-20
+label universes, frozen metrics, transfer directions and measurement-floor
+estimator. Source OOF fidelity is shown as the macro mean for delta cosine,
+Systema centroid accuracy and absolute-effect rank agreement, respectively.
+Concordance is descriptive and does not establish predictor-family
+  equivalence or superiority. For the RBF family, the matched profile
+  concordance is $\rho=0.983$, with within-metric range $0.829$--$1.000$
+  and mean row-wise prediction-vector cosine $0.733$.}
+\label{tab:predictor-family-sensitivity}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}p{0.16\linewidth}p{0.22\linewidth}p{0.09\linewidth}p{0.22\linewidth}p{0.22\linewidth}@{}}
+\toprule
+Family & Source-only tuning & Surfaces & Source OOF fidelity ($\Delta$ / Sys / rank) & Matched transport concordance \\
+\midrule
+Bilinear ridge & Registered source-inner CV & 18 & 0.240 / 0.499 / 0.299 & Reference family \\
+RBF kernel ridge & 15/15 hit $\alpha=10$; extended to $\alpha=30$ & 18 & 0.257 / 0.498 / 0.310 & $D_{\rm adj}$ profile $\rho=0.983$; point and CI sign agreement 18/18 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}

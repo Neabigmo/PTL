@@ -1,0 +1,92 @@
+schema_version: 2
+formal_benchmark:
+  biological_instance_unit: environment_id + perturbation_label + dose + timepoint
+  split_id: ptl_biological_instance_split_v1
+  split_seed: 20260907
+  model_seeds: [0, 1, 2]
+  split_strategy: per_environment_condition_grouped
+  split_fractions: {train: 0.6, validation: 0.2, test: 0.2}
+  reliability_target: I[fidelity >= tau * median(validation_fidelity)]
+  primary_tau: 0.8
+  tau_sensitivity: [0.6, 0.7, 0.8, 0.9]
+folds:
+  method: grouped_stratified_if_available
+  n_splits: 5
+  group: biological_instance_id
+  never_group_by: run_id
+tables:
+  predictions:
+    allowed_prefixes:
+      - prediction_id
+      - biological_instance_id
+      - environment_id
+      - predictor
+      - predictor_version
+      - predictor_commit
+      - predictor_split_id
+      - seed
+      - prediction
+      - uq
+      - provenance
+  deployment_features:
+    blocks: [U, P, S, N, C]
+  outcomes:
+    fields: [fidelity, continuous_risk, transportability, deg, retrieval]
+  folds:
+    fields: [biological_instance_id, fold, holdout_role]
+feature_blocks:
+  U: [uq_mean_gene_variance, uq_median_gene_variance, uq_top_effect_variance, uq_cosine_disagreement, uq_effect_norm_variance]
+  P: [prediction_norm, prediction_sparsity, prediction_concentration, prediction_manifold_distance]
+  S: [exact_training_support_fraction, component_training_support_fraction, training_neighborhood_density]
+  N: [perturbation_seen_fraction, component_seen_fraction, combination_novelty, perturbation_novelty]
+  C: [cell_context, perturbation_modality, readout_modality, condition, platform]
+forbidden_headline_features:
+  - split_family
+  - stress_family_flag
+  - heldout_target
+  - fidelity
+  - continuous_risk
+  - transportability
+  - transportability_tau
+  - deg
+  - retrieval
+  - total_cells
+  - n_reference_groups
+  - source_reference_keys
+  - batch_distance
+  - support_cells
+  - support_signatures
+  - reference_key_overlap
+  - realized_cell_count
+  - realized_qc_count
+  - target_batch_composition
+  - target_reproducibility
+methods:
+  - raw_normalized_uq
+  - best_scalar_uq
+  - platt_logistic
+  - isotonic
+  - u_only_rf
+  - u_p_rf
+  - u_ps_rf
+  - u_psn_rf
+  - ptl_rf
+ptl_context:
+  formula: sigmoid(exp(a(z)) * logit(p0) + b(z))
+  scalar_uq_input: U
+  input_blocks: [U, P, S, N, C]
+  encoded_context_columns: [cell_context, perturbation_modality, readout_modality, condition, platform]
+  categorical_encoding: fold_local_one_hot_with_unknown_zero_fallback
+  initialization: identity_a_zero_b_zero
+  correction_regularization: [a_squared, b_squared]
+  architecture: small_linear_block_encoder
+ptl_no_context:
+  input_blocks: [P, S, N]
+  interpretation: excludes all context features; explicit-ID-free target-outcome-free ablation
+ptl_full_id:
+  input_blocks: [P, S, N, C, predictor_id, environment_id]
+  interpretation: identity-rich upper-bound diagnostic, not headline
+metrics:
+  primary: [aurc, excess_aurc, risk_at_50, risk_at_80, ftr_at_50, ftr_at_80, brier, log_loss]
+  secondary: [auroc, auprc, spearman_predicted_risk_realized_risk]
+  aggregation: environment_then_macro_average

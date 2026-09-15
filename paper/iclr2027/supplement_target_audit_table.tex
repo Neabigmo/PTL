@@ -1,0 +1,17 @@
+\begin{table}[H]
+\centering
+\scriptsize
+\caption{Empirical target-audit replay. Every candidate receives a 10-cell pilot; the policy allocates additional target cells using only the audit pool. Values average the four decision budgets.}
+\label{tab:target-audit}
+\begin{tabular}{lrrrr}
+\toprule
+Policy & Mean upgraded & False REUSE & Correct REUSE & Correct REVISE \\
+\midrule
+pilot only & 0.0 & 0.000 & 0.333 & 0.028 \\
+ptl boundary & 55.7 & 0.097 & 0.444 & 0.056 \\
+random extra depth & 32.6 & 0.000 & 0.333 & 0.069 \\
+source uncertainty & 33.0 & 0.000 & 0.333 & 0.125 \\
+uniform depth & 144.9 & 0.000 & 0.333 & 0.056 \\
+\bottomrule
+\end{tabular}
+\end{table}

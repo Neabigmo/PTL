@@ -1,0 +1,23 @@
+\begin{table}[H]
+\centering
+\caption{One-last active-audit redesign at matched actual additional-cell
+cost. The regret-bound-critical policy reduces false reuse relative to the
+legacy PTL boundary, but does not exceed the source-uncertainty baseline in
+correct revision at matched cost. Realized evaluation-pool regret is invariant
+under this frozen-shortlist replay by construction and is reported only as a
+policy-invariant reference. The prespecified kill-switch therefore demotes it
+to a negative supplement result.}
+\label{tab:regret-bound-critical}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Policy & False reuse & Correct revise & True regret & Normalized regret \\
+\midrule
+Regret-bound critical & 0.000 & 0.083 & 0.040 & 0.378 \\
+Random extra depth & 0.000 & 0.069 & 0.040 & 0.378 \\
+Uniform depth & 0.000 & 0.056 & 0.040 & 0.378 \\
+Source uncertainty & 0.000 & 0.125 & 0.040 & 0.378 \\
+Legacy PTL boundary & 0.097 & 0.056 & 0.040 & 0.378 \\
+\bottomrule
+\end{tabular}
+\end{table}

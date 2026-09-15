@@ -1,0 +1,117 @@
+{
+  "schema_version": 2,
+  "status": "executed",
+  "unit": "three unordered context-pair blocks × two directions × three metrics = 18 directed rows",
+  "outer_validation": "leave-one-unordered-context-pair-out; both directions and all metrics held out together; continuous scaling fit within each training fold",
+  "validation_blocks": 3,
+  "reverse_direction_leakage": false,
+  "d_adj_source": "corrected canonical summary only",
+  "models": {
+    "M0_metric": [
+      "metric"
+    ],
+    "M1_metric_plus_mean": [
+      "metric",
+      "absolute_mean_risk_shift"
+    ],
+    "M2_metric_plus_d_adj": [
+      "metric",
+      "d_meas_id"
+    ],
+    "M3_metric_plus_mean_plus_d_adj": [
+      "metric",
+      "absolute_mean_risk_shift",
+      "d_meas_id"
+    ],
+    "M4_metric_plus_mean_plus_decomposition": [
+      "metric",
+      "absolute_mean_risk_shift",
+      "d_tie_cf",
+      "d_direction_cf"
+    ]
+  },
+  "nested_contrasts": {
+    "reported": {
+      "M1-M0": {
+        "contrast": "M1-M0",
+        "reference_model": "M0_metric",
+        "comparison_model": "M1_metric_plus_mean",
+        "nested": true,
+        "valid": true,
+        "n": 18,
+        "mae_reference": 0.09982035287008557,
+        "mae_comparison": 0.08699383265330396,
+        "rmse_reference": 0.1302809116139972,
+        "rmse_comparison": 0.1192485499287821,
+        "delta_mae": 0.012826520216781614,
+        "delta_rmse": 0.011032361685215111,
+        "bootstrap_delta_mae_q05": -0.0010852331787708502,
+        "bootstrap_delta_mae_q95": 0.02673827361233408,
+        "bootstrap_draws": 2000,
+        "cv_method": "leave-one-unordered-context-pair-out",
+        "cv_blocks": 3,
+        "d_adj_source": "corrected canonical summary only"
+      },
+      "M2-M0": {
+        "contrast": "M2-M0",
+        "reference_model": "M0_metric",
+        "comparison_model": "M2_metric_plus_d_adj",
+        "nested": true,
+        "valid": true,
+        "n": 18,
+        "mae_reference": 0.09982035287008557,
+        "mae_comparison": 0.10512384981641744,
+        "rmse_reference": 0.1302809116139972,
+        "rmse_comparison": 0.1324093070819295,
+        "delta_mae": -0.005303496946331865,
+        "delta_rmse": -0.0021283954679322814,
+        "bootstrap_delta_mae_q05": -0.019103057524727907,
+        "bootstrap_delta_mae_q95": 0.00849606363206419,
+        "bootstrap_draws": 2000,
+        "cv_method": "leave-one-unordered-context-pair-out",
+        "cv_blocks": 3,
+        "d_adj_source": "corrected canonical summary only"
+      },
+      "M3-M1": {
+        "contrast": "M3-M1",
+        "reference_model": "M1_metric_plus_mean",
+        "comparison_model": "M3_metric_plus_mean_plus_d_adj",
+        "nested": true,
+        "valid": true,
+        "n": 18,
+        "mae_reference": 0.08699383265330396,
+        "mae_comparison": 0.09218482189741467,
+        "rmse_reference": 0.1192485499287821,
+        "rmse_comparison": 0.12094387581504754,
+        "delta_mae": -0.005190989244110711,
+        "delta_rmse": -0.0016953258862654336,
+        "bootstrap_delta_mae_q05": -0.0135314370098608,
+        "bootstrap_delta_mae_q95": 0.003149458521639392,
+        "bootstrap_draws": 2000,
+        "cv_method": "leave-one-unordered-context-pair-out",
+        "cv_blocks": 3,
+        "d_adj_source": "corrected canonical summary only"
+      }
+    },
+    "omitted_invalid": {
+      "M4-M3": {
+        "comparison_model": "M4_metric_plus_mean_plus_decomposition",
+        "reference_model": "M3_metric_plus_mean_plus_d_adj",
+        "valid": false,
+        "reason": "comparison feature set is not a superset of the reference feature set"
+      }
+    }
+  },
+  "bootstrap": {
+    "draws": 2000,
+    "unit": "unordered context-pair block",
+    "seed": 20260914,
+    "interval": "percentile 90% interval"
+  },
+  "p_value_reporting": "omitted; three unordered context-pair blocks are insufficient for a headline p-value",
+  "outputs": {
+    "summary": "artifacts/manifests/reviewer_decision_incremental_value.csv",
+    "oof": "artifacts/manifests/reviewer_decision_incremental_value_oof.csv",
+    "contrasts": "artifacts/manifests/reviewer_decision_incremental_value_contrasts.csv"
+  }
+}

@@ -1,0 +1,27 @@
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{3.5pt}
+\caption{\textbf{Predictor-family compatibility audit.} The audit records
+whether a public implementation can satisfy the manuscript's frozen
+source-only prediction contract: training uses source information only,
+target outcomes are unseen until evaluation, and the output is a held-out
+vector on the declared gene panel. Only the canonical formal-v2 GEARS cohort
+runs enter Supplementary Tables~\ref{tab:external-gears}--\ref{tab:external-model-summary}; the other rows are feasibility or semantic-contract
+records, not performance results.}
+\label{tab:predictor-compatibility}
+\begin{tabular}{@{}p{0.19\linewidth}p{0.24\linewidth}p{0.49\linewidth}@{}}
+\toprule
+Family & Current evidence & Manuscript decision \\
+\midrule
+GEARS & Formal-v2 CUDA runs completed on three public cohorts; 20 epochs; native uncertainty retained & Included only as the scope-limited external cohort audit in Supplementary Tables~\ref{tab:external-gears}--\ref{tab:external-model-summary}; not pooled with the Frangieh estimand. \\
+State & Official checkout and preprocessing verified; its set-transition output does not materialize the required frozen global five-fold source-only vector and target-risk bridge & Blocked from the claim lock; no score reported. \\
+TxPert & Official cached inference is reproducible for K562, but the available checkpoint/data do not provide the frozen Nadig HepG2/Jurkat source-only vector & Blocked by context mismatch; K562 performance is not relabelled as cross-cell transfer. \\
+scGPT & Package is installed, but import fails before model construction because the current torchtext binary cannot load (Windows error 127) & Bounded package attempt only; no model result is claimed. \\
+biolord & Source-only adapter and pinned compatible checkpoint are not materialized in the current workspace & Compatibility pending; no score is claimed. \\
+PerturbNet & Source-only adapter and pinned compatible checkpoint are not materialized in the current workspace & Compatibility pending; no score is claimed. \\
+Scouter & Source-only adapter and pinned compatible checkpoint are not materialized in the current workspace & Compatibility pending; no score is claimed. \\
+CPA-ext / scGen / CellOT & Rescue-layer implementations and weights are not information-matched to the declared source-only vector contract & Deferred to a separate context-aware rescue audit; no score is claimed. \\
+\bottomrule
+\end{tabular}
+\end{table}

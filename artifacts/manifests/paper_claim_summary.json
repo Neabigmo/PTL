@@ -1,0 +1,31 @@
+{
+  "status": "executed",
+  "rows": 33,
+  "frangieh_rows": 27,
+  "nadig_rows": 6,
+  "frangieh_shared_labels": 243,
+  "decision_link_rows": 18,
+  "decision_spearman": 0.7750257997936018,
+  "decision_spearman_ci": [
+    0.7341640706126688,
+    0.8857142857142857
+  ],
+  "within_metric_spearman": 0.2571428571428571,
+  "within_metric_spearman_ci": [
+    0.019861702016014216,
+    0.45174820373163926
+  ],
+  "mean_fidelity_shift_spearman_d_adj": 0.6904024767801857,
+  "mean_fidelity_shift_spearman_regret": 0.7688338493292053,
+  "primary_ctrl_ifng_adjusted": {
+    "delta_cosine": 0.0933313329696308,
+    "systema_centroid_accuracy": 0.0351813602473176,
+    "absolute_effect_rank_agreement": 0.073299618112384
+  },
+  "source": "artifacts/manifests/reliability_transport_atlas.csv + reliability_transport_decision_link.csv",
+  "outputs": [
+    "artifacts/manifests/paper_claim_summary.csv",
+    "artifacts/manifests/paper_claim_summary.json",
+    "paper/iclr2027/generated_claims.tex"
+  ]
+}

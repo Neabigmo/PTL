@@ -1,0 +1,19 @@
+\begin{table}[H]
+\centering
+\tiny
+\caption{Prespecified model comparison under leave-one-unordered-context-pair-out validation. $\Delta$MAE is positive when a model improves on the stated reference; intervals are 2,000 unordered-pair block-bootstrap diagnostics. M4 is exploratory because its decomposition features are not a superset of M3.}
+\label{tab:incremental-decision-value}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrrrrrr}
+\toprule
+Model & MAE & RMSE & OOF $\rho$ & $\Delta\mathrm{MAE}_{M0}$ & $\Delta\mathrm{MAE}_{M1}$ & 90\% interval & Validation \\
+\midrule
+M0 metric & 0.100 & 0.130 & 0.60 & 0.000 & -- & -- & ref. \\
+M1 metric plus mean & 0.087 & 0.119 & 0.66 & 0.013 & 0.000 & [-0.001, 0.027] & LOPO (3) \\
+M2 metric plus d adj & 0.105 & 0.132 & 0.64 & -0.005 & -- & [-0.019, 0.008] & LOPO (3) \\
+M3 metric plus mean plus d adj & 0.092 & 0.121 & 0.62 & 0.008 & -0.005 & [-0.011, 0.026] & LOPO (3) \\
+M4 metric plus mean plus decomposition (exploratory) & 0.106 & 0.137 & 0.66 & -0.007 & -0.019 & [-0.040, 0.027] & LOPO (3) \\
+\bottomrule
+\end{tabular}
+}
+\end{table}

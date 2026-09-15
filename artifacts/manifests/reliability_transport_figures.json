@@ -1,0 +1,188 @@
+{
+  "schema_version": 4,
+  "status": "executed",
+  "figure_count": 8,
+  "figure_order": [
+    "problem",
+    "atlas",
+    "measurement_boundary",
+    "decision_consequence",
+    "supp_source_only_forecasting",
+    "supp_metric_stratified_decision",
+    "supp_mean_fidelity_control",
+    "supp_estimand_validation"
+  ],
+  "render_order": [
+    "fig4",
+    "fig1",
+    "fig3",
+    "fig2",
+    "supp_fig1",
+    "supp_fig2",
+    "supp_fig3",
+    "supp_fig4"
+  ],
+  "formats": [
+    "png",
+    "pdf",
+    "svg",
+    "tiff"
+  ],
+  "source_tables_directory": "results/figures/reliability_transportability/source_tables",
+  "exemplar_registry": "artifacts/manifests/figure_exemplar_registry.json",
+  "visual_architecture": "paper/iclr2027/FIGURE_ARCHITECTURE.md",
+  "outputs": {
+    "fig4": {
+      "files": [
+        "reliability_transportability_fig4_decision_consequence.png",
+        "reliability_transportability_fig4_decision_consequence.pdf",
+        "reliability_transportability_fig4_decision_consequence.svg",
+        "reliability_transportability_fig4_decision_consequence.tiff"
+      ],
+      "source_table": "results/figures/reliability_transportability/source_tables/fig4_decision_consequence.csv",
+      "rows": 263
+    },
+    "fig1": {
+      "files": [
+        "reliability_transportability_fig1_graphical_abstract.png",
+        "reliability_transportability_fig1_graphical_abstract.pdf",
+        "reliability_transportability_fig1_graphical_abstract.svg",
+        "reliability_transportability_fig1_graphical_abstract.tiff"
+      ],
+      "source_table": "results/figures/reliability_transportability/source_tables/fig1_source.csv",
+      "rows": 259
+    },
+    "fig3": {
+      "files": [
+        "reliability_transportability_fig3_measurement_boundary.png",
+        "reliability_transportability_fig3_measurement_boundary.pdf",
+        "reliability_transportability_fig3_measurement_boundary.svg",
+        "reliability_transportability_fig3_measurement_boundary.tiff"
+      ],
+      "source_table": "results/figures/reliability_transportability/source_tables/fig3_measurement_boundary.csv",
+      "rows": 66
+    },
+    "fig2": {
+      "files": [
+        "reliability_transportability_fig2_transport_atlas.png",
+        "reliability_transportability_fig2_transport_atlas.pdf",
+        "reliability_transportability_fig2_transport_atlas.svg",
+        "reliability_transportability_fig2_transport_atlas.tiff"
+      ],
+      "source_table": "results/figures/reliability_transportability/source_tables/fig2_transport_atlas.csv",
+      "rows": 51
+    },
+    "supp_fig1": {
+      "files": [
+        "reliability_transportability_supp_fig1_source_only_forecasting.png",
+        "reliability_transportability_supp_fig1_source_only_forecasting.pdf",
+        "reliability_transportability_supp_fig1_source_only_forecasting.svg",
+        "reliability_transportability_supp_fig1_source_only_forecasting.tiff"
+      ],
+      "source_table": "results/figures/reliability_transportability/source_tables/supp_fig1_source_only_forecasting.csv",
+      "rows": 145
+    },
+    "supp_fig2": {
+      "files": [
+        "reliability_transportability_supp_fig2_metric_stratified_decision.png",
+        "reliability_transportability_supp_fig2_metric_stratified_decision.pdf",
+        "reliability_transportability_supp_fig2_metric_stratified_decision.svg",
+        "reliability_transportability_supp_fig2_metric_stratified_decision.tiff"
+      ],
+      "source_table": "results/figures/reliability_transportability/source_tables/supp_fig2_metric_stratified_decision.csv",
+      "rows": 22
+    },
+    "supp_fig3": {
+      "files": [
+        "reliability_transportability_supp_fig3_mean_fidelity_control.png",
+        "reliability_transportability_supp_fig3_mean_fidelity_control.pdf",
+        "reliability_transportability_supp_fig3_mean_fidelity_control.svg",
+        "reliability_transportability_supp_fig3_mean_fidelity_control.tiff"
+      ],
+      "source_table": "results/figures/reliability_transportability/source_tables/supp_fig3_mean_fidelity_control.csv",
+      "rows": 18
+    },
+    "supp_fig4": {
+      "files": [
+        "reliability_transportability_supp_fig4_estimand_validation.png",
+        "reliability_transportability_supp_fig4_estimand_validation.pdf",
+        "reliability_transportability_supp_fig4_estimand_validation.svg",
+        "reliability_transportability_supp_fig4_estimand_validation.tiff"
+      ],
+      "source_table": "results/figures/reliability_transportability/source_tables/supp_fig4_estimand_validation.csv",
+      "rows": 4
+    }
+  },
+  "data_policy": "Frozen Frangieh/Nadig data and existing matched-fixed/bootstrap summaries; unavailable prospective cells stay gray/NA; target-informed explanatory quantities never enter prospective prediction.",
+  "selection_policy": "Fig1B uses source-rank quantile exemplars from the full 243-label source-frozen surface; Fig1D is a compact count preview from the complete 243-label delta-cosine risk surface and retains the full source table; Fig4A is the unique detailed alluvial view. Supplementary Fig. S1 uses the registered 144-row source-only feature ladder U→U+G→U+G+S→U+G+S+N. S2 uses the fixed 18-point decision surface; S3 uses metric-matched full-depth risk vectors on the same fixed universes; S4 uses the canonical synthetic estimand validation.",
+  "style_policy": "Centralized ptl_figure_style.py; metric colors are stable; biological context uses position/line style; no equal-grid heatmap dominance.",
+  "anti_fabrication_checks": [
+    "strict support >= 8",
+    "Supplementary Fig. S1 uses 144 source-only rows",
+    "Supplementary Fig. S2 uses exactly 18 fixed decision rows",
+    "Supplementary Fig. S3 uses metric-specific risk rows and exact matched universes",
+    "Supplementary Fig. S4 uses stored synthetic trials",
+    "target_feature_leakage=False",
+    "Nadig replication uses full-size per-label artifact",
+    "no numeric cross-dataset prospective result",
+    "primary intervals are 90%"
+  ],
+  "data_kill_switch": {
+    "formal_reliability_labels": 47,
+    "formal_reliability_labels_expected": 47,
+    "full_source_frozen_labels": 243,
+    "full_source_frozen_labels_expected": 243,
+    "contexts": [
+      "frangieh_melanoma_control",
+      "frangieh_melanoma_coculture",
+      "frangieh_melanoma_ifng"
+    ],
+    "atlas_rows": 27,
+    "atlas_rows_expected": 27,
+    "metrics": [
+      "absolute_effect_rank_agreement",
+      "delta_cosine",
+      "systema_centroid_accuracy"
+    ],
+    "depths": [
+      "10",
+      "20",
+      "40",
+      "80",
+      "160",
+      "full"
+    ],
+    "depths_expected": [
+      "10",
+      "20",
+      "40",
+      "80",
+      "160",
+      "full"
+    ],
+    "decision_link_rows": 18,
+    "decision_link_rows_expected": 18,
+    "decision_link_rho": 0.7750257997936018,
+    "decision_link_rho_expected": 0.7750257997936018,
+    "decision_budgets": [
+      0.05,
+      0.1,
+      0.2,
+      0.5
+    ],
+    "decision_budgets_expected": [
+      0.05,
+      0.1,
+      0.2,
+      0.5
+    ],
+    "failure_total": 2784,
+    "failure_complete": 219,
+    "failure_complete_expected": 219,
+    "nadig_rows": 6,
+    "nadig_rows_expected": 6,
+    "nadig_status": "full-size per-label replication; two directions × three metrics",
+    "status": "PASS",
+    "failures": []
+  }
+}

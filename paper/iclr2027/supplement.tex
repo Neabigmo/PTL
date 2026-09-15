@@ -1,0 +1,420 @@
+\documentclass{article}
+\usepackage{../../third_party/iclr2027/iclr2027_conference,times}
+\input{../../third_party/iclr2027/math_commands.tex}
+\input{generated_claims.tex}
+\input{generated_scientific_upgrade.tex}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{hyperref}
+\usepackage{url}
+\hypersetup{hidelinks}
+
+\renewcommand{\tablename}{Supplementary Table}
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\figurename}{Supplementary Figure}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\thesection}{\Alph{section}}
+
+\title{Supplement to ``Measuring the Transport of Perturbation Reliability Rankings Across Biological Contexts''}
+\author{Anonymous Authors}
+
+\begin{document}
+\maketitle
+
+\noindent\textbf{Organization.} This appendix supplies the data and source-frozen protocol (A), estimators and uncertainty decomposition (B), extended transport and independent replication evidence (C), measurement and decision robustness (D), the prospective source-only boundary (E), additional robustness and diagnostic analyses (F), the external predictor context under matched information constraints (G), and the scientific regeneration path (H). It complements rather than repeats the main-text sequence: observed reordering $\rightarrow$ measurement-adjusted transport $\rightarrow$ independent replication $\rightarrow$ measurement boundary $\rightarrow$ decision consequence.
+
+\section{Data and source-frozen evaluation protocol}
+\label{app:data}
+
+The primary surface is the Frangieh Perturb-CITE-seq melanoma data set \citep{frangieh2021multimodal}. We normalize each cell to a total of 10,000, apply $\log(1+x)$, and retain cells with at least 700 detected genes, 1,500 counts, and at most 25\% mitochondrial counts. After cell QC, the analysis uses the fixed 8,229-gene evaluation panel. Control, co-culture, and IFN$\gamma$ form the three biological contexts. A source-frozen predictor is fit at the source context and evaluated without re-training in the target context. Fig.~1B retains all 243 background rank trajectories and highlights a deterministic set of source-rank quantile exemplars for legibility; the full shortlist accounting retains all 243 labels.
+
+The independent HepG2--Jurkat replication uses the Nadig data set \citep{nadig2025trade}. Its target-sum/$\log(1+x)$ preprocessing is fixed before evaluation. The primary analysis requires 20 cells per condition, uses five label-disjoint folds, three frozen ensemble members, and 30 resampling seeds. These are evaluation settings, not fitted outcomes.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Eligibility conditions for the independent replication. The full registry, including rejected and incomplete candidates, remains a repository artifact rather than a manuscript table.}
+\label{tab:registry}
+\begin{tabular}{lll}
+\toprule
+Criterion & Requirement & Nadig evidence \\
+\midrule
+Shared perturbations & matched labels across contexts & 2,392 \\
+Cell support & minimum 20 cells per condition & 87.2\% eligible \\
+Matched controls & controls available in both contexts & 4,976 / 12,013 cells \\
+Technical comparability & same library, RNA readout, and harvest design & supported \\
+Major context confounding & no obvious context-linked batch confound & none identified \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Measurement-adjusted reliability transport}
+\label{app:estimators}
+
+Pairwise risk comparisons retain ties as an explicit ordering state rather than coercing them into a strict direction. Separately, exact/tolerance ties are excluded from the strict-sign Beta posterior used for the stable-direction diagnostic. A strict direction is declared stable when the 95\% equal-tail Beta(1,1) posterior credible interval excludes $0.5$, with at least eight non-tie observations supporting the strict comparison; otherwise the pair remains unresolved.
+
+We report the finite-sampling floor, the measurement-adjusted discrepancy, and a conservative joint-floor stress test separately. Effect-estimate intervals resample matched perturbation labels together with the declared measurement-seed and model-member resampling units. The decision-link association is descriptive over 18 directed source--target surface rows; its dependence-aware sensitivity resamples three unordered context-pair blocks while preserving both directions and all metric rows. No target labels or target-derived features enter the source-frozen predictor.
+
+For a finite set of $M$ resampling replicates, let $Z_r$ denote the
+tie-aware state for one perturbation pair in replicate $r$. The within-context
+coincidence term is estimated with the unbiased order-2 U-statistic
+\[
+ \widehat W_U=\frac{1}{M(M-1)}\sum_{r\ne r'}\mathbf{1}\{Z_r=Z_{r'}\},
+ \qquad \widehat D_{\rm within}=1-\widehat W_U.
+\]
+This correction removes the positive finite-replicate bias of the plug-in
+coincidence estimate under a null context pair. All exact comparisons use a
+fixed tolerance of $10^{-8}$. The strict-direction diagnostic uses a
+Beta$(1,1)$ prior after excluding exact/tolerance ties; its posterior support
+count is the number of remaining strict observations. The metric-dependence
+diagnostic uses 15 prespecified discovery seeds and 15 held-out validation
+seeds, while the primary effect estimates retain the declared 30-seed
+resampling contract.
+
+The component analysis uses the empirical pair-order law rather than the
+posterior tail probability used for stable-state classification. For each
+directed transfer and metric, both measurement replicates are retained and
+independent 15-seed halves form a cross-product estimator. The finite-sample
+report contains a tie component and a directional-bias component, compared
+with the canonical per-seed U-corrected $D_{\rm adj}$ on the same eligible
+universe. The population strength/flip identity is retained algebraically,
+but its nonlinear empirical split is not treated as unbiased. At the
+population level $0\leq D_{\rm adj}\leq 1$, but the unbiased
+  finite-sample estimate $\widehat D_{\rm adj}$ is signed and is not clipped;
+negative values indicate that the observed pair-state discrepancy is smaller
+than the finite-replicate correction. In the deterministic tie-free limit,
+each pair law is a point mass and $D_{\rm adj}$ reduces exactly to the
+normalized Kendall inversion fraction $(1-\tau)/2$. This is a limit check,
+not a substitute for the finite-measurement estimand.
+
+\section{Extended transport evidence and independent replication}
+\label{app:extended}
+
+The full-surface transport diagnostics contain the shared labels available to each matched context pair and are reported in the figure-source tables. Aggregate $D_{\rm adj}$ estimates are formed from globally merged eligible per-transfer sets; shard-local pairwise summaries are never averaged. Same-context controls are near zero (0.001--0.005), showing that the signal is not a generic artifact of the pairwise estimator.
+
+Table~\ref{tab:nadig} gives the matched-universe sensitivity of the independent Nadig replication at the two prespecified eligibility thresholds (minimum 20 versus 40 cells per condition). The six rows cover all three metrics at each threshold; the complete two-direction full-size surface remains in the figure source table. The values are presented as measurement-adjusted components rather than as conventional prediction accuracy, keeping the replication aligned with the main claim.
+
+For universe accounting, the Nadig registry contains 2,392 shared labels;
+2,086 labels per direction meet the primary minimum-20-cell eligibility rule,
+and the matched sensitivity universes contain 1,255 labels at minimum 20 and
+345 labels at minimum 40 after intersecting the two directions and the fixed
+metric panel. These counts are registry properties, not model-selected
+subsets.
+
+\input{supplement_nadig_table.tex}
+
+\section{Measurement and decision robustness}
+\label{app:robustness}
+
+Depth analyses use matched pseudoreplicates at 10, 20, 40, 80, and 160 cells per perturbation--context condition, with the full-depth estimate as reference. Detectability is the first depth whose 90\% interval lower bound exceeds zero; resolution is the first depth within 10\% of the full-depth estimate.
+
+The decision link is robust over 5\%, 10\%, 20\%, and 50\% shortlist budgets, using the random-reference regret scale of the main analysis and a bounded worst-oracle scale as a secondary diagnostic. Table~\ref{tab:decision-robustness} reports the descriptive surface association and unordered-pair/source-context leave-out ranges. These rows are a compact counterpart to the main-text decision figure, not a second set of decision claims.
+
+\input{supplement_decision_robustness_table.tex}
+
+\subsection{Transport decomposition and rank comparators}
+
+The full-surface decomposition contains 18 directed transfer--metric rows on
+the matched-fixed universe (139 or 186 perturbations, hence 9,591 or 17,205
+unordered pairs). Table~\ref{tab:transport-decomposition} reports a
+finite-measurement cross-product for the tie and directional-bias components,
+and compares their sum with canonical per-seed U-corrected $D_{\rm adj}$.
+The population strength/flip identity is retained algebraically, but its
+nonlinear empirical split is not presented as unbiased. Table~\ref{tab:rank-comparator}
+compares alternative rank summaries on the identical 18-row surface; these are
+descriptive comparator analyses and do not change the primary estimand. The
+depth-convergence ledger records each comparator, its same-context floor, and
+$|T(n)-T(\mathrm{full})|$ for every matched depth.
+
+\input{supplement_transport_decomposition_table.tex}
+\input{supplement_rank_comparator_table.tex}
+
+\subsection{Finite-depth discrimination against a matched null}
+
+The canonical summary field \texttt{measurement\_floor} is the within-context
+term subtracted by the primary estimator; it is not itself a same-context
+$D_{\rm adj}$ shift. We therefore recomputed a matched pseudo-context null at
+each depth by splitting the 30 seeds into independent 15-seed halves, keeping
+both measurement replicates in each half. The cross-context estimate uses both
+held-out orientations, and the same-context null uses the two within-context
+half comparisons. This produces 30 macro rows and 540 surface rows across the
+five comparator families and six depths. Because the finite $D_{\rm adj}$ unit
+is consequential, we also compared this flattened 15-seed$\times$2-replicate
+construction with a seed-block-preserving audit that U-corrects each aligned
+two-replicate seed block before averaging. Across the 108 $D_{\rm adj}$ null
+rows, the current construction was negative in 108/108 rows (mean $-0.00673$),
+whereas the seed-block audit was negative in 63/108 (mean $-0.000334$); the
+maximum absolute difference was $0.0302$ and rank correlation was $0.074$.
+The constructions therefore do not estimate the same finite-sample quantity.
+The main-text Fig.~3C is explicitly labeled a split-half pair-law
+diagnostic, while the canonical primary $D_{\rm adj}$ remains the per-seed
+U-corrected summary. No negative estimate was clipped or selected away.
+All comparator margins were positive
+at every depth, but their magnitudes differ substantially; in particular,
+top-10 Jaccard has the largest full-depth margin whereas $D_{\rm adj}$ is the
+finite-measurement pair-state formulation, not a universally dominant rank
+summary. The stable-inversion comparator has lower evaluable coverage at low
+depth and is interpreted accordingly. In addition, we materialized a separate
+matched-unit audit for all five comparator families. Each aligned
+two-replicate seed block is collapsed to one block-level vector for the rank
+comparators; $D_{\rm adj}$ is U-corrected within each aligned block and
+averaged, and the stable-direction fraction uses the same 15 block-level
+vectors with the frozen support rule. This audit has one row per surface,
+depth, and comparator (540 rows) and is not substituted for the primary
+flattened-partition estimate. All five matched-unit margins remain positive
+in 108/108 rows; for $D_{\rm adj}$, 3/108 matched cross estimates and 63/108
+matched same-context null estimates are negative, while the margin remains
+positive in every row. We therefore retain the signed estimates and do not
+interpret the finite-sample null sign as a biological effect.
+
+\input{supplement_finite_measurement_table.tex}
+
+\subsection{Incremental decision value and empirical target-audit replay}
+
+To distinguish the pooled decision association from a mean-fidelity scale
+effect, we fit five prespecified nested models under leave-one-unordered-
+context-pair-out
+validation. The prespecified model family is evaluated under this outer split;
+the nested contrasts are M1--M0, M2--M0 and M3--M1, while M4 is retained as an
+exploratory decomposition-feature model because it is not a superset of M3.
+All continuous features are standardized within the training fold.
+The mean-shift model gives a modest OOF MAE improvement of
+$\PTLIncrementalMeanDeltaMAE$ with an unordered-pair block-bootstrap 90\% interval
+$\PTLIncrementalMeanDeltaMAECI$. The $D_{\rm adj}$ contrast beyond metric plus
+mean shift is $\PTLIncrementalDAdjBeyondMeanDeltaMAE$
+($\PTLIncrementalDAdjBeyondMeanDeltaMAECI$). These are uncertainty-aware
+diagnostics, not causal effects. Table~\ref{tab:incremental-decision-value}
+gives the complete OOF comparison and 2,000-draw unordered-pair block
+bootstrap; no headline permutation $p$-value is reported for three blocks.
+
+\input{supplement_incremental_decision_value_table.tex}
+
+The shortlist audit uses lower/upper target-risk intervals and the rules
+\textsc{reuse} if $\mathrm{UB}_{\rm regret}\leq\epsilon$, \textsc{revise} if
+$\mathrm{LB}_{\rm regret}>\epsilon$, and \textsc{unresolved} otherwise. The
+offline replay uses $\epsilon=0.05$, gives every candidate a 10-cell target
+pilot, and spends an additional target-cell budget through the 20/40/80/160
+depth ladder. Policies see only the audit pool; the disjoint reference pool is
+retained offline and the evaluation pool is used only for realized regret.
+This is an empirical decision replay, not a certification framework or a
+simultaneous confidence guarantee. Table~\ref{tab:target-audit} summarizes all
+$\PTLTargetAuditRows$ rows; the row-level ledger is retained in the repository.
+
+\input{supplement_target_audit_table.tex}
+
+\subsection{Regret-bound-critical active-audit redesign}
+
+As a final prespecified attempt to improve the active audit, we allocated
+additional cells to candidates active in the regret upper bound: the highest
+upper-bound items inside the source shortlist and the lowest lower-bound items
+outside it, followed by interval width. At matched actual additional-cell
+cost, false reuse was eliminated relative to the legacy PTL boundary, but the
+policy did not exceed the source-uncertainty baseline in correct revision. The
+realized evaluation-pool regret is invariant under the frozen-shortlist replay
+by construction and is reported only as a policy-invariant reference. The
+kill-switch therefore demotes this policy to a negative supplementary result
+rather than a main-text contribution.
+
+\input{supplement_regret_bound_critical_table.tex}
+
+\section{Can reordering be anticipated from source-only information?}
+\label{app:prospective}
+
+This analysis asks a narrower prospective question than the transport study: can a source-only feature ladder anticipate future reordering burden? The legal feature sets are cumulative uncertainty ($U$), geometry ($U+G$), support ($U+G+S$), and novelty ($U+G+S+N$). Target outcomes, target risk, and the measurement-adjusted transport value are excluded by an information firewall. The source-only task-specific usable universe contains approximately 28--44 labels; the 243-label universe belongs to the full-size shortlist surface.
+
+The evaluation contains 18 transfer-by-metric tasks for each of continuous burden and high-burden classification. It uses ten repeats of five label-disjoint folds with nested ridge selection. Every source row records \texttt{target\_feature\_leakage=False}. Supplementary Fig.~\ref{fig:source-only} shows held-out task-level performance directly; it intentionally does not recycle the earlier deployment-gate analysis or an unreconstructible chance baseline.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig1_source_only_forecasting.pdf}
+\caption{Source-only prospective boundary. (A) The information firewall separates source-observable features from target outcomes. (B) Held-out Spearman correlation for continuous reordering burden. (C) Held-out AUPRC for high-burden classification. Each point is one transfer-by-metric task; thick marks summarize the median and interquartile range.}
+\label{fig:source-only}
+\end{figure}
+
+\section{Additional robustness and diagnostic analyses}
+\label{app:reviewer-proofing}
+
+Supplementary Fig.~\ref{fig:metric-stratified} checks whether the primary
+decision association is explained only by the different scales of the three
+metrics. Panel A shows the fixed 18-point surface; Panel B ranks $D_{\rm adj}$
+and regret within each metric before pooling. The pooled within-metric
+association is descriptive ($\rho=\PTLWithinMetricRho$). With only three
+unordered context-pair blocks, the percentile 90\% block-bootstrap interval
+is a diagnostic, $\PTLWithinMetricRhoCI$ from 2,000 draws; leave-one-pair-out
+estimates range from $0.00$ to $0.47$. The six-point metric-specific summaries
+are shown without a headline significance claim.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig2_metric_stratified_decision.pdf}
+\caption{Metric-stratified decision association. The 18 fixed full-depth,
+10\% random-reference decision rows are shown in their native scale (A) and
+after within-metric rank transformation (B). The pooled within-metric interval
+is reported in the text and source table rather than overlaid on the rank
+points. Colors identify metrics; no target-informed feature enters the
+source-frozen predictor.}
+\label{fig:metric-stratified}
+\end{figure}
+
+\FloatBarrier
+
+Supplementary Fig.~\ref{fig:mean-fidelity} computes the absolute change in
+mean metric risk on the exact matched perturbation universe used by
+$D_{\rm adj}$. It is a metric-matched control for the statement that a change
+in average fidelity and a change in reliability ordering are distinct
+quantities; marker shape identifies directed transfer and color identifies the
+metric. Across the 18 rows, the mean-risk shift has Spearman $\rho=\PTLMeanFidelityShiftRhoD$
+with $D_{\rm adj}$ and $\rho=\PTLMeanFidelityShiftRhoRegret$ with normalized
+regret; these are descriptive matched-universe associations, not a causal
+decomposition.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig3_mean_fidelity_control.pdf}
+\caption{Metric-matched mean-fidelity control. Each point is one of 18
+directed transfer--metric rows. The horizontal coordinate is the absolute
+source-to-target mean-risk shift computed on the exact fixed label universe;
+the vertical coordinate is $D_{\rm adj}$ (A) or the corresponding normalized
+decision regret at 10\% budget (B).}
+\label{fig:mean-fidelity}
+\end{figure}
+
+\FloatBarrier
+
+Supplementary Fig.~\ref{fig:estimand-validation} validates the finite-sample
+estimand in synthetic data with a known null and a known alternative. The
+stored trial-level distributions show the positive plug-in bias under the
+null and the centering of the U-corrected estimator near the population
+identity.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig4_estimand_validation.pdf}
+\caption{Finite-sample validation of the ordering estimand. Trial-level
+sampling distributions compare the plug-in/V estimator with the order-2
+U-corrected estimator under a finite-sample null and a known alternative;
+vertical references mark the population identity.}
+\label{fig:estimand-validation}
+\end{figure}
+
+\section{External predictor context under matched information constraints}
+\label{app:external}
+
+To broaden the model-family context without changing the primary estimand, we
+also record the completed formal-v2 external GEARS contract~\citep{roohani2023gears}
+on three public
+cohorts. These canonical runs use condition-disjoint holdout, zero perturbation
+overlap, a dataset-native frozen 4,096-gene panel, three seeds and 20 training
+epochs.
+The two larger cohorts include held-out validation predictions; the K562 GWPS
+cohort has only 64 test rows and is therefore retained as a test-only audit
+surface. Supplementary Table~\ref{tab:external-gears} reports the complete
+dataset-level summary. These results characterize conventional response
+prediction under external cohorts; they neither establish predictor-family
+invariance nor enter the Frangieh context-shift claim lock.
+
+\input{supplement_external_gears_table.tex}
+
+An earlier one-epoch GEARS pilot used the same dataset/seed labels and frozen
+panels but produced a different set of predictions. It is retained only in the
+provenance audit (\texttt{gears\_duplicate\_run\_audit.csv}), is not pooled as
+an additional replicate, and is excluded from both external tables; the
+formal-v2 family above is the sole canonical GEARS source.
+
+Using the same frozen panels and condition-disjoint split construction, we also completed five
+non-GEARS controls (45 runs total): control mean, global perturbation delta,
+perturbation mean delta, context-nearest-neighbour delta, and ridge
+regression. Together with GEARS this gives 54 comparable runs across six
+audited model/control families. Supplementary Table~\ref{tab:external-model-summary} reports
+equal-run aggregate metrics; the complete run-level CSV is retained so that
+the small-cohort sensitivity and model-specific variation remain auditable.
+Because the holdout is perturbation-disjoint, the context-$k$NN control falls
+back to the global mean on unseen test perturbations; we retain this row as an
+explicit protocol control rather than presenting it as successful neighbour
+transfer. These controls broaden the external benchmark context without
+changing the source-frozen Frangieh estimand or implying a legal second
+predictor family on that primary surface.
+
+\input{supplement_external_model_summary_table.tex}
+
+The broader predictor-family plan was also audited against the same
+source-only contract. Supplementary Table~\ref{tab:predictor-compatibility}
+records the executable or semantic status of the additional families, including
+scGPT~\citep{cui2024scgpt}, TxPert~\citep{wenkel2026txpert}, CPA~\citep{lotfollahi2023cpa},
+scGen~\citep{lotfollahi2019scgen} and CellOT~\citep{bunne2023cellot}. These
+rows are deliberately not treated as performance comparisons: a package,
+checkpoint, or context-mismatched inference run is not evidence for the
+Frangieh transport claim. The corresponding machine-readable ledgers are
+\texttt{predictor\_family\_protocol.csv} and
+\texttt{modern\_predictor\_feasibility.json}.
+
+\input{supplement_predictor_compatibility_table.tex}
+
+\subsection{Source-only predictor-family sensitivity on the Frangieh surface}
+
+To test whether the transport profile is tied to the primary bilinear-ridge
+parameterization, we materialized a source-only RBF kernel-ridge family on the
+same Frangieh labels, gene panel, three metrics, six directed transfers and
+full-size minimum-20 measurement surface. The target outcomes were loaded
+only after source-only prediction materialization; they were not visible during
+fit, penalty tuning or family selection. The initial penalty grid was extended
+because all 15 source-by-outer-fold choices selected its largest value. The
+resulting RBF sensitivity preserves the positive adjusted-discrepancy interval
+on all 18 matched rows and has descriptive $D_{\rm adj}$ profile Spearman
+$\rho=0.983$ with the bilinear-ridge family; the within-metric profile range is
+$0.829$--$1.000$ and the mean row-wise prediction-vector cosine is $0.733$.
+Point and interval sign agreement holds on all 18 rows. This is a matched-surface sensitivity, not evidence
+of predictor-family equivalence, superiority, causality or broader
+generalization.
+
+\input{supplement_predictor_family_sensitivity_table.tex}
+
+\subsection{Provenance limits on a four-context expansion}
+
+We audited the exact provenance and support before adding a broader
+HepG2--Jurkat--K562--RPE1 transport map. HepG2 and Jurkat are both day-7
+harvests, but the available Replogle K562 and RPE1 exports are day 6 and day 7,
+respectively, with no timepoint field in the local cell-level exports. The
+harvest difference is therefore inseparable from the intended context
+contrast. Although the four-way label intersection and minimum-support counts
+are large, the current 1,536-gene panel is missing 185 genes in at least one
+context. We consequently do not present a clean four-context biological map;
+the audit is a provenance boundary, not a negative biological result. The
+underlying public-cohort provenance follows the Nadig atlas and the Replogle
+genome-scale Perturb-seq resource \citep{nadig2025trade,replogle2022genome}.
+
+\input{supplement_context_audit_table.tex}
+
+\FloatBarrier
+
+\section{Reproducibility and scientific regeneration}
+\label{app:reproducibility}
+
+The scientific regeneration path starts from the canonical manifest tables, fixed splits and resampling settings, and rebuilds the four main figures, Supplementary Figs.~S1--S4, and the compact supplementary tables. The anonymous repository documents the executable commands and data lineage. Large raw H5AD/NPZ inputs remain external to the manuscript tree; the reviewable CSV/JSON products expose the values used in figures and tables.
+
+\paragraph{Code and data availability.}
+The anonymized core release is available at
+\url{https://github.com/Neabigmo/PTL/tree/iclr2027-anonymous-core} and contains
+the source code, repository-relative configurations, manuscript sources,
+publication figures, and compact reviewable data products. Raw single-cell
+matrices are not redistributed. The Frangieh RNA screen and the Nadig
+HepG2--Jurkat screens are available from the public scPerturb v1.4 Zenodo
+record (\url{https://zenodo.org/records/13350497}); the repository README
+documents the relevant file names and regeneration commands.
+
+The scope-limited external GEARS audit and its matched baseline controls are
+summarized in Supplementary Tables~\ref{tab:external-gears} and
+\ref{tab:external-model-summary}; the broader predictor-family compatibility
+ledger is summarized in Table~\ref{tab:predictor-compatibility}. Broader
+condition-holdout analyses, old failure-anatomy graphics, and the earlier
+broad source-only deployment gate remain repository-only. Runtime compatibility
+notes for predictor families that do not satisfy the frozen source-only
+contract are likewise retained as an engineering ledger, not presented as
+primary scientific evidence.
+
+\bibliographystyle{../../third_party/iclr2027/iclr2027_conference}
+\bibliography{../../manuscript/references}
+\end{document}

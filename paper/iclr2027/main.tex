@@ -1,0 +1,542 @@
+\documentclass{article}
+\usepackage{../../third_party/iclr2027/iclr2027_conference,times}
+\input{../../third_party/iclr2027/math_commands.tex}
+\input{generated_claims.tex}
+\input{generated_scientific_upgrade.tex}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{placeins}
+\hypersetup{hidelinks}
+
+\title{Measuring the Transport of Perturbation Reliability Rankings Across Biological Contexts}
+\author{Anonymous Authors}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Single-cell perturbation predictors are often used to prioritize experiments,
+but a perturbation that is predicted reliably in one context need not remain
+reliable in another. We study whether the ordering of perturbation-level
+realized risk transports across biological contexts when the predictor is held
+fixed. Because finite cell counts can themselves induce apparent rank changes,
+we define a tie-aware discrepancy that compares pairwise ordering
+distributions and removes matched within-context sampling variation. In the
+Frangieh Perturb-CITE-seq dataset \citep{frangieh2021multimodal}, reliability
+rankings change across control, co-culture and IFN$\gamma$ conditions under
+three complementary risk metrics. The changes exceed same-context sampling
+baselines, become increasingly resolvable with measurement depth, and are
+reproduced in an independent HepG2--Jurkat analysis from the Nadig atlas
+\citep{nadig2025trade}. A matched source-only RBF kernel-ridge sensitivity
+preserves the transport profile despite materially different prediction
+vectors, indicating that the pattern is not specific to one linear
+parameterization. Reliability reordering also changes finite top-$k$
+experimental shortlists, although its relation to regret is metric-dependent
+and is not uniquely explained by a single transport scalar. Together, these
+results treat predictor reliability as a context-dependent ranking object and
+provide a finite-measurement framework for deciding when apparent reordering
+is distinguishable from experimental sampling noise.
+\end{abstract}
+
+\section{Introduction}
+Single-cell perturbation screens make it possible to measure many interventions
+in parallel, but the space of candidate experiments grows faster than the
+experimental budget. Pooled Perturb-seq established a route from genetic
+perturbations to high-dimensional single-cell readouts
+\citep{dixit2016perturbseq,adamson2016parseq}; genome-scale screens and
+harmonized perturbation resources have since expanded both the intervention
+universe and the range of measurement depths \citep{replogle2022genome,
+peidli2024scperturb}. A computational predictor is therefore useful not only
+for estimating a response, but also for deciding which perturbations deserve
+follow-up.
+
+That decision is an ordering problem. Existing perturbation-prediction studies
+usually ask whether a model reconstructs an unseen response or generalizes to
+an unseen perturbation. Representative approaches span latent-variable,
+optimal-transport, graph-based and foundation-model methods, including scGen,
+CPA, CellOT, GEARS, scGPT and TxPert
+\citep{lotfollahi2019scgen,lotfollahi2023cpa,bunne2023cellot,
+roohani2023gears,cui2024scgpt,wenkel2026txpert}. Benchmarks broaden this
+comparison across datasets and metrics \citep{generalizable2025benchmark},
+while direct audits show that complex models need not outperform simple linear
+baselines under a fixed protocol \citep{ahlmann2025simple,wong2025simple}.
+These studies evaluate response fidelity; they do not directly ask whether
+the identity of reliably predicted perturbations survives a biological context
+shift.
+
+A ranking shift is not automatically a biological-context effect. With finite
+numbers of cells, perturbation risks fluctuate, and two observed orders can
+differ even when the underlying order is not resolved. Cell number and
+sequencing depth are therefore part of the inferential problem, not merely
+technical details \citep{peidli2024scperturb,squair2021augur}. Work on ranking
+under noisy measurements makes the same point for uncertain and tied orders
+\citep{zuk2007ranking,sankaran2025ranking}. Our question is complementary to
+calibration and selective prediction: after accounting for this finite-cell
+ordering floor, does the relative ordering of realized model risk change
+between biological contexts?
+
+We answer this question with a source-frozen protocol. Predictions are fixed
+before target outcomes are observed; context-specific risks are then compared
+through a tie-aware, measurement-adjusted discrepancy. For each perturbation
+pair, the estimator compares the distributions of lower, tied and higher risk
+states across contexts and removes matched within-context sampling variation
+using an unbiased order-2 U-statistic~\citep{hoeffding1948class}. The primary analysis uses the Frangieh context
+surface, a same-context pseudoreplicate control, an independent HepG2--Jurkat
+replication, matched-depth resampling and a finite top-$k$ decision layer.
+
+\textbf{We make three contributions.} First, we formalize reliability transport
+as a finite-measurement comparison of perturbation-pair ordering distributions
+rather than mean response fidelity. Second, we show that context-associated
+reordering exceeds a matched sampling floor, has an explicit measurement
+boundary, and recurs under an independent context pair and matched nonlinear
+predictor sensitivity. Third, we connect the identifiable ordering change to
+finite experimental shortlists while keeping post-hoc transport measurement
+separate from prospective source-only prediction.
+
+\section{Related Work}
+\textbf{Perturbation prediction and its evaluation.} Single-cell perturbation
+prediction has progressed from latent-variable and perturbation-aware
+generative models to optimal-transport, graph-based and foundation-model
+approaches~\citep{lotfollahi2019scgen,lotfollahi2023cpa,bunne2023cellot,
+roohani2023gears,cui2024scgpt,theodoris2023geneformer,wenkel2026txpert,
+xing2025gperturb}. Current benchmarks emphasize response fidelity, held-out
+perturbations and held-out contexts, and show that dataset composition and
+metric choice can change model conclusions~\citep{generalizable2025benchmark,
+scperteval2026,systema2025}. These studies compare predicted and observed
+responses under specified splits and metrics. They do not treat the ordering of
+perturbation-level realized risk as the object that must transport across
+contexts.
+
+\textbf{Ranking under measurement noise.} Calibration and selective prediction
+study confidence, abstention or risk coverage under a fixed task
+\citep{guo2017calibration,geifman2017selective,ovadia2019uncertainty,
+liang2024selective}. Classical rank correlation and top-$k$ list distances
+provide deterministic comparators~\citep{kendall1938new,fagin2003comparing};
+uncertainty analyses study rankings induced by noisy measurements and fragile
+top-$k$ overlap~\citep{zuk2007ranking}, while weighted and tie-aware extensions
+address unequal rank importance and incomparable items
+\citep{vigna2015weighted,sankaran2025ranking}. Classical distances assume an
+observed ranking, whereas our setting requires distinguishing context-shifted
+ordering from instability induced by finite repeated measurement. The
+order-2 estimator uses the standard U-statistic construction of Hoeffding
+\citep{hoeffding1948class}.
+
+\textbf{From ranking to decisions.} Domain generalization formalizes what may
+survive a domain shift, but the present study makes no causal transportability
+claim~\citep{jalaldoust2024transport,zhou2022dgsurvey}. Decision-focused
+learning distinguishes predictive error from the loss induced by an action
+\citep{donti2017task,wilder2019melding,elmachtoub2022smart}; here the action
+is a finite top-$k$ perturbation shortlist, not a learned decision policy. Work
+on reliable single-cell perturbations instead studies whether the experimental
+perturbation itself is reproducible~\citep{wang2026reliable}. We use decision
+loss only to ask whether a frozen source reliability order remains useful after
+biology changes, keeping data reliability, model reliability and action loss as
+distinct statistical objects.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig1_graphical_abstract.pdf}
+  \caption{\textbf{Reliability ordering under biological context shift.}
+  The source predictor is frozen before evaluation in the target context.
+  The rank braid retains all 243 background rank trajectories and highlights
+  a deterministic set of source-rank quantile exemplars for legibility. The
+  compact shortlist preview reports 25 perturbations per context:
+  6 retained, 19 dropped and 19 newly entering the target shortlist. The full
+  243-label accounting remains in the Fig.~1 source table, while the detailed
+  replacement flow is reserved for Fig.~4A. The decomposition uses the same
+  source-frozen predictor and prespecified evaluation protocol on its declared eligible
+  transfer set. Metric colors are fixed throughout the paper.}
+  \label{fig:framework}
+\end{figure*}
+
+\section{Problem setting and measurement-adjusted ordering}
+Let $x_{p,e}^{(r)}$ be the response for perturbation $p$ in context $e$ and
+raw-cell resampling replicate $r$. A predictor $f_\theta$ is trained only on a
+source context and produces a fixed vector $\hat y_p$ for each held-out
+perturbation. For metric $m$, the realized risk is
+\begin{equation}
+ R_{p,e}^{(m,r)}=g_m(\hat y_p,y_{p,e}^{(r)}),
+\end{equation}
+where larger values mean worse prediction. We use one minus cosine similarity
+(delta cosine), one minus Systema centroid accuracy~\citep{systema2025}, and one minus
+absolute-effect rank agreement. These risks are evaluated after target
+outcomes are observed; source-only uncertainty is kept separate from the
+ordering estimand.
+
+For a pair $a=(p,q)$, define the tie-aware pair state
+\begin{equation}
+ Z_{a,e}^{(m,r)}=\operatorname{sign}\!\left(R_{p,e}^{(m,r)}-R_{q,e}^{(m,r)}\right)
+ \in\{-1,0,+1\}.
+\end{equation}
+The resampling distribution gives $\pi_{a,e}^{(m)}=[\Pr(Z=-1),\Pr(Z=0),
+\Pr(Z=+1)]$. For two contexts $e_1,e_2$,
+\begin{equation}
+ D_{\rm cross}=\mathbb E_a[1-\pi_{a,e_1}^{\mathsf T}\pi_{a,e_2}],\qquad
+ D_{\rm within,e}=\mathbb E_a[1-\|\pi_{a,e}\|_2^2].
+\end{equation}
+The measurement-adjusted discrepancy, equivalently one half of the squared
+delta-kernel MMD
+\citep{gretton2012kernel}, is
+\begin{equation}
+ D_{\rm adj}=D_{\rm cross}-
+ \frac{D_{\rm within,e_1}+D_{\rm within,e_2}}{2}
+ =\frac12\mathbb E_a\|\pi_{a,e_1}-\pi_{a,e_2}\|_2^2
+ \label{eq:ordering_identity}
+\end{equation}
+Thus $D_{\rm adj}$ is the squared separation between the two ordering
+distributions after removing their within-context coincidence terms. It is a
+transport quantity for relative reliability, rather than an average change in
+prediction accuracy.
+For interpretability, write $t_e=\pi_{a,e}(0)$ and
+$b_e=\pi_{a,e}(+1)-\pi_{a,e}(-1)$. The pairwise squared separation has the
+exact decomposition
+\begin{equation}
+ D_{\rm adj}(a)=D_{\rm tie}(a)+D_{\rm strength}(a)+D_{\rm flip}(a),\quad
+ \begin{aligned}
+ D_{\rm tie}(a)&=\tfrac34(t_{e_1}-t_{e_2})^2,\\
+ D_{\rm strength}(a)&=\tfrac14(|b_{e_1}|-|b_{e_2}|)^2,\\
+ D_{\rm flip}(a)&=|b_{e_1}b_{e_2}|\,\mathbb{1}\{b_{e_1}b_{e_2}<0\}.
+ \end{aligned}
+ \label{eq:ordering_decomposition}
+\end{equation}
+For finite measurement, the reported components use a cross-product of
+independent 15-seed halves while retaining both measurement replicates.
+The empirical report is therefore $D_{\rm tie}^{\rm CF}$ plus a
+directional-bias component; the nonlinear strength/flip split is retained as
+population algebra, not presented as an unbiased finite-sample decomposition.
+The canonical per-seed U-corrected $D_{\rm adj}$ is reconstructed from the
+merged member-level risks. Finite-measurement component calibration and the
+comparison between cross-fit and canonical estimates are reported in the
+Supplement; they are not additional population identities.
+\paragraph{Estimand properties.}
+Because each $\pi_{a,e}$ is a probability vector, $0\leq D_{\rm adj}\leq 1$.
+The discrepancy is symmetric in the two contexts and equals zero if and only
+if the pair-state distributions agree almost everywhere over the declared
+pair universe. It is therefore a squared divergence; we do not claim a
+triangle inequality and use ``discrepancy'' rather than ``distance''.
+The bound applies to the population estimand. Its unbiased finite-sample
+U-corrected estimate $\widehat D_{\rm adj}$ is signed and is not clipped to
+$[0,1]$; a negative estimate can occur when the observed pair-state
+discrepancy is smaller than the finite-replicate correction. In the
+deterministic tie-free limit, each pair law collapses to a point mass and
+$D_{\rm adj}$ reduces exactly to the normalized Kendall inversion fraction,
+$(1-\tau)/2$. Its distinct role is finite-measurement transport, where pair
+states are uncertain and the matched within-context component must be
+estimated rather than ignored.
+For finite resampling sets, the within-context term uses the unbiased order-2
+U-statistic~\citep{hoeffding1948class}. A strict direction is declared stable when the 95\% equal-tail
+Beta(1,1) posterior credible interval excludes $0.5$, with at least eight
+non-tie observations supporting the strict comparison; otherwise the pair
+remains unresolved. This categorical state rule is separate from the 90\%
+intervals reported for effect estimates.
+
+The primary Frangieh surface contains 243 shared perturbation labels across
+three contexts. Fig.~\ref{fig:framework}B selects source-rank quantile
+exemplars only to keep the complete braid legible, whereas its background
+ribbons and the Fig.~1 source table retain the full 243-label source-frozen
+surface. Fig.~1D is a compact decision preview; the detailed shortlist flow
+appears only in Fig.~4A. Aggregate transport estimates use their declared full eligible
+tables. The predictor uses a ten-component PCA basis, ridge penalty
+$\alpha=0.1$, one global five-fold perturbation split and three independent
+model members. Matched raw-cell pseudoreplicates use 30 resampling seeds and a
+minimum of 20 cells per perturbation--context. The independent Nadig analysis
+uses the exact shared HepG2--Jurkat perturbation set and is not pooled with
+Frangieh.
+
+\subsection{Decision consequences}
+For a source context $e_s$ and selection budget $k$, let
+\begin{equation}
+ S_k(e_s)=\operatorname*{arg\,min}_{S:\,|S|=k}\sum_{p\in S}R_{p,e_s}
+ \label{eq:source_selection}
+\end{equation}
+be the source-ranked shortlist. Its target-context loss is
+$L_{e_t}(S)=k^{-1}\sum_{p\in S}R_{p,e_t}$, and normalized selection regret
+compares $L_{e_t}(S_k(e_s))$ with the target-oracle shortlist $S_k(e_t)$.
+Thus the decision layer measures the consequence of transporting a source
+reliability order, rather than evaluating a second predictor.
+
+For the decision layer, the target regret at budget $k$ is defined as
+\begin{equation}
+ \operatorname{Regret}_k(e_s\!\to e_t)=
+ L_{e_t}\!\left(S_k(e_s)\right)-L_{e_t}\!\left(S_k(e_t)\right),
+ \label{eq:decision_regret}
+\end{equation}
+where the second term is the target-oracle loss. Let
+$S_k^{\rm worst}(e_t)$ be the deterministic $k$-item set with largest target
+risk and let $L_{e_t}(\mathcal U)$ be the mean target risk over the eligible
+universe. We report two explicitly distinct normalizations,
+\begin{equation}
+ \operatorname{Regret}^{\rm rand}_k=
+ \frac{\operatorname{Regret}_k}{L_{e_t}(\mathcal U)-L_{e_t}(S_k(e_t))},\qquad
+ \operatorname{Regret}^{\rm worst}_k=
+ \frac{\operatorname{Regret}_k}{L_{e_t}(S_k^{\rm worst})-L_{e_t}(S_k(e_t))}.
+ \label{eq:normalized_regret}
+\end{equation}
+The first preserves the random-reference scale used in the primary result;
+the second is bounded by the deterministic worst shortlist when its
+denominator is positive.
+
+\section{Results}
+\subsection{Reliability ordering changes across biological contexts}
+Figure~\ref{fig:framework} introduces the object of interest: predictions are
+held fixed while target biology changes, so movement in the perturbation order
+cannot be attributed to refitting the predictor. The full Frangieh atlas
+contains 243 shared labels; Fig.~\ref{fig:framework}B retains all 243
+background trajectories and highlights a deterministic set of source-rank
+quantile exemplars so that individual ribbons remain readable.
+Preprocessing and replication eligibility are summarized in Appendix A; the
+complete candidate registry is retained with the repository artifacts.
+Fig.~\ref{fig:framework}D previews the fixed top-10\% shortlist replacement example; the complete
+label-level risk accounting is retained in the figure source table. The same-context resampling
+control gives $D_{\rm adj}=\PTLSameContextRange$ across its nine context--metric
+cells, whereas the matched biological transfers produce larger
+measurement-adjusted values.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig2_transport_atlas.pdf}
+  \caption{\textbf{Context-dependent reliability transport.} (A) Six directed
+  Frangieh transfers with three metric estimates and 90\% intervals. (B)
+  Stable-pair inversion fraction: fraction of pairs stable in both contexts
+  whose strict ordering reverses. (C) Same-context independent
+  pseudoreplicate control, shown as point estimates because it is a floor
+  diagnostic rather than a biological transfer. (D) Independent Nadig
+  HepG2--Jurkat replication in both source directions. Metric color is fixed;
+  in panel D, marker shape identifies the source direction and context is
+  otherwise carried by position and labels.}
+  \label{fig:atlas}
+\end{figure*}
+
+The full-size Ctrl-to-IFN$\gamma$ transfer illustrates metric dependence. For
+delta cosine, $D_{\rm cross}=\PTLPrimaryDeltaCross$ and
+$D_{\rm adj}=\PTLPrimaryDeltaAdj$ ($\PTLPrimaryDeltaAdjCI$); for Systema
+centroid, the corresponding values are $\PTLPrimarySystemaCross$ and
+$\PTLPrimarySystemaAdj$ ($\PTLPrimarySystemaAdjCI$); for absolute-effect rank
+they are $\PTLPrimaryRankCross$ and $\PTLPrimaryRankAdj$
+($\PTLPrimaryRankAdjCI$). These generated values are read from the same
+  prespecified analysis table used by the figure builder. The conservative joint-floor
+stress test is retained separately, because it is not an additive component of
+the measurement-adjusted estimand. The atlas in Fig.~\ref{fig:atlas} retains
+metric and transfer heterogeneity rather than averaging it away.
+The finite-sample estimator and tie rule are given in
+Appendix B.
+
+The independent Nadig replication provides a different context pair and a
+larger shared perturbation universe. The macro adjusted excess is \PTLNadigDelta{} for
+delta cosine, \PTLNadigSystema{} for Systema centroid and \PTLNadigRank{} for absolute-effect rank,
+with positive 90\% intervals in both source directions. This replication
+  supports the ordering-level phenomenon without being used to tune the
+  Frangieh decision association. Matched-universe sensitivity for this
+  replication is reported in Appendix C, while the complete two-direction
+  full-size surface remains in the figure source table.
+
+As one matched predictor-family sensitivity, we also materialized a source-only
+RBF kernel-ridge family on the same Frangieh surface. Its source-only penalty
+selection required an expanded grid. The matched transport profile had
+Spearman $\rho=0.983$ with the primary bilinear-ridge profile (within-metric
+profile correlations $0.829$--$1.000$; mean row-wise prediction-vector cosine
+$0.733$ in the Supplement), and adjusted-discrepancy point and interval signs
+agreed on all 18 transfer--metric rows. This is descriptive evidence that the
+profile is not an immediate artifact of one parameterization, not predictor-
+family equivalence or broader generalization.
+
+\FloatBarrier
+\subsection{Measurement depth determines when reordering is resolvable}
+We next hold the perturbation universe fixed and resample 10, 20, 40, 80 and
+160 cells per perturbation--context pseudoreplicate, together with a matched
+full-depth endpoint. The signed $D_{\rm adj}(n)$ trajectory is retained. The
+first budget within ten percent of the full-depth value summarizes resolution;
+detectability requires a positive lower endpoint of the 90\% interval. These
+are metric- and transfer-specific summaries, not a universal cell threshold.
+We additionally compare each transport statistic with a matched same-context
+pseudo-context null at every depth, because the canonical within-context
+measurement term is not itself a same-context $D_{\rm adj}$ estimate.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig3_measurement_boundary.pdf}
+  \caption{\textbf{Measurement depth defines an identifiability boundary.} (A)
+  Signed depth trajectories for the primary Ctrl--IFN$\gamma$ contrast with
+  other transfers as pale paths. (B) The six-transfer resolution map; circles
+  mark detectability and squares mark the resolution budget, with open glyphs
+  denoting not reached. (C) Cross-context transport and matched same-context
+  split-half pair-law null margins across depth for the five prespecified
+  comparator families. This is a finite-measurement diagnostic, not the
+  canonical per-seed $D_{\rm adj}$ summary.
+  The full-depth endpoint is the fixed-160 eligibility universe ($n=139$),
+  not the wider full-size minimum-20 universe used for Figs.~1--2. Signed
+  finite-sample estimates are retained, so null diagnostics can be negative.
+  Detectability and quantitative resolution are separate experimental
+  requirements under the declared resampling protocol.}
+  \label{fig:boundary}
+\end{figure*}
+
+The trajectories rise at different rates for the three metrics, and several
+source--contrast cells remain unresolved at the available budgets. Increasing
+depth therefore improves identifiability without producing a single portable
+cutoff. This measurement boundary is a prerequisite for interpreting a
+context-associated ordering difference beyond the measured sampling floor. The
+matched-null analysis shows positive cross-minus-null margins for every
+comparator at every depth, but does not support presenting $D_{\rm adj}$ as a
+universally superior rank statistic; its role is the explicit tie-aware,
+measurement-adjusted estimand. The depth comparator audit is reported in
+the Supplementary finite-measurement audit.
+The depth definitions and all transfer-specific results are in
+Appendix D.
+
+\FloatBarrier
+\subsection{Context-dependent reordering changes shortlist decisions}
+To connect the ordering to an experimental action, each source context selects
+the lowest-risk perturbations at budgets $k/n\in\{0.05,0.10,0.20,0.50\}$ and
+the target context evaluates the selected set. We report target top-$k$
+retention and normalized regret under both a random-reference and a bounded
+worst-oracle normalization.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig4_decision_consequence.pdf}
+  \caption{\textbf{Context-dependent ordering changes experimental priorities.}
+  (A) Detailed example of delta-cosine top-$k$ replacement under the
+  Ctrl-to-IFN$\gamma$ shift (6 of 25 shortlist positions are retained; 19 are
+  dropped and 19 are new). (B)
+  The 18 full-depth transfer--metric observations; marker shape identifies
+  metric and pale connectors identify directed transfer. The pointwise error
+  bars are canonical 90\% intervals; the descriptive association and its
+  unordered-context-pair sensitivity are reported in the text, and no fitted
+  line is implied. (C) Unordered-context-pair-held-out incremental prediction
+  of normalized regret beyond metric identity; intervals are block-bootstrap
+  diagnostics.}
+  \label{fig:decision}
+\end{figure*}
+
+The primary full-depth link contains six directed source--target surfaces and
+three metrics, hence 18 descriptive rows. Larger adjusted reordering is aligned
+with larger normalized regret, with Spearman $\rho=\PTLDecisionRhoDisplay$;
+the three unordered context-pair and source-context sensitivities are reported
+separately. The association is a decision-level summary of the declared
+surface, not a claim that every predictor or biological system will have the
+same slope.
+
+An explicit unordered-context-pair leave-one-out comparison separates metric identity,
+mean-fidelity shift, and ordering transport. Adding the matched mean-risk shift
+to metric identity reduces OOF MAE by $\PTLIncrementalMeanDeltaMAE$
+($\PTLIncrementalMeanDeltaMAECI$). Adding $D_{\rm adj}$ beyond metric plus
+mean shift changes MAE by $\PTLIncrementalDAdjBeyondMeanDeltaMAE$
+($\PTLIncrementalDAdjBeyondMeanDeltaMAECI$); the two nested contrasts are
+shown separately in Fig.~\ref{fig:decision}. Thus the pooled association is not
+interpreted as a unique causal contribution of one scalar ordering summary.
+The corresponding unordered-pair block-bootstrap table is reported in the
+Supplement; no headline permutation $p$-value is used for only three blocks.
+
+The shortlist view makes the mechanism concrete: perturbations that occupy the
+source top-$k$ need not occupy the target top-$k$, so a source ranking can lose
+retention and incur regret even when the predictor itself has not changed. The
+budget-wise association summaries show that the link is not confined to one
+selection fraction, while its magnitude depends on the transfer and metric.
+The four-budget, two-normalization robustness summary is reported in
+Appendix D. A metric-matched mean-risk control, using the same eligible labels
+and frozen predictions, shows that context-average fidelity and reliability-
+order transport are empirically non-equivalent (Supplementary Fig.~S3).
+
+Additional target-audit and prospective source-only analyses are reported in
+the Supplement. They are kept separate from the post-hoc transport claim
+because both require information that is unavailable before target outcomes
+are measured.
+
+\FloatBarrier
+\section{Discussion}
+The central result is that perturbation reliability is an environment-dependent
+ordering, not a fixed property of a perturbation. With predictions held fixed,
+matched biological context shifts reordered realized risk beyond a same-context
+sampling floor, and the direction recurs in both directions of an independent
+HepG2--Jurkat context pair. The result is therefore an empirical
+reliability-transport object: it does not claim that every predictor or
+biological system must reorder in the same way.
+
+This object complements response-prediction benchmarks. scGen, CPA, CellOT,
+GEARS, scGPT and related studies primarily evaluate response fidelity under
+specified splits and metrics~\citep{lotfollahi2019scgen,lotfollahi2023cpa,
+bunne2023cellot,roohani2023gears,cui2024scgpt,generalizable2025benchmark}.
+Those scores answer whether a model predicts responses well on average; our
+question is whether its perturbation-level error ordering remains useful after
+biology changes. Mean fidelity can therefore remain similar while a finite
+shortlist is replaced. The object is also distinct from experimental
+perturbation reliability, which concerns whether a measured perturbation effect
+is reproducible~\citep{wang2026reliable}; we condition on a frozen predictor and
+make the metric, context and predictor part of the estimand.
+
+Measurement depth supplies an operational boundary for this interpretation.
+The depth analysis separates detectability of a context-associated ordering
+change from quantitative resolution of its magnitude. More cells can therefore
+answer two different experimental questions: whether transport is distinguishable
+from sampling variation, and whether its estimate is close enough to the
+full-depth value for quantitative use. The tie-aware support rule and the
+matched same-context control make that distinction explicit. In the deterministic
+tie-free limit, $D_{\rm adj}$ reduces to the normalized Kendall inversion
+fraction; its contribution here is to define the same transport question when
+pair states are uncertain under finite repeated measurement.
+
+The decision layer shows why the distinction matters. Source-ranked top-$k$
+choices lose target retention when reliability moves, and adjusted reordering
+is descriptively aligned with normalized regret over the six directed surfaces.
+This is a decision diagnostic, not an end-to-end decision-focused learner
+~\citep{donti2017task,wilder2019melding,elmachtoub2022smart}. The 18 rows are
+three metrics across three unordered context-pair blocks and both directions,
+so they are not 18 independent biological replicates. Metric-stratified
+associations are weaker than the pooled surface, while the matched mean-risk
+shift provides the only modest OOF improvement
+($\PTLIncrementalMeanDeltaMAE$; $\PTLIncrementalMeanDeltaMAECI$) and the
+additional $D_{\rm adj}$ contrast beyond mean shift does not add held-out value
+($\PTLIncrementalDAdjBeyondMeanDeltaMAE$;
+$\PTLIncrementalDAdjBeyondMeanDeltaMAECI$). Thus classical deterministic rank
+comparators remain appropriate when risks are precisely observed; the paper
+does not claim that one scalar universally predicts regret.
+
+\paragraph{Scope and testable extensions.}
+The evidence is bounded by one source-frozen bilinear-ridge predictor family,
+three reliability metrics, the Frangieh context design and one independent
+HepG2--Jurkat pair. The decision association is estimated from only three
+unordered context-pair blocks. A matched source-only RBF sensitivity, the
+prospective feature ladder, the active-audit replay and external model controls
+are reported in the Supplement and are not pooled into the primary claim; the
+source-only signal should not be read as a pre-experiment oracle. The direct
+next tests are replication across predictor families, contexts and modalities
+under the same source-only, label-disjoint and measurement-adjusted contract.
+Context diversity is increasingly recognized as important for virtual-cell
+generalization~\citep{dibaeinia2026context}; the present framework gives such
+studies a concrete ordering-level quantity to test.
+
+\section*{Reproducibility statement}
+The anonymous code release at
+\url{https://github.com/Neabigmo/PTL/tree/iclr2027-anonymous-core}
+provides the canonical manifest tables, fixed splits, figure-source products,
+and commands required to regenerate the four main
+figures, Supplementary Figs.~S1--S4, and the compact tables. Appendices A, B,
+and H specify the data, estimators, and scientific regeneration path; the
+transport decomposition, comparator benchmark, incremental decision-value,
+and target-audit ledgers are included as reviewer-facing supplementary
+artifacts. Auxiliary
+engineering analyses are retained separately and are not used as manuscript
+evidence.
+
+\section*{Code and data availability}
+The anonymized core release contains the analysis and figure-generation code,
+repository-relative configurations, manuscript sources, publication figures,
+and compact data products needed to inspect the reported estimates. Raw
+single-cell matrices are not redistributed. The Frangieh RNA screen and the
+Nadig HepG2--Jurkat screens can be obtained from the public scPerturb v1.4
+Zenodo record (\url{https://zenodo.org/records/13350497}); the repository
+README records the relevant file names and regeneration commands. Users should
+download the source data directly and follow the original data-set licenses.
+
+\section*{AI use statement}
+AI-assisted tools were used for language editing, literature triage, code
+organization and figure-script drafting. The authors verified citations,
+methods and results and are responsible for the final manuscript.
+
+\clearpage
+\bibliographystyle{../../third_party/iclr2027/iclr2027_conference}
+\bibliography{../../manuscript/references}
+\end{document}

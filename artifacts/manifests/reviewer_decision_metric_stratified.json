@@ -1,0 +1,30 @@
+{
+  "status": "executed",
+  "budget_fraction": 0.1,
+  "depth": "full",
+  "surface": "3 unordered context pairs x 2 directions x 3 metrics = 18 directed rows",
+  "metric_specific_n": 6,
+  "within_metric_transform": "rank d_meas_id and normalized_regret separately within each metric, then pool",
+  "bootstrap": {
+    "unit": "unordered context-pair block",
+    "draws": 2000,
+    "seed": 20260914,
+    "interval": "percentile 90% interval",
+    "valid_draws": 2000
+  },
+  "point_spearman": 0.2571428571428571,
+  "within_metric_unordered_pair_bootstrap_ci": [
+    0.019861702016014216,
+    0.45174820373163926
+  ],
+  "metric_specific_spearman": {
+    "absolute_effect_rank_agreement": 0.8857142857142858,
+    "delta_cosine": -0.028571428571428574,
+    "systema_centroid_accuracy": -0.08571428571428573
+  },
+  "leave_one_unordered_context_pair_out": {
+    "frangieh_melanoma_coculture<->frangieh_melanoma_control": 0.0,
+    "frangieh_melanoma_coculture<->frangieh_melanoma_ifng": 0.39999999999999997,
+    "frangieh_melanoma_control<->frangieh_melanoma_ifng": 0.4666666666666667
+  }
+}

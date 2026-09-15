@@ -1,0 +1,17 @@
+{
+  "status": "executed",
+  "rows": 144,
+  "feature_ladders": [
+    "U",
+    "U+G",
+    "U+G+S",
+    "U+G+S+N"
+  ],
+  "tasks": [
+    "continuous_burden",
+    "high_burden_top_tercile"
+  ],
+  "source_only_protocol": "features are joined only on the frozen source environment and perturbation label; target burden is evaluation-only",
+  "outer_validation": "10 repeats × 5 label-disjoint folds with nested ridge selection",
+  "output": "artifacts/manifests/reviewer_prospective_feature_ladder.csv"
+}
