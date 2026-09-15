@@ -282,10 +282,13 @@ def _aggregate_seed_plans(
         block = sparse.csc_matrix((data, indices, indptr), shape=(shape[0], gene_end - gene_start))
         selected = block[union_rows][:, local_panel].tocsr().astype(np.float32)
         scales = 10000.0 / metadata_by_row.loc[union_rows, "ncounts"].to_numpy(dtype=np.float32)
-        selected = selected.multiply(scales[:, None]).tocsr()
-        selected.data = np.log1p(selected.data)
-        grouped = joint_design.T @ selected
-        grouped_array = grouped.toarray().astype(np.float32, copy=False)
+        # The subsequent multiplication is sparse-by-dense. Materializing
+        # only this 256-gene block avoids SciPy's implicit CSR->CSC copy of a
+        # large sparse block, which can exceed host memory during full-size
+        # family comparisons without changing the normalization or values.
+        selected = selected.multiply(scales[:, None]).toarray().astype(np.float32, copy=False)
+        selected = np.log1p(selected)
+        grouped_array = (joint_design.T @ selected).astype(np.float32, copy=False)
         group_offset = 0
         for plan_index, plan in enumerate(plans):
             n_groups = len(plan["virtual_keys"])
@@ -326,12 +329,15 @@ def _systema_risk_chunked(prediction: np.ndarray, truth: np.ndarray, batch_size:
 
 
 def _systema_risk_batch(prediction_versions: np.ndarray, truths: np.ndarray) -> np.ndarray:
-    """Score all model versions and split seeds in one BLAS-backed distance pass.
+    """Score model versions and split seeds in bounded BLAS-backed chunks.
 
     ``prediction_versions`` is [version, label, gene] and ``truths`` is
     [split_seed, label, gene].  The result is [split_seed, version, label].
     This is algebraically the pinned Systema centroid-accuracy definition but
     avoids thousands of small Python-level calls during the 30-seed audit.
+    The version/seed axes are tiled explicitly because the un-tiled distance
+    matrix scales as (version*label) x (seed*label) and can otherwise create
+    a several-hundred-megabyte transient for neural families.
     """
 
     prediction_versions = np.asarray(prediction_versions, dtype=np.float64)
@@ -342,44 +348,98 @@ def _systema_risk_batch(prediction_versions: np.ndarray, truths: np.ndarray) -> 
     n_seeds = truths.shape[0]
     if n_labels < 2:
         return np.zeros((n_seeds, n_versions, n_labels), dtype=np.float64)
-    # The distance comparison is exactly the pinned Systema definition.  CuPy
-    # is used when the configured CUDA device is available; all persisted
-    # outputs are copied back to NumPy before any rank/bootstrap operation.
+    # The distance comparison is exactly the pinned Systema definition.  Keep
+    # the two outer axes tiled even when CUDA is available; this makes the
+    # calculation reproducible on both CPU and GPU without changing any
+    # persisted metric values.  Four-by-four tiles are small relative to the
+    # gene dimension but large enough to retain efficient matrix products.
+    version_tile = 4
+    seed_tile = 4
+    result = np.empty((n_seeds, n_versions, n_labels), dtype=np.float64)
     cp = None
     try:
         import cupy as cp
         xp = cp
-        pred_flat = cp.asarray(prediction_versions, dtype=cp.float32).reshape(n_versions * n_labels, n_genes)
-        truth_flat = cp.asarray(truths, dtype=cp.float32).reshape(n_seeds * n_labels, n_genes)
-        pred_norm = xp.einsum("ij,ij->i", pred_flat, pred_flat)
-        truth_norm = xp.einsum("ij,ij->i", truth_flat, truth_flat)
-        distances = pred_norm[:, None] + truth_norm[None, :] - 2.0 * (pred_flat @ truth_flat.T)
-        distances = xp.maximum(distances, 0.0).reshape(n_versions, n_labels, n_seeds, n_labels).transpose(2, 0, 1, 3)
-        self_distances = xp.diagonal(distances, axis1=2, axis2=3).copy()
-        comparison = distances > self_distances[..., None]
-        label_index = xp.arange(n_labels)
-        comparison[:, :, label_index, label_index] = False
-        accuracy = comparison.sum(axis=-1) / float(n_labels - 1)
-        result = cp.asnumpy(1.0 - accuracy)
-        cp.get_default_memory_pool().free_all_blocks()
-        cp.get_default_pinned_memory_pool().free_all_blocks()
-        return result
+        pred_all = cp.asarray(prediction_versions, dtype=cp.float32)
+        truth_all = cp.asarray(truths, dtype=cp.float32)
     except (ImportError, RuntimeError, MemoryError):
+        cp = None
+        xp = np
+        pred_all = prediction_versions.astype(np.float32, copy=False)
+        truth_all = truths.astype(np.float32, copy=False)
+    try:
+        for version_start in range(0, n_versions, version_tile):
+            version_end = min(version_start + version_tile, n_versions)
+            pred_flat = pred_all[version_start:version_end].reshape(
+                (version_end - version_start) * n_labels, n_genes
+            )
+            pred_norm = xp.einsum("ij,ij->i", pred_flat, pred_flat)
+            for seed_start in range(0, n_seeds, seed_tile):
+                seed_end = min(seed_start + seed_tile, n_seeds)
+                truth_flat = truth_all[seed_start:seed_end].reshape(
+                    (seed_end - seed_start) * n_labels, n_genes
+                )
+                truth_norm = xp.einsum("ij,ij->i", truth_flat, truth_flat)
+                distances = pred_norm[:, None] + truth_norm[None, :] - 2.0 * (
+                    pred_flat @ truth_flat.T
+                )
+                distances = xp.maximum(distances, 0.0).reshape(
+                    version_end - version_start,
+                    n_labels,
+                    seed_end - seed_start,
+                    n_labels,
+                ).transpose(2, 0, 1, 3)
+                self_distances = xp.diagonal(distances, axis1=2, axis2=3).copy()
+                comparison = distances > self_distances[..., None]
+                label_index = xp.arange(n_labels)
+                comparison[:, :, label_index, label_index] = False
+                accuracy = comparison.sum(axis=-1) / float(n_labels - 1)
+                result[seed_start:seed_end, version_start:version_end] = cp.asnumpy(
+                    1.0 - accuracy
+                ) if cp is not None else 1.0 - accuracy
         if cp is not None:
             cp.get_default_memory_pool().free_all_blocks()
             cp.get_default_pinned_memory_pool().free_all_blocks()
-        pred_flat = prediction_versions.reshape(n_versions * n_labels, n_genes)
-        truth_flat = truths.reshape(n_seeds * n_labels, n_genes)
-        pred_norm = np.einsum("ij,ij->i", pred_flat, pred_flat)
-        truth_norm = np.einsum("ij,ij->i", truth_flat, truth_flat)
-        distances = pred_norm[:, None] + truth_norm[None, :] - 2.0 * (pred_flat @ truth_flat.T)
-        distances = np.maximum(distances, 0.0).reshape(n_versions, n_labels, n_seeds, n_labels).transpose(2, 0, 1, 3)
-        self_distances = np.diagonal(distances, axis1=2, axis2=3).copy()
-        comparison = distances > self_distances[..., None]
-        label_index = np.arange(n_labels)
-        comparison[:, :, label_index, label_index] = False
-        accuracy = comparison.sum(axis=-1) / float(n_labels - 1)
-        return 1.0 - accuracy
+        return result
+    except (RuntimeError, MemoryError):
+        if cp is not None:
+            cp.get_default_memory_pool().free_all_blocks()
+            cp.get_default_pinned_memory_pool().free_all_blocks()
+        # A CPU fallback is retained for CUDA OOM/runtime failures.  It uses
+        # the same bounded tiles and therefore does not recreate the large
+        # all-at-once allocation.
+        pred_all = prediction_versions.astype(np.float32, copy=False)
+        truth_all = truths.astype(np.float32, copy=False)
+        result.fill(0.0)
+        for version_start in range(0, n_versions, version_tile):
+            version_end = min(version_start + version_tile, n_versions)
+            pred_flat = pred_all[version_start:version_end].reshape(
+                (version_end - version_start) * n_labels, n_genes
+            )
+            pred_norm = np.einsum("ij,ij->i", pred_flat, pred_flat)
+            for seed_start in range(0, n_seeds, seed_tile):
+                seed_end = min(seed_start + seed_tile, n_seeds)
+                truth_flat = truth_all[seed_start:seed_end].reshape(
+                    (seed_end - seed_start) * n_labels, n_genes
+                )
+                truth_norm = np.einsum("ij,ij->i", truth_flat, truth_flat)
+                distances = pred_norm[:, None] + truth_norm[None, :] - 2.0 * (
+                    pred_flat @ truth_flat.T
+                )
+                distances = np.maximum(distances, 0.0).reshape(
+                    version_end - version_start,
+                    n_labels,
+                    seed_end - seed_start,
+                    n_labels,
+                ).transpose(2, 0, 1, 3)
+                self_distances = np.diagonal(distances, axis1=2, axis2=3).copy()
+                comparison = distances > self_distances[..., None]
+                label_index = np.arange(n_labels)
+                comparison[:, :, label_index, label_index] = False
+                result[seed_start:seed_end, version_start:version_end] = (
+                    1.0 - comparison.sum(axis=-1) / float(n_labels - 1)
+                )
+        return result
 
 
 def _metric_risks(prediction_members: np.ndarray, truth: np.ndarray) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray]]:
@@ -904,8 +964,15 @@ def run(
             batched_risks: dict[tuple[str, int], tuple[dict[str, np.ndarray], dict[str, np.ndarray]]] = {}
             for environment in (left, right):
                 for half in (0, 1):
+                    # Prediction artifacts are persisted as
+                    # [source_context, perturbation_label, model_member, gene].
+                    # The metric engine consumes the selected slice as
+                    # [perturbation_label, model_member, gene]; its internal
+                    # version stack performs the member transpose only for
+                    # the batched Systema calculation.
+                    prediction_members = source_members[indices]
                     batched_risks[(environment, half)] = _metric_risks_batch(
-                        source_members[indices], truths[(environment, half)]
+                        prediction_members, truths[(environment, half)]
                     )
             for metric in METRICS:
                 fixed_left = np.concatenate(

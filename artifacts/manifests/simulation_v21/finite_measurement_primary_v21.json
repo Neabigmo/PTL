@@ -1,0 +1,20 @@
+{
+  "schema_version": 2,
+  "status": "executed",
+  "mode": "primary",
+  "condition_count": 960,
+  "expected_condition_count": 960,
+  "trials_per_condition": 500,
+  "truth_draws_per_condition": 1024,
+  "shard_count": 4,
+  "shards": [
+    "artifacts/manifests/simulation_v21/finite_measurement_primary_v21_part01of04.csv",
+    "artifacts/manifests/simulation_v21/finite_measurement_primary_v21_part02of04.csv",
+    "artifacts/manifests/simulation_v21/finite_measurement_primary_v21_part03of04.csv",
+    "artifacts/manifests/simulation_v21/finite_measurement_primary_v21_part04of04.csv"
+  ],
+  "csv": "artifacts/manifests/simulation_v21/finite_measurement_primary_v21.csv",
+  "truth_definition": "D_adj truth is one-half the squared L2 distance between the finite-depth measurement pair-state probabilities, including the declared quantization resolution. Kendall, Spearman and top10 Jaccard use the corresponding finite-depth population-mean ordering targets. Realized pair ties are reported separately.",
+  "stable_rule": "Beta(plus+1, minus+1) 95% direction posterior with minimum strict support >=8; ties remain a third state.",
+  "interpretation": "Calibration artifact only. It does not assert comparator superiority and is not mixed with empirical Frangieh results."
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "status": "executed",
+  "families": [
+    "bilinear_ridge",
+    "rbf_krr",
+    "source_only_latent_mlp",
+    "source_only_mlp"
+  ],
+  "canonical_rows_per_family": 18,
+  "directed_transfer_count": 6,
+  "metric_count": 3,
+  "strict_support_required": 8,
+  "surface": "artifacts/manifests/predictor_families_v2/canonical_four_family_transport.csv",
+  "comparison": "artifacts/manifests/predictor_families_v2/canonical_four_family_comparison.csv",
+  "source_fidelity": [
+    {
+      "family": "bilinear_ridge",
+      "source_oof_fidelity_available": true,
+      "source_oof_fidelity_mean": 0.3459508937637917
+    },
+    {
+      "family": "rbf_kernel_ridge_source_only",
+      "source_oof_fidelity_available": true,
+      "source_oof_fidelity_mean": 0.35507342081640386
+    }
+  ],
+  "scope_note": "This is a canonical transport comparison. Family superiority is not asserted; source-fidelity fields are reported only when an existing artifact provides them."
+}

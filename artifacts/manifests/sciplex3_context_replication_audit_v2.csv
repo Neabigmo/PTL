@@ -1,0 +1,9 @@
+section,context,cells,perturbations,control_cells,control_units,replicates,plates,context_left,context_right,matched_dose_time_units,shared_perturbations,median_min_cells_per_shared_unit,units_meeting_20_cells_each,plates_total,plates_shared_by_at_least_two_contexts,plates_unique_to_one_context,fraction_cells_on_context_unique_plates,no_plate_uniquely_confounded,shared_perturbations_at_least_100_for_every_pair,matched_dose_time_units_at_least_100_for_every_pair,median_min_cells_at_least_20_for_every_pair,same_rna_readout,controls_present_in_each_context,fixed_gene_panel
+context_summary,A549,244281.0,189.0,5857.0,2.0,2.0,20.0,,,,,,,,,,,,,,,,,
+context_summary,MCF7,344862.0,189.0,7786.0,1.0,2.0,16.0,,,,,,,,,,,,,,,,,
+context_summary,K562,173652.0,189.0,3935.0,1.0,2.0,16.0,,,,,,,,,,,,,,,,,
+matched_pair,,,,,,,,A549,MCF7,753.0,189.0,221.0,751.0,,,,,,,,,,,
+matched_pair,,,,,,,,A549,K562,753.0,189.0,213.0,753.0,,,,,,,,,,,
+matched_pair,,,,,,,,MCF7,K562,753.0,189.0,241.0,751.0,,,,,,,,,,,
+plate_audit,,,,,,,,,,,,,,52.0,0.0,52.0,1.0,False,,,,,,
+strict_gate_checks,,,,,,,,,,,,,,,,,,False,True,True,True,True,True,True

@@ -1,0 +1,13 @@
+family,reference_family,metric,rows_compared,spearman_D_adj_vs_reference,D_adj_point_sign_agreement,D_adj_CI_sign_agreement
+bilinear_ridge,bilinear_ridge,delta_cosine,6,1.0,1.0,1.0
+bilinear_ridge,bilinear_ridge,systema_centroid_accuracy,6,1.0,1.0,1.0
+bilinear_ridge,bilinear_ridge,absolute_effect_rank_agreement,6,1.0,1.0,1.0
+rbf_krr,bilinear_ridge,delta_cosine,6,0.8857142857142858,1.0,1.0
+rbf_krr,bilinear_ridge,systema_centroid_accuracy,6,1.0,1.0,1.0
+rbf_krr,bilinear_ridge,absolute_effect_rank_agreement,6,0.8285714285714287,1.0,1.0
+source_only_latent_mlp,bilinear_ridge,delta_cosine,6,0.8857142857142858,1.0,1.0
+source_only_latent_mlp,bilinear_ridge,systema_centroid_accuracy,6,1.0,1.0,1.0
+source_only_latent_mlp,bilinear_ridge,absolute_effect_rank_agreement,6,0.7714285714285715,1.0,1.0
+source_only_mlp,bilinear_ridge,delta_cosine,6,0.942857142857143,1.0,1.0
+source_only_mlp,bilinear_ridge,systema_centroid_accuracy,6,1.0,1.0,1.0
+source_only_mlp,bilinear_ridge,absolute_effect_rank_agreement,6,0.5428571428571429,1.0,1.0

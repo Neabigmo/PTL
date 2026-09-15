@@ -1,0 +1,27 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Corrected finite-measurement calibration.} Each primary
+condition uses a finite-depth pair-state population as the truth for its
+matching estimator. Values summarize the condition-level absolute error,
+signed bias, RMSE, and median absolute error over the registered primary grid;
+the grid contains 960 conditions and 500 trials per condition. The realized
+pair-tie rate is reported rather than equated with the resolution setting.}
+\label{tab:finite-measurement-v21}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Estimator & Mean MAE & Mean bias & Mean RMSE & Median MAE \\
+\midrule
+$D_{\mathrm{adj}}$ & 0.002 & -0.000 & 0.002 & 0.001 \\
+Kendall distance & 0.011 & -0.006 & 0.012 & 0.005 \\
+Spearman distance & 0.002 & 0.001 & 0.003 & 0.002 \\
+Top-10\% Jaccard distance & 0.017 & 0.006 & 0.026 & 0.013 \\
+Stable-pair inversion & 0.010 & -0.010 & 0.010 & 0.004 \\
+\bottomrule
+\end{tabular}
+\par\smallskip
+\raggedright\footnotesize Mean realized pair-tie rate across conditions:
+0.063. The corrected $D_{\mathrm{adj}}$ truth is
+not a latent Kendall distance; the previous v2 artifact is retained only for
+provenance and is not pooled here.
+\end{table}

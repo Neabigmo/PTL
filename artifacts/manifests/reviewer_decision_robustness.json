@@ -1,0 +1,69 @@
+{
+  "status": "executed",
+  "analysis_surface": "matched-fixed full-depth decision macro summaries; source-frozen predictor",
+  "directed_transfer_metric_rows": 18,
+  "budget_fractions": [
+    0.05,
+    0.1,
+    0.2,
+    0.5
+  ],
+  "regret_scales": {
+    "normalized_regret": "random-reference normalization; same matched-fixed canonical surface as Fig. 4B",
+    "worst_oracle_normalized_regret": "bounded worst-oracle secondary diagnostic retained from the materialized source-frozen decision curves"
+  },
+  "primary_descriptive_association": {
+    "budget_fraction": 0.1,
+    "spearman": 0.7750257997936018,
+    "source": "reliability_transport_decision_link.csv"
+  },
+  "primary_cv": {
+    "method": "leave-one-unordered-context-pair-out",
+    "blocks": 3,
+    "held_out_unit": "both directions and all three metrics for one unordered context pair",
+    "reverse_direction_leakage": false
+  },
+  "source_context_sensitivity": {
+    "method": "leave-one-source-context-out",
+    "blocks": 3,
+    "held_out_unit": "all outgoing directed rows for one source context"
+  },
+  "robustness": "all budgets plus unordered-pair LOPO and source-context sensitivity; descriptive association only",
+  "metric_stratified": {
+    "status": "executed",
+    "budget_fraction": 0.1,
+    "depth": "full",
+    "surface": "3 unordered context pairs x 2 directions x 3 metrics = 18 directed rows",
+    "metric_specific_n": 6,
+    "within_metric_transform": "rank d_meas_id and normalized_regret separately within each metric, then pool",
+    "bootstrap": {
+      "unit": "unordered context-pair block",
+      "draws": 2000,
+      "seed": 20260914,
+      "interval": "percentile 90% interval",
+      "valid_draws": 2000
+    },
+    "point_spearman": 0.2571428571428571,
+    "within_metric_unordered_pair_bootstrap_ci": [
+      0.019861702016014216,
+      0.45174820373163926
+    ],
+    "metric_specific_spearman": {
+      "absolute_effect_rank_agreement": 0.8857142857142858,
+      "delta_cosine": -0.028571428571428574,
+      "systema_centroid_accuracy": -0.08571428571428573
+    },
+    "leave_one_unordered_context_pair_out": {
+      "frangieh_melanoma_coculture<->frangieh_melanoma_control": 0.0,
+      "frangieh_melanoma_coculture<->frangieh_melanoma_ifng": 0.39999999999999997,
+      "frangieh_melanoma_control<->frangieh_melanoma_ifng": 0.4666666666666667
+    }
+  },
+  "outputs": {
+    "decision_curves": "artifacts/manifests/reviewer_full_surface_decision_curves.csv",
+    "budget_lopo": "artifacts/manifests/reviewer_decision_budget_lopo.csv",
+    "budget_loto_compatibility_alias": "artifacts/manifests/reviewer_decision_budget_loto.csv",
+    "metric_stratified_csv": "artifacts/manifests/reviewer_decision_metric_stratified.csv",
+    "metric_stratified_json": "artifacts/manifests/reviewer_decision_metric_stratified.json"
+  }
+}

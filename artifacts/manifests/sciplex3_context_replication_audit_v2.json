@@ -1,0 +1,115 @@
+{
+  "schema_version": 2,
+  "status": "blocked",
+  "predictor_run": false,
+  "outcome_blind": true,
+  "dataset": "data/raw/scperturb_v1.4/SrivatsanTrapnell2020_sciplex3.h5ad",
+  "contexts": [
+    "A549",
+    "MCF7",
+    "K562"
+  ],
+  "shape": {
+    "cells_in_file": 799317,
+    "genes_in_file": 110983
+  },
+  "observation_fields_used": [
+    "cell_line",
+    "perturbation",
+    "dose_value",
+    "dose_unit",
+    "time",
+    "replicate",
+    "plate"
+  ],
+  "outcome_fields_not_used": [
+    "X",
+    "layers",
+    "obsm",
+    "obsp"
+  ],
+  "variable_metadata_columns": [
+    "ensembl_id"
+  ],
+  "registered_thresholds": {
+    "minimum_shared_perturbations": 100,
+    "minimum_median_cells_per_shared_unit": 20,
+    "matched_dose_time_required": true,
+    "same_rna_readout_required": true,
+    "controls_each_context_required": true,
+    "no_unique_plate_confounding_required": true,
+    "fixed_gene_panel_required": true
+  },
+  "context_summary": [
+    {
+      "context": "A549",
+      "cells": 244281,
+      "perturbations": 189,
+      "control_cells": 5857,
+      "control_units": 2,
+      "replicates": 2,
+      "plates": 20
+    },
+    {
+      "context": "MCF7",
+      "cells": 344862,
+      "perturbations": 189,
+      "control_cells": 7786,
+      "control_units": 1,
+      "replicates": 2,
+      "plates": 16
+    },
+    {
+      "context": "K562",
+      "cells": 173652,
+      "perturbations": 189,
+      "control_cells": 3935,
+      "control_units": 1,
+      "replicates": 2,
+      "plates": 16
+    }
+  ],
+  "matched_pairs": [
+    {
+      "context_left": "A549",
+      "context_right": "MCF7",
+      "matched_dose_time_units": 753,
+      "shared_perturbations": 189,
+      "median_min_cells_per_shared_unit": 221.0,
+      "units_meeting_20_cells_each": 751
+    },
+    {
+      "context_left": "A549",
+      "context_right": "K562",
+      "matched_dose_time_units": 753,
+      "shared_perturbations": 189,
+      "median_min_cells_per_shared_unit": 213.0,
+      "units_meeting_20_cells_each": 753
+    },
+    {
+      "context_left": "MCF7",
+      "context_right": "K562",
+      "matched_dose_time_units": 753,
+      "shared_perturbations": 189,
+      "median_min_cells_per_shared_unit": 241.0,
+      "units_meeting_20_cells_each": 751
+    }
+  ],
+  "plate_audit": {
+    "plates_total": 52,
+    "plates_shared_by_at_least_two_contexts": 0,
+    "plates_unique_to_one_context": 52,
+    "fraction_cells_on_context_unique_plates": 1.0,
+    "no_plate_uniquely_confounded": false
+  },
+  "strict_gate_checks": {
+    "shared_perturbations_at_least_100_for_every_pair": true,
+    "matched_dose_time_units_at_least_100_for_every_pair": true,
+    "median_min_cells_at_least_20_for_every_pair": true,
+    "same_rna_readout": true,
+    "controls_present_in_each_context": true,
+    "no_plate_uniquely_confounded": false,
+    "fixed_gene_panel": true
+  },
+  "decision": "Run the source-only predictor only if every strict gate check is true. This audit does not pass data to a predictor."
+}

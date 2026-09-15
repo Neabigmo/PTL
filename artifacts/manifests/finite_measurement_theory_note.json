@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "status": "verified_theory_note",
+  "audit_date": "2026-09-14",
+  "purpose": "Read-only audit companion for the finite-measurement theory and literature note.",
+  "outputs": [
+    "artifacts/manifests/finite_measurement_theory_note.md",
+    "artifacts/manifests/finite_measurement_theory_note.json"
+  ],
+  "contract_disposition": {
+    "primary_estimand": "tie-aware measurement-adjusted pair-order divergence",
+    "state_space": [-1, 0, 1],
+    "deterministic_kendall_relation": "(1-tau)/2 equals strict inversion fraction only when both deterministic vectors are tie-free",
+    "finite_measurement_report": "D_tie^CF plus D_direction^CF",
+    "population_strength_flip": "retained algebraically; no unbiased empirical strength/flip split claimed",
+    "manuscript_edits": false,
+    "new_contract_or_gate": false
+  },
+  "frozen_artifact_checks": {
+    "kendall_no_tie": {
+      "source": "artifacts/manifests/rank_comparator_benchmark.csv",
+      "report_source": "artifacts/manifests/rank_comparator_benchmark.json",
+      "full_depth_rows": 18,
+      "tie_free_rows": 12,
+      "max_abs_relation_error": 8.326672684688674e-17,
+      "all_applicable_counts_match": true
+    },
+    "canonical_d_adj_reconstruction": {
+      "source": "artifacts/manifests/reliability_transport_measurement_depth_matched_fixed_summary.csv",
+      "full_depth_directed_rows": 18,
+      "max_abs_cross_minus_half_within_error": 8.326672684688674e-17,
+      "max_abs_cross_minus_measurement_floor_error": 8.326672684688674e-17
+    },
+    "crossfit_decomposition": {
+      "source": "artifacts/manifests/reliability_transport_decomposition.csv",
+      "report_source": "artifacts/manifests/reliability_transport_decomposition.json",
+      "rows": 18,
+      "zero_tie_component_rows": 12,
+      "positive_tie_component_rows": 6,
+      "max_abs_crossfit_total_minus_canonical_d_adj": 0.022131164633510586,
+      "comparison_is_estimator_variation": true
+    },
+    "known_pair_law_delta_mmd": {
+      "source": "artifacts/manifests/ordering_identifiability_synthetic.csv",
+      "state_order": [-1, 0, 1],
+      "pi_source": [0.7, 0.2, 0.1],
+      "pi_target": [0.65, 0.3, 0.05],
+      "cross_disagreement": 0.4800000000000001,
+      "within_source": 0.4600000000000001,
+      "within_target": 0.485,
+      "half_squared_delta_mmd": 0.0074999999999999945,
+      "canonical_population_delta": 0.0074999999999999945,
+      "exact_identity_checked": true
+    },
+    "finite_replicate_u_correction": {
+      "source": "artifacts/manifests/ordering_identifiability_synthetic.csv",
+      "finite_null_plugin_bias": 0.04658610026041667,
+      "finite_null_u_bias": -7.619160353536164e-05,
+      "known_alternative_plugin_bias": 0.039060546875,
+      "known_alternative_u_bias": -0.00037001854482321926
+    },
+    "crossfit_synthetic_validation": {
+      "source": "artifacts/manifests/transport_decomposition_synthetic_validation.csv",
+      "regimes": 6,
+      "trials_per_regime": 300,
+      "pair_count": 256,
+      "max_abs_reported_mean_bias": 0.00013091001157397586
+    }
+  },
+  "order_two_status": {
+    "quadratic_tie_component": "exact block-level order-2 U-statistic exists under independent seed blocks",
+    "quadratic_direction_component": "exact block-level order-2 U-statistic exists under independent seed blocks",
+    "strength_flip_split": "not a single unbiased order-2 functional over all pair laws because of absolute-value and sign-boundary nonlinearities",
+    "frozen_choice": "retain the validated 15-seed-half cross-product with both measurement replicates"
+  },
+  "literature": [
+    {
+      "key": "kendall1938new",
+      "metadata_source": "manuscript/references.bib",
+      "locator": "https://doi.org/10.1093/biomet/30.1-2.81",
+      "positioning": "tie-free deterministic pairwise-rank correspondence"
+    },
+    {
+      "key": "fagin2003comparing",
+      "metadata_source": "manuscript/references.bib",
+      "locator": "https://doi.org/10.1137/S0895480102412856",
+      "positioning": "top-k list comparator context"
+    },
+    {
+      "key": "vigna2015weighted",
+      "metadata_source": "manuscript/references.bib",
+      "locator": "https://doi.org/10.1145/2736277.2741088",
+      "positioning": "weighted and tie-aware Kendall comparator context; not adopted by the frozen contract"
+    },
+    {
+      "key": "zuk2007ranking",
+      "metadata_source": "manuscript/references.bib",
+      "locator": null,
+      "positioning": "uncertainty-over-ranking backdrop; no model equivalence claimed"
+    },
+    {
+      "key": "sankaran2025ranking",
+      "metadata_source": "manuscript/references.bib",
+      "locator": "https://doi.org/10.1007/s41060-025-00722-1",
+      "positioning": "noisy performance and ties; distinct PTL tie, posterior, and measurement procedures"
+    },
+    {
+      "key": "gretton2012kernel",
+      "metadata_source": "manuscript/references.bib",
+      "locator": "https://jmlr.org/papers/v13/gretton12a.html",
+      "positioning": "delta-kernel MMD identity; not a generic continuous MMD test"
+    }
+  ]
+}

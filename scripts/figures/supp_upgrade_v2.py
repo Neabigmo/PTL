@@ -1,4 +1,4 @@
-"""Supplementary Figure: finite-measurement calibration and predictor families."""
+"""Supplementary Figure: corrected finite-measurement calibration and predictor families."""
 
 from __future__ import annotations
 
@@ -22,13 +22,13 @@ FAMILIES = ("bilinear_ridge", "rbf_kernel_ridge_source_only", "source_only_mlp",
 FAMILY_LABELS = {"bilinear_ridge": "Bilinear", "rbf_kernel_ridge_source_only": "RBF", "source_only_mlp": "MLP", "source_only_latent_mlp": "Latent MLP"}
 
 
-def _panel_label(ax: plt.Axes, label: str, *, x: float = -0.22) -> None:
-    ax.text(x, 1.08, label, transform=ax.transAxes, fontsize=11, fontweight="bold", va="top")
+def _panel_label(ax: plt.Axes, label: str, *, x: float = -0.22, y: float = 1.08) -> None:
+    ax.text(x, y, label, transform=ax.transAxes, fontsize=11, fontweight="bold", va="top")
 
 
 def build() -> list[str]:
     apply_style()
-    simulation = pd.read_csv(ROOT / "artifacts/manifests/simulation_v2/finite_measurement_primary.csv")
+    simulation = pd.read_csv(ROOT / "artifacts/manifests/simulation_v21/finite_measurement_primary_v21.csv")
     profiles = pd.read_csv(ROOT / "artifacts/manifests/neural_family_transport_profiles.csv")
     profile_rows = profiles.loc[profiles["predictor_family"].isin(FAMILIES)].copy()
     fidelity_rows = []
@@ -44,22 +44,35 @@ def build() -> list[str]:
     fig.suptitle("Finite-measurement calibration and source-only family sensitivity", x=.02, y=.985, ha="left", fontsize=10.5, fontweight="bold")
     grid = fig.add_gridspec(2, 2, left=.10, right=.93, top=.88, bottom=.15, wspace=.34, hspace=.48)
 
-    ax = fig.add_subplot(grid[0, 0]); _panel_label(ax, "A")
+    ax = fig.add_subplot(grid[0, 0]); _panel_label(ax, "A", x=-0.34)
     for law, color, label in (("gaussian_heteroscedastic", "#4C78A8", "Gaussian"), ("student_t_heavy_tailed", "#8B6F61", "Student-t")):
-        sub = simulation.loc[simulation["law"].eq(law)].groupby("depth", as_index=False)["d_adj_mae_to_latent_truth"].mean()
-        ax.plot(sub["depth"], sub["d_adj_mae_to_latent_truth"], marker="o", ms=3.5, lw=1.5, color=color, label=label)
+        sub = simulation.loc[simulation["law"].eq(law)].groupby("depth", as_index=False)["d_adj_mae_to_truth"].mean()
+        ax.plot(sub["depth"], sub["d_adj_mae_to_truth"], marker="o", ms=3.5, lw=1.5, color=color, label=label)
     ax.set_xscale("log"); ax.set_xticks([5, 10, 20, 40, 80, 160], ["5", "10", "20", "40", "80", "160"])
-    ax.set_xlabel("Cells per condition"); ax.set_ylabel(r"$D_{\rm adj}$ MAE")
+    ax.set_xlabel("Cells per condition"); ax.set_ylabel(r"$D_{\rm adj}$ MAE to finite truth")
     ax.legend(frameon=False, fontsize=6.4, loc="upper right")
     clean_axes(ax, grid=True)
 
     ax = fig.add_subplot(grid[0, 1]); _panel_label(ax, "B")
-    pivot = simulation.loc[simulation["law"].eq("gaussian_heteroscedastic")].pivot_table(index="inversion_fraction", columns="depth", values="d_adj_bias_to_latent_truth", aggfunc="mean")
-    im = ax.imshow(pivot.to_numpy(), aspect="auto", cmap="RdBu_r", vmin=-.08, vmax=.08, interpolation="nearest")
+    pivot = simulation.loc[
+        simulation["law"].eq("gaussian_heteroscedastic")
+        & simulation["resolution"].eq(0.1)
+        & simulation["noise_scale"].eq(1.0)
+    ].pivot_table(index="inversion_fraction", columns="depth", values="d_adj_bias_to_truth", aggfunc="mean")
+    bias_values = pivot.to_numpy(dtype=float)
+    color_limit = max(0.001, float(np.nanpercentile(np.abs(bias_values), 95)) * 1.25)
+    im = ax.imshow(
+        bias_values,
+        aspect="auto",
+        cmap="RdBu_r",
+        vmin=-color_limit,
+        vmax=color_limit,
+        interpolation="nearest",
+    )
     ax.set_xticks(np.arange(len(pivot.columns)), [str(int(v)) for v in pivot.columns]); ax.set_yticks(np.arange(len(pivot.index)), [f"{v:g}" for v in pivot.index])
-    ax.set_xlabel("Cells per condition"); ax.set_ylabel("True inversion")
-    ax.set_title("Gaussian bias", loc="left", fontsize=8, pad=3, fontweight="bold")
-    cbar = fig.colorbar(im, ax=ax, fraction=.045, pad=.035); cbar.set_label("estimate − truth", fontsize=6.5); cbar.ax.tick_params(labelsize=6)
+    ax.set_xlabel("Cells per condition"); ax.set_ylabel("Inversion setting")
+    ax.set_title("Gaussian bias (resolution 0.1; noise 1.0)", loc="left", fontsize=8, pad=3, fontweight="bold")
+    cbar = fig.colorbar(im, ax=ax, fraction=.045, pad=.035); cbar.set_label("estimate − finite truth", fontsize=6.5); cbar.ax.tick_params(labelsize=6)
 
     ax = fig.add_subplot(grid[1, 0]); _panel_label(ax, "C")
     family_positions = np.arange(len(FAMILIES))

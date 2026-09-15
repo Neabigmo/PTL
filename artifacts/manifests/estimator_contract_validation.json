@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "status": "validated",
+  "purpose": "implementation audit of ESTIMATOR_CONTRACT_V2.md",
+  "contract": {
+    "split_seed_count": 30,
+    "model_member_pairs": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        1,
+        2
+      ]
+    ],
+    "metric_count": 3,
+    "metrics": [
+      "delta_cosine",
+      "systema_centroid_accuracy",
+      "absolute_effect_rank_agreement"
+    ],
+    "minimum_cells_primary": 20,
+    "minimum_cells_sensitivity": 40,
+    "minimum_strict_support": 8,
+    "runtime_gate": false
+  },
+  "canonical_surface": {
+    "status": "validated",
+    "checks": {
+      "rows": 18,
+      "expected_rows": 18,
+      "unique_keys": 18,
+      "self_transfers": 0,
+      "ordering_rows": 27,
+      "ordering_expected_rows": 27,
+      "minimum_strict_support": 8,
+      "minimum_strict_support_required": 8,
+      "pass": true
+    }
+  },
+  "algebraic_identities": {
+    "status": "validated",
+    "seed": 20260915,
+    "shape_left": [
+      7,
+      6
+    ],
+    "shape_right": [
+      8,
+      6
+    ],
+    "absolute_errors": {
+      "squared_distance_identity": 4.163336342344337e-17,
+      "left_u_identity": 1.6653345369377348e-16,
+      "right_u_identity": 5.551115123125783e-17
+    }
+  },
+  "interpretation": "This report does not create a runtime gate and does not replace the primary full-size estimator."
+}

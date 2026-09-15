@@ -229,7 +229,7 @@ The evaluation contains 18 transfer-by-metric tasks for each of continuous burde
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/supplementary/s1.pdf}
+\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig1_source_only_forecasting.pdf}
 \caption{Source-only prospective boundary. (A) The information firewall separates source-observable features from target outcomes. (B) Held-out Spearman correlation for continuous reordering burden. (C) Held-out AUPRC for high-burden classification. Each point is one transfer-by-metric task; thick marks summarize the median and interquartile range.}
 \label{fig:source-only}
 \end{figure}
@@ -249,7 +249,7 @@ are shown without a headline significance claim.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/supplementary/s2.pdf}
+\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig2_metric_stratified_decision.pdf}
 \caption{Metric-stratified decision association. The 18 fixed full-depth,
 10\% random-reference decision rows are shown in their native scale (A) and
 after within-metric rank transformation (B). The pooled within-metric interval
@@ -273,7 +273,7 @@ decomposition.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/supplementary/s3.pdf}
+\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig3_mean_fidelity_control.pdf}
 \caption{Metric-matched mean-fidelity control. Each point is one of 18
 directed transfer--metric rows. The horizontal coordinate is the absolute
 source-to-target mean-risk shift computed on the exact fixed label universe;
@@ -292,7 +292,7 @@ identity.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/supplementary/s4.pdf}
+\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig4_estimand_validation.pdf}
 \caption{Finite-sample validation of the ordering estimand. Trial-level
 sampling distributions compare the plug-in/V estimator with the order-2
 U-corrected estimator under a finite-sample null and a known alternative;
@@ -371,6 +371,7 @@ of predictor-family equivalence, superiority, causality or broader
 generalization.
 
 \input{supplement_predictor_family_sensitivity_table.tex}
+\input{supplement_predictor_family_canonical_v2_table.tex}
 
 \subsection{Neural source-only families and finite-measurement simulation}
 
@@ -387,24 +388,32 @@ and $0.355$ for RBF. These are adequacy and profile diagnostics, not target-
 informed model selection; the target outcomes were not loaded during fitting.
 
 The resulting four-family profile is evaluated on the same frozen labels,
-genes, contexts and metrics and is retained as a deterministic full-depth
-profile because the neural runs do not replace the canonical cell-resampled
-$D_{\rm adj}$ surface. Supplementary Fig.~\ref{fig:upgrade-v2} shows this
-profile together with the pre-registered finite-measurement calibration slice:
-two generative laws, 60 conditions, 500 trials per condition, six cell-depths,
-five inversion fractions and an exact Beta direction posterior with the frozen
-minimum strict support of eight. The simulation is a calibration and recovery
-screen; it does not justify a universal superiority claim for $D_{\rm adj}$
-or for any predictor family. Full machine-readable outputs are
-\texttt{neural\_family\_transport\_profiles.csv} and
-\texttt{simulation\_v2/finite\_measurement\_primary.csv}.
+genes, contexts and metrics. The canonical family comparison uses the same
+18 directed transfer--metric rows and the same full-size raw-cell estimator;
+it is a sensitivity analysis, not a predictor-superiority claim. Supplementary
+Fig.~\ref{fig:upgrade-v2} shows this profile together with the corrected
+finite-measurement calibration: two generative laws, 960 registered
+conditions (six depths, four resolution settings, four noise scales and five
+inversion settings), and 500 trials per condition. Here the $D_{\rm adj}$
+truth is the finite-depth population pair-state distance at the declared
+resolution, while Kendall, Spearman and top-10 Jaccard use their corresponding
+finite-depth population-mean ordering targets. Directional states use the
+exact Beta posterior with the frozen minimum strict support of eight; realized
+pair ties are retained as a third state. The simulation is a calibration and
+recovery screen; it does not justify a universal superiority claim for
+$D_{\rm adj}$ or for any predictor family. Full machine-readable outputs are
+\path{predictor_families_v2/canonical_four_family_transport.csv},
+\path{neural_family_transport_profiles.csv} and
+\path{simulation_v21/finite_measurement_primary_v21.csv}. The former
+\path{simulation_v2} artifact is retained only as provenance and is not
+pooled with the corrected grid.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/supplementary/s5_upgrade_v2.pdf}
+\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig5_upgrade_v2.pdf}
 \caption{\textbf{Source-only family and finite-measurement sensitivity.} (A)
-Mean absolute error of the corrected ordering estimate relative to the known
-latent ordering law across cell depth for Gaussian-heteroscedastic and
+Mean absolute error of the corrected ordering estimate relative to the finite-
+depth pair-state truth across cell depth for Gaussian-heteroscedastic and
 Student-$t$ measurements. (B) Bias surface for the Gaussian primary slice;
 the horizontal axis is cell depth and the vertical axis is the true inversion
 fraction. (C) Source-side OOF fidelity for each source context and predictor
@@ -414,6 +423,8 @@ descriptive and were not used to tune target transport or alter the canonical
 main-text estimand.}
 \label{fig:upgrade-v2}
 \end{figure}
+
+\input{supplement_finite_measurement_v21_table.tex}
 
 \subsection{Provenance limits on a four-context expansion}
 
@@ -430,6 +441,22 @@ underlying public-cohort provenance follows the Nadig atlas and the Replogle
 genome-scale Perturb-seq resource \citep{nadig2025trade,replogle2022genome}.
 
 \input{supplement_context_audit_table.tex}
+
+\subsection{Outcome-blind scPerturb3 context audit}
+
+As a separate provenance audit, we examined the local Srivatsan--Trapnell
+scPerturb3 file using observation and variable metadata only. The three
+candidate cell-line contexts (A549, MCF7 and K562) share 189 perturbations and
+753 matched dose--time units per pair, with a median of at least 213 cells per
+matched unit. However, all 52 plates are unique to one cell line, so every
+cell is on a context-unique plate. This fails the preregistered
+no-unique-plate-confounding requirement. The source-only predictor was
+therefore not run on these contexts, and this audit is reported as a
+provenance boundary rather than as a negative biological result. The complete
+outcome-blind record is
+\texttt{artifacts/manifests/sciplex3\_context\_replication\_audit\_v2.json};
+the corresponding evidence and reopening requirements are listed in
+\texttt{EXTERNAL\_DATA\_NEEDED\_V2.md}.
 
 \FloatBarrier
 

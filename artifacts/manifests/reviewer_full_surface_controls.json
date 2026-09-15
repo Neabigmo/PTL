@@ -1,0 +1,15 @@
+{
+  "status": "executed",
+  "shared_prediction_label_count": 243,
+  "eligible_label_count_range": [
+    234,
+    237
+  ],
+  "directed_biological_rows": 18,
+  "same_context_negative_control_rows": 9,
+  "negative_control": "same context A/B pseudoreplicates reuse completed source-frozen full-size raw-cell resampling inputs; no predictor retraining or raw-data recomputation",
+  "outputs": {
+    "directed_full_surface": "artifacts/manifests/reviewer_full_surface_directed.csv",
+    "pseudocontext_negative_control": "artifacts/manifests/reviewer_pseudocontext_negative_control.csv"
+  }
+}
