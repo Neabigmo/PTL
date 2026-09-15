@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "upgrade_id": "PTL_ICLR2027_SCIENTIFIC_UPGRADE_V2",
+  "question": "When finite measurement makes reliability ordering uncertain, can measurement-adjusted transport be separated from sampling instability and connected to decisions without target leakage?",
+  "primary_surface": {
+    "dataset": "FrangiehIzar2021_RNA",
+    "contexts": [
+      "frangieh_melanoma_control",
+      "frangieh_melanoma_coculture",
+      "frangieh_melanoma_ifng"
+    ],
+    "perturbations": 243,
+    "evaluation_genes": 8229,
+    "outer_folds": 5,
+    "model_seeds": [0, 1, 2],
+    "metrics": [
+      "delta_cosine",
+      "systema_centroid_accuracy",
+      "absolute_effect_rank_agreement"
+    ],
+    "measurement_depths": [5, 10, 20, 40, 80, 160],
+    "minimum_strict_support": 8
+  },
+  "simulation": {
+    "cells_per_condition": [5, 10, 20, 40, 80, 160],
+    "tie_probability": [0.0, 0.1, 0.3, 0.5],
+    "noise_scale": [0.25, 0.5, 1.0, 2.0],
+    "true_inversion_fraction": [0.0, 0.05, 0.1, 0.2, 0.4],
+    "perturbation_counts": [50, 100, 250],
+    "primary_perturbation_count": 100,
+    "trials_per_condition": 500,
+    "generative_laws": ["gaussian_heteroscedastic", "student_t_heavy_tailed"],
+    "estimators": [
+      "d_adj",
+      "kendall",
+      "spearman",
+      "top10_jaccard",
+      "stable_inversion",
+      "floor_adjusted_kendall",
+      "floor_adjusted_spearman",
+      "floor_adjusted_jaccard"
+    ]
+  },
+  "predictor_families": {
+    "required": ["bilinear_ridge", "rbf_kernel_ridge_source_only", "source_only_mlp", "source_only_latent_mlp"],
+    "mlp": {
+      "hidden_layers": [256, 512],
+      "activation": "GELU",
+      "dropout": 0.1,
+      "weight_decay_grid": [1e-5, 1e-4, 1e-3],
+      "learning_rate": 1e-3,
+      "max_epochs": 500,
+      "patience": 30
+    },
+    "latent": {
+      "latent_dimension": 32,
+      "response_basis": "source-training-only PCA",
+      "predictor": "source-only MLP",
+      "target_outcomes_allowed": false
+    },
+    "adequacy_rule": "finite, non-degenerate predictions on the frozen 243-label surface; source OOF fidelity must be reported before any target outcome is loaded"
+  },
+  "decision": {
+    "budgets": [0.05, 0.1, 0.2, 0.5],
+    "weights": ["hard_top_k_boundary", "smooth_source_rank_boundary"],
+    "smooth_tau": "k/2",
+    "cross_fit": true,
+    "primary_cv": "leave_one_unordered_context_pair_out",
+    "promotion_rule": "promote weighted transport only if held-out MAE improves beyond mean shift and global D_adj and is not explained by Jaccard"
+  },
+  "dataset_eligibility": {
+    "tier_1_min_shared_perturbations": 100,
+    "tier_1_min_median_cells": 20,
+    "same_readout_required": true,
+    "matched_controls_required": true,
+    "unresolved_timepoint_confound_disqualifies": true
+  },
+  "kill_switches": [
+    "Do not claim uniform superiority of D_adj unless both simulation laws support the same finite-measurement advantage.",
+    "Do not promote a predictor family that fails the source-side adequacy rule.",
+    "Do not promote a new dataset with unresolved context, batch, or harvest-time confounding.",
+    "Do not promote weighted decision transport without held-out improvement beyond mean shift and global D_adj.",
+    "Do not call post-hoc perturbation/pathway associations causal.",
+    "Do not expand the active-audit heuristic after the preregistered negative result."
+  ],
+  "promotion": {
+    "main_text": "formal estimator, finite-measurement simulation, and only supported cross-family or decision evidence",
+    "supplement_only": "external controls, weak/failed families, provenance-blocked datasets, active-audit replay, and exploratory diagnostics",
+    "target_outcomes_in_predictor_fitting": false
+  }
+}

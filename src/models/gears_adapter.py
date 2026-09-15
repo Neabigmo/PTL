@@ -21,10 +21,11 @@ import pandas as pd
 import torch
 from tqdm import tqdm
 
-# Add sw_mgli site-packages to path for GEARS imports
-SW_MGLI_SITE = r"E:\anaconda3\envs\sw_mgli\Lib\site-packages"
-if SW_MGLI_SITE not in sys.path:
-    sys.path.insert(0, SW_MGLI_SITE)
+# Optionally add an environment-specific site-packages directory for GEARS.
+# The public repository never embeds a machine-specific path.
+GEARS_SITE = os.environ.get("PTL_GEARS_SITE_PACKAGES", "")
+if GEARS_SITE and GEARS_SITE not in sys.path:
+    sys.path.insert(0, GEARS_SITE)
 
 try:
     from gears import GEARS, PertData

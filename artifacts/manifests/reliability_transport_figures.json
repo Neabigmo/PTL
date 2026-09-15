@@ -1,7 +1,7 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "status": "executed",
-  "figure_count": 8,
+  "figure_count": 9,
   "figure_order": [
     "problem",
     "atlas",
@@ -10,7 +10,8 @@
     "supp_source_only_forecasting",
     "supp_metric_stratified_decision",
     "supp_mean_fidelity_control",
-    "supp_estimand_validation"
+    "supp_estimand_validation",
+    "supp_upgrade_v2"
   ],
   "render_order": [
     "fig4",
@@ -20,7 +21,8 @@
     "supp_fig1",
     "supp_fig2",
     "supp_fig3",
-    "supp_fig4"
+    "supp_fig4",
+    "supp_fig5"
   ],
   "formats": [
     "png",
@@ -111,10 +113,20 @@
       ],
       "source_table": "results/figures/reliability_transportability/source_tables/supp_fig4_estimand_validation.csv",
       "rows": 4
+    },
+    "supp_fig5": {
+      "files": [
+        "reliability_transportability_supp_fig5_upgrade_v2.png",
+        "reliability_transportability_supp_fig5_upgrade_v2.pdf",
+        "reliability_transportability_supp_fig5_upgrade_v2.svg",
+        "reliability_transportability_supp_fig5_upgrade_v2.tiff"
+      ],
+      "source_table": "artifacts/manifests/neural_family_transport_profiles.csv",
+      "rows": 216
     }
   },
   "data_policy": "Frozen Frangieh/Nadig data and existing matched-fixed/bootstrap summaries; unavailable prospective cells stay gray/NA; target-informed explanatory quantities never enter prospective prediction.",
-  "selection_policy": "Fig1B uses source-rank quantile exemplars from the full 243-label source-frozen surface; Fig1D is a compact count preview from the complete 243-label delta-cosine risk surface and retains the full source table; Fig4A is the unique detailed alluvial view. Supplementary Fig. S1 uses the registered 144-row source-only feature ladder U→U+G→U+G+S→U+G+S+N. S2 uses the fixed 18-point decision surface; S3 uses metric-matched full-depth risk vectors on the same fixed universes; S4 uses the canonical synthetic estimand validation.",
+  "selection_policy": "Fig1B uses source-rank quantile exemplars from the full 243-label source-frozen surface; Fig1D is a compact count preview from the complete 243-label delta-cosine risk surface and retains the full source table; Fig4A is the unique detailed alluvial view. Supplementary Fig. S1 uses the registered 144-row source-only feature ladder U→U+G→U+G+S→U+G+S+N. S2 uses the fixed 18-point decision surface; S3 uses metric-matched full-depth risk vectors on the same fixed universes; S4 uses the canonical synthetic estimand validation; S5 uses the four-family descriptive profile and the 60-condition finite-measurement primary simulation.",
   "style_policy": "Centralized ptl_figure_style.py; metric colors are stable; biological context uses position/line style; no equal-grid heatmap dominance.",
   "anti_fabrication_checks": [
     "strict support >= 8",
@@ -125,6 +137,7 @@
     "target_feature_leakage=False",
     "Nadig replication uses full-size per-label artifact",
     "no numeric cross-dataset prospective result",
+    "S5 uses executed neural-family profiles and simulation-v2 summaries",
     "primary intervals are 90%"
   ],
   "data_kill_switch": {

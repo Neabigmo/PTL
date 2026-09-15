@@ -721,8 +721,8 @@ def build(root: Path) -> tuple[Path, Path, dict[str, Any]]:
             "stable_inversion_note": "Stable inversion fractions are reported as point diagnostics from the existing strict-support ordering artifact; no unsupported confidence interval is invented for them.",
         },
         "reproduction_commands": [
-            "F:/anaconda3/python.exe scripts/run_frangieh_source_only_rbf_krr.py --measurement --draws 2000",
-            "F:/anaconda3/python.exe scripts/build_predictor_family_transport_comparison.py",
+            "python scripts/run_frangieh_source_only_rbf_krr.py --measurement --draws 2000",
+            "python scripts/build_predictor_family_transport_comparison.py",
         ],
     }
     report_path = root / OUTPUT_JSON

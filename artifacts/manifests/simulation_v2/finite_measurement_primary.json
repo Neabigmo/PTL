@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "status": "executed",
+  "mode": "primary",
+  "trials_per_condition": 500,
+  "condition_count": 60,
+  "workers": 8,
+  "seed": 20260915,
+  "n_replicates": 12,
+  "minimum_strict_support": 8,
+  "estimators": [
+    "d_adj",
+    "kendall",
+    "spearman",
+    "top10_jaccard",
+    "stable_inversion",
+    "floor_adjusted_kendall",
+    "floor_adjusted_spearman",
+    "floor_adjusted_jaccard"
+  ],
+  "generative_laws": [
+    "gaussian_heteroscedastic",
+    "student_t_heavy_tailed"
+  ],
+  "truth_definition": "latent continuous source/target rank distances under a Gaussian-copula inversion law",
+  "stable_rule": "Beta(plus+1, minus+1) 95% direction posterior with minimum strict support >=8 is enforced; the canonical exact implementation is shared with src/evaluation/ordering_estimands.py.",
+  "interpretation": "Calibration and comparator recovery screen only; no uniform superiority claim is promoted without agreement across both laws and preregistered conditions.",
+  "csv": "artifacts/manifests/simulation_v2/finite_measurement_primary.csv"
+}

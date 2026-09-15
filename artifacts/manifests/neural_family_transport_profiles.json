@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "status": "executed",
+  "profile_surface": "same frozen Frangieh labels/genes/contexts/metrics; deterministic full-depth source-frozen risk vectors",
+  "families": [
+    "bilinear_ridge",
+    "rbf_kernel_ridge_source_only",
+    "source_only_mlp",
+    "source_only_latent_mlp"
+  ],
+  "rows_per_family": 54,
+  "rows_total": 216,
+  "source_adequacy": {
+    "bilinear_ridge": {
+      "macro_source_fidelity": 0.3459508937637917,
+      "source_fidelity::frangieh_melanoma_control": 0.3546556165236549,
+      "source_fidelity::frangieh_melanoma_coculture": 0.3140435622950158,
+      "source_fidelity::frangieh_melanoma_ifng": 0.36915350247270445
+    },
+    "rbf_kernel_ridge_source_only": {
+      "macro_source_fidelity": 0.35507342081640386,
+      "source_fidelity::frangieh_melanoma_control": 0.3620455783401722,
+      "source_fidelity::frangieh_melanoma_coculture": 0.32482320164095074,
+      "source_fidelity::frangieh_melanoma_ifng": 0.37835148246808864
+    },
+    "source_only_mlp": {
+      "macro_source_fidelity": 0.362614214042107,
+      "source_fidelity::frangieh_melanoma_control": 0.3669919636681023,
+      "source_fidelity::frangieh_melanoma_coculture": 0.33084572480077673,
+      "source_fidelity::frangieh_melanoma_ifng": 0.39000495365744187
+    },
+    "source_only_latent_mlp": {
+      "macro_source_fidelity": 0.3664484365793377,
+      "source_fidelity::frangieh_melanoma_control": 0.3718687911108864,
+      "source_fidelity::frangieh_melanoma_coculture": 0.3352610215143672,
+      "source_fidelity::frangieh_melanoma_ifng": 0.3922154971127593
+    }
+  },
+  "prediction_similarity_to_bilinear": {
+    "rbf_kernel_ridge_source_only": 0.7333061099052429,
+    "source_only_mlp": 0.7536064982414246,
+    "source_only_latent_mlp": 0.768703043460846
+  },
+  "target_outcomes_used_for_fitting": false,
+  "target_outcomes_used_for_family_selection": false,
+  "interpretation": "Descriptive profile only; this artifact does not replace the canonical cell-resampled D_adj surface and does not establish superiority, equivalence, or generalization.",
+  "inputs": {
+    "bilinear_ridge": "artifacts/source_data/frangieh_source_frozen_predictions.npz",
+    "rbf_kernel_ridge_source_only": "artifacts/source_data/frangieh_source_only_rbf_krr_predictions.npz",
+    "source_only_mlp": "artifacts/source_data/frangieh_source_only_mlp_predictions.npz",
+    "source_only_latent_mlp": "artifacts/source_data/frangieh_source_only_latent_mlp_predictions.npz"
+  },
+  "csv": "artifacts/manifests/neural_family_transport_profiles.csv"
+}

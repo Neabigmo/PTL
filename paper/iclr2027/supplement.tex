@@ -229,7 +229,7 @@ The evaluation contains 18 transfer-by-metric tasks for each of continuous burde
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig1_source_only_forecasting.pdf}
+\includegraphics[width=\textwidth]{figures/supplementary/s1.pdf}
 \caption{Source-only prospective boundary. (A) The information firewall separates source-observable features from target outcomes. (B) Held-out Spearman correlation for continuous reordering burden. (C) Held-out AUPRC for high-burden classification. Each point is one transfer-by-metric task; thick marks summarize the median and interquartile range.}
 \label{fig:source-only}
 \end{figure}
@@ -249,7 +249,7 @@ are shown without a headline significance claim.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig2_metric_stratified_decision.pdf}
+\includegraphics[width=\textwidth]{figures/supplementary/s2.pdf}
 \caption{Metric-stratified decision association. The 18 fixed full-depth,
 10\% random-reference decision rows are shown in their native scale (A) and
 after within-metric rank transformation (B). The pooled within-metric interval
@@ -273,7 +273,7 @@ decomposition.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig3_mean_fidelity_control.pdf}
+\includegraphics[width=\textwidth]{figures/supplementary/s3.pdf}
 \caption{Metric-matched mean-fidelity control. Each point is one of 18
 directed transfer--metric rows. The horizontal coordinate is the absolute
 source-to-target mean-risk shift computed on the exact fixed label universe;
@@ -292,7 +292,7 @@ identity.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig4_estimand_validation.pdf}
+\includegraphics[width=\textwidth]{figures/supplementary/s4.pdf}
 \caption{Finite-sample validation of the ordering estimand. Trial-level
 sampling distributions compare the plug-in/V estimator with the order-2
 U-corrected estimator under a finite-sample null and a known alternative;
@@ -372,6 +372,49 @@ generalization.
 
 \input{supplement_predictor_family_sensitivity_table.tex}
 
+\subsection{Neural source-only families and finite-measurement simulation}
+
+We extended the source-only sensitivity without changing the canonical
+bilinear-ridge estimand. Two additional families were fit on the frozen
+Frangieh surface: a direct MLP and a latent-response MLP. In every outer fold,
+the ten-dimensional input basis and, for the latent family, the 32-dimensional
+response basis were fit on source training conditions only. The models used
+the preregistered $256$--$512$ GELU architecture, dropout $0.1$, AdamW and a
+source-only inner selection of weight decay. Across the three source contexts,
+the macro source-side OOF fidelity was $0.363$ for the direct MLP and $0.366$
+for the latent-response MLP, compared with $0.346$ for the bilinear reference
+and $0.355$ for RBF. These are adequacy and profile diagnostics, not target-
+informed model selection; the target outcomes were not loaded during fitting.
+
+The resulting four-family profile is evaluated on the same frozen labels,
+genes, contexts and metrics and is retained as a deterministic full-depth
+profile because the neural runs do not replace the canonical cell-resampled
+$D_{\rm adj}$ surface. Supplementary Fig.~\ref{fig:upgrade-v2} shows this
+profile together with the pre-registered finite-measurement calibration slice:
+two generative laws, 60 conditions, 500 trials per condition, six cell-depths,
+five inversion fractions and an exact Beta direction posterior with the frozen
+minimum strict support of eight. The simulation is a calibration and recovery
+screen; it does not justify a universal superiority claim for $D_{\rm adj}$
+or for any predictor family. Full machine-readable outputs are
+\texttt{neural\_family\_transport\_profiles.csv} and
+\texttt{simulation\_v2/finite\_measurement\_primary.csv}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/supplementary/s5_upgrade_v2.pdf}
+\caption{\textbf{Source-only family and finite-measurement sensitivity.} (A)
+Mean absolute error of the corrected ordering estimate relative to the known
+latent ordering law across cell depth for Gaussian-heteroscedastic and
+Student-$t$ measurements. (B) Bias surface for the Gaussian primary slice;
+the horizontal axis is cell depth and the vertical axis is the true inversion
+fraction. (C) Source-side OOF fidelity for each source context and predictor
+family. (D) Deterministic ordering profiles for the three fixed metrics across
+the four source-only families. The neural family and simulation analyses are
+descriptive and were not used to tune target transport or alter the canonical
+main-text estimand.}
+\label{fig:upgrade-v2}
+\end{figure}
+
 \subsection{Provenance limits on a four-context expansion}
 
 We audited the exact provenance and support before adding a broader
@@ -393,7 +436,7 @@ genome-scale Perturb-seq resource \citep{nadig2025trade,replogle2022genome}.
 \section{Reproducibility and scientific regeneration}
 \label{app:reproducibility}
 
-The scientific regeneration path starts from the canonical manifest tables, fixed splits and resampling settings, and rebuilds the four main figures, Supplementary Figs.~S1--S4, and the compact supplementary tables. The anonymous repository documents the executable commands and data lineage. Large raw H5AD/NPZ inputs remain external to the manuscript tree; the reviewable CSV/JSON products expose the values used in figures and tables.
+The scientific regeneration path starts from the canonical manifest tables, fixed splits and resampling settings, and rebuilds the four main figures, Supplementary Figs.~S1--S5, and the compact supplementary tables. The anonymous repository documents the executable commands and data lineage. Large raw H5AD/NPZ inputs remain external to the manuscript tree; the reviewable CSV/JSON products expose the values used in figures and tables.
 
 \paragraph{Code and data availability.}
 The anonymized core release is available at

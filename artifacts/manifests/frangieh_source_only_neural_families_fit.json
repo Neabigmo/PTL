@@ -1,0 +1,3125 @@
+{
+  "status": "executed",
+  "protocol": "source_only_neural_families_v2",
+  "source_environments": [
+    "frangieh_melanoma_control",
+    "frangieh_melanoma_coculture",
+    "frangieh_melanoma_ifng"
+  ],
+  "outer_folds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "model_seeds": [
+    0,
+    1,
+    2
+  ],
+  "families": [
+    "source_only_mlp",
+    "source_only_latent_mlp"
+  ],
+  "architecture": {
+    "input": "train-only PCA of source post-expression, 10 components",
+    "hidden": [
+      256,
+      512
+    ],
+    "activation": "GELU",
+    "dropout": 0.1,
+    "optimizer": "AdamW",
+    "learning_rate": 0.001,
+    "max_epochs": 500,
+    "patience": 30,
+    "weight_decay_grid": [
+      1e-05,
+      0.0001,
+      0.001
+    ]
+  },
+  "latent_target": {
+    "family": "source_only_latent_mlp",
+    "basis": "outer-fold train-only PCA of source response",
+    "dimension": 32
+  },
+  "target_outcomes_used_during_fit": false,
+  "gene_count": 8229,
+  "records": [
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 0,
+      "model_seed": 0,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 489,
+        "validation_mse": 0.4052990674972534,
+        "epochs_run": 500
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 1,
+          "validation_mse": 0.8734028935432434,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 1,
+          "validation_mse": 0.8736807703971863,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 1,
+          "validation_mse": 0.8730453252792358,
+          "epochs_run": 11
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 0,
+      "model_seed": 1,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 2,
+        "validation_mse": 0.8055621385574341,
+        "epochs_run": 32
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 1,
+          "validation_mse": 0.8734028935432434,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 1,
+          "validation_mse": 0.8736807703971863,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 1,
+          "validation_mse": 0.8730453252792358,
+          "epochs_run": 11
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 0,
+      "model_seed": 2,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 351,
+        "validation_mse": 0.6872064471244812,
+        "epochs_run": 381
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 1,
+          "validation_mse": 0.8734028935432434,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 1,
+          "validation_mse": 0.8736807703971863,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 1,
+          "validation_mse": 0.8730453252792358,
+          "epochs_run": 11
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 1,
+      "model_seed": 0,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 194,
+        "validation_mse": 0.6672527194023132,
+        "epochs_run": 224
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 4,
+          "validation_mse": 0.9251199960708618,
+          "epochs_run": 14
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 4,
+          "validation_mse": 0.9252563118934631,
+          "epochs_run": 14
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 4,
+          "validation_mse": 0.9250572919845581,
+          "epochs_run": 14
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 1,
+      "model_seed": 1,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 30,
+        "validation_mse": 0.7271760702133179,
+        "epochs_run": 60
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 4,
+          "validation_mse": 0.9251199960708618,
+          "epochs_run": 14
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 4,
+          "validation_mse": 0.9252563118934631,
+          "epochs_run": 14
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 4,
+          "validation_mse": 0.9250572919845581,
+          "epochs_run": 14
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 1,
+      "model_seed": 2,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 160,
+        "validation_mse": 0.48414838314056396,
+        "epochs_run": 190
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 4,
+          "validation_mse": 0.9251199960708618,
+          "epochs_run": 14
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 4,
+          "validation_mse": 0.9252563118934631,
+          "epochs_run": 14
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 4,
+          "validation_mse": 0.9250572919845581,
+          "epochs_run": 14
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 2,
+      "model_seed": 0,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 24,
+        "validation_mse": 1.2658088207244873,
+        "epochs_run": 54
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 16,
+          "validation_mse": 0.7738927602767944,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 16,
+          "validation_mse": 0.7734578847885132,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 18,
+          "validation_mse": 0.7735987305641174,
+          "epochs_run": 28
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 2,
+      "model_seed": 1,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 500,
+        "validation_mse": 0.4800664484500885,
+        "epochs_run": 500
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 16,
+          "validation_mse": 0.7738927602767944,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 16,
+          "validation_mse": 0.7734578847885132,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 18,
+          "validation_mse": 0.7735987305641174,
+          "epochs_run": 28
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 2,
+      "model_seed": 2,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 486,
+        "validation_mse": 0.44731104373931885,
+        "epochs_run": 500
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 16,
+          "validation_mse": 0.7738927602767944,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 16,
+          "validation_mse": 0.7734578847885132,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 18,
+          "validation_mse": 0.7735987305641174,
+          "epochs_run": 28
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 3,
+      "model_seed": 0,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 42,
+        "validation_mse": 1.3679282665252686,
+        "epochs_run": 72
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 5,
+          "validation_mse": 1.4373348951339722,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 5,
+          "validation_mse": 1.4350615739822388,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 6,
+          "validation_mse": 1.435041069984436,
+          "epochs_run": 16
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 3,
+      "model_seed": 1,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 16,
+        "validation_mse": 0.9732906818389893,
+        "epochs_run": 46
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 5,
+          "validation_mse": 1.4373348951339722,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 5,
+          "validation_mse": 1.4350615739822388,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 6,
+          "validation_mse": 1.435041069984436,
+          "epochs_run": 16
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 3,
+      "model_seed": 2,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 84,
+        "validation_mse": 0.633303165435791,
+        "epochs_run": 114
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 5,
+          "validation_mse": 1.4373348951339722,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 5,
+          "validation_mse": 1.4350615739822388,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 6,
+          "validation_mse": 1.435041069984436,
+          "epochs_run": 16
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 4,
+      "model_seed": 0,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 128,
+        "validation_mse": 0.5635122060775757,
+        "epochs_run": 158
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 1,
+          "validation_mse": 1.372867465019226,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 1,
+          "validation_mse": 1.3728435039520264,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 1,
+          "validation_mse": 1.373058795928955,
+          "epochs_run": 11
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 4,
+      "model_seed": 1,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 3,
+        "validation_mse": 1.0102298259735107,
+        "epochs_run": 33
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 1,
+          "validation_mse": 1.372867465019226,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 1,
+          "validation_mse": 1.3728435039520264,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 1,
+          "validation_mse": 1.373058795928955,
+          "epochs_run": 11
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 4,
+      "model_seed": 2,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 3,
+        "validation_mse": 1.2092504501342773,
+        "epochs_run": 33
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 1,
+          "validation_mse": 1.372867465019226,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 1,
+          "validation_mse": 1.3728435039520264,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 1,
+          "validation_mse": 1.373058795928955,
+          "epochs_run": 11
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 0,
+      "model_seed": 0,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 24,
+        "validation_mse": 0.9856275320053101,
+        "epochs_run": 54
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 19,
+          "validation_mse": 0.8486531972885132,
+          "epochs_run": 29
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 17,
+          "validation_mse": 0.8444566130638123,
+          "epochs_run": 27
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 9,
+          "validation_mse": 0.8515055775642395,
+          "epochs_run": 19
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 0,
+      "model_seed": 1,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 147,
+        "validation_mse": 0.5904892683029175,
+        "epochs_run": 177
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 19,
+          "validation_mse": 0.8486531972885132,
+          "epochs_run": 29
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 17,
+          "validation_mse": 0.8444566130638123,
+          "epochs_run": 27
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 9,
+          "validation_mse": 0.8515055775642395,
+          "epochs_run": 19
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 0,
+      "model_seed": 2,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 268,
+        "validation_mse": 0.8149189352989197,
+        "epochs_run": 298
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 19,
+          "validation_mse": 0.8486531972885132,
+          "epochs_run": 29
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 17,
+          "validation_mse": 0.8444566130638123,
+          "epochs_run": 27
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 9,
+          "validation_mse": 0.8515055775642395,
+          "epochs_run": 19
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 1,
+      "model_seed": 0,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 165,
+        "validation_mse": 0.8003891706466675,
+        "epochs_run": 195
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 2,
+          "validation_mse": 1.1010483503341675,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 3,
+          "validation_mse": 1.099871277809143,
+          "epochs_run": 13
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 3,
+          "validation_mse": 1.0999751091003418,
+          "epochs_run": 13
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 1,
+      "model_seed": 1,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 316,
+        "validation_mse": 0.5088117122650146,
+        "epochs_run": 346
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 2,
+          "validation_mse": 1.1010483503341675,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 3,
+          "validation_mse": 1.099871277809143,
+          "epochs_run": 13
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 3,
+          "validation_mse": 1.0999751091003418,
+          "epochs_run": 13
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 1,
+      "model_seed": 2,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 490,
+        "validation_mse": 0.36837002635002136,
+        "epochs_run": 500
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 2,
+          "validation_mse": 1.1010483503341675,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 3,
+          "validation_mse": 1.099871277809143,
+          "epochs_run": 13
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 3,
+          "validation_mse": 1.0999751091003418,
+          "epochs_run": 13
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 2,
+      "model_seed": 0,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 68,
+        "validation_mse": 0.6980589032173157,
+        "epochs_run": 98
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 5,
+          "validation_mse": 0.9799033999443054,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 3,
+          "validation_mse": 0.9796185493469238,
+          "epochs_run": 13
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 2,
+          "validation_mse": 0.9795792102813721,
+          "epochs_run": 12
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 2,
+      "model_seed": 1,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 38,
+        "validation_mse": 0.7940453886985779,
+        "epochs_run": 68
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 5,
+          "validation_mse": 0.9799033999443054,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 3,
+          "validation_mse": 0.9796185493469238,
+          "epochs_run": 13
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 2,
+          "validation_mse": 0.9795792102813721,
+          "epochs_run": 12
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 2,
+      "model_seed": 2,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 105,
+        "validation_mse": 0.8309983015060425,
+        "epochs_run": 135
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 5,
+          "validation_mse": 0.9799033999443054,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 3,
+          "validation_mse": 0.9796185493469238,
+          "epochs_run": 13
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 2,
+          "validation_mse": 0.9795792102813721,
+          "epochs_run": 12
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 3,
+      "model_seed": 0,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 413,
+        "validation_mse": 0.4227052330970764,
+        "epochs_run": 443
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 10,
+          "validation_mse": 1.140825629234314,
+          "epochs_run": 20
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 11,
+          "validation_mse": 1.1405500173568726,
+          "epochs_run": 21
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 9,
+          "validation_mse": 1.1457371711730957,
+          "epochs_run": 19
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 3,
+      "model_seed": 1,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 136,
+        "validation_mse": 0.6636961102485657,
+        "epochs_run": 166
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 10,
+          "validation_mse": 1.140825629234314,
+          "epochs_run": 20
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 11,
+          "validation_mse": 1.1405500173568726,
+          "epochs_run": 21
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 9,
+          "validation_mse": 1.1457371711730957,
+          "epochs_run": 19
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 3,
+      "model_seed": 2,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 10,
+        "validation_mse": 0.9009231328964233,
+        "epochs_run": 40
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 10,
+          "validation_mse": 1.140825629234314,
+          "epochs_run": 20
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 11,
+          "validation_mse": 1.1405500173568726,
+          "epochs_run": 21
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 9,
+          "validation_mse": 1.1457371711730957,
+          "epochs_run": 19
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 4,
+      "model_seed": 0,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 493,
+        "validation_mse": 0.4933162033557892,
+        "epochs_run": 500
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 19,
+          "validation_mse": 1.010477900505066,
+          "epochs_run": 29
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 19,
+          "validation_mse": 1.0060125589370728,
+          "epochs_run": 29
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 17,
+          "validation_mse": 1.0043919086456299,
+          "epochs_run": 27
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 4,
+      "model_seed": 1,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 33,
+        "validation_mse": 0.9111443758010864,
+        "epochs_run": 63
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 19,
+          "validation_mse": 1.010477900505066,
+          "epochs_run": 29
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 19,
+          "validation_mse": 1.0060125589370728,
+          "epochs_run": 29
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 17,
+          "validation_mse": 1.0043919086456299,
+          "epochs_run": 27
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 4,
+      "model_seed": 2,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 25,
+        "validation_mse": 0.9227991104125977,
+        "epochs_run": 55
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 19,
+          "validation_mse": 1.010477900505066,
+          "epochs_run": 29
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 19,
+          "validation_mse": 1.0060125589370728,
+          "epochs_run": 29
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 17,
+          "validation_mse": 1.0043919086456299,
+          "epochs_run": 27
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 0,
+      "model_seed": 0,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 39,
+        "validation_mse": 0.730721652507782,
+        "epochs_run": 69
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 1,
+          "validation_mse": 1.1428011655807495,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 2,
+          "validation_mse": 1.1420117616653442,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 2,
+          "validation_mse": 1.1442722082138062,
+          "epochs_run": 12
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 0,
+      "model_seed": 1,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 362,
+        "validation_mse": 0.48400741815567017,
+        "epochs_run": 392
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 1,
+          "validation_mse": 1.1428011655807495,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 2,
+          "validation_mse": 1.1420117616653442,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 2,
+          "validation_mse": 1.1442722082138062,
+          "epochs_run": 12
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 0,
+      "model_seed": 2,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 42,
+        "validation_mse": 0.872128427028656,
+        "epochs_run": 72
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 1,
+          "validation_mse": 1.1428011655807495,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 2,
+          "validation_mse": 1.1420117616653442,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 2,
+          "validation_mse": 1.1442722082138062,
+          "epochs_run": 12
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 1,
+      "model_seed": 0,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 36,
+        "validation_mse": 0.6794987320899963,
+        "epochs_run": 66
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 6,
+          "validation_mse": 1.136881709098816,
+          "epochs_run": 16
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 5,
+          "validation_mse": 1.137341022491455,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 7,
+          "validation_mse": 1.1360487937927246,
+          "epochs_run": 17
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 1,
+      "model_seed": 1,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 450,
+        "validation_mse": 0.4592902958393097,
+        "epochs_run": 480
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 6,
+          "validation_mse": 1.136881709098816,
+          "epochs_run": 16
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 5,
+          "validation_mse": 1.137341022491455,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 7,
+          "validation_mse": 1.1360487937927246,
+          "epochs_run": 17
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 1,
+      "model_seed": 2,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 57,
+        "validation_mse": 0.80739426612854,
+        "epochs_run": 87
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 6,
+          "validation_mse": 1.136881709098816,
+          "epochs_run": 16
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 5,
+          "validation_mse": 1.137341022491455,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 7,
+          "validation_mse": 1.1360487937927246,
+          "epochs_run": 17
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 2,
+      "model_seed": 0,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 500,
+        "validation_mse": 0.4731954336166382,
+        "epochs_run": 500
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 17,
+          "validation_mse": 0.9637045860290527,
+          "epochs_run": 27
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 18,
+          "validation_mse": 0.9649128913879395,
+          "epochs_run": 28
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 16,
+          "validation_mse": 0.9655665755271912,
+          "epochs_run": 26
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 2,
+      "model_seed": 1,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 74,
+        "validation_mse": 0.701498806476593,
+        "epochs_run": 104
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 17,
+          "validation_mse": 0.9637045860290527,
+          "epochs_run": 27
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 18,
+          "validation_mse": 0.9649128913879395,
+          "epochs_run": 28
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 16,
+          "validation_mse": 0.9655665755271912,
+          "epochs_run": 26
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 2,
+      "model_seed": 2,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 36,
+        "validation_mse": 0.7137726545333862,
+        "epochs_run": 66
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 17,
+          "validation_mse": 0.9637045860290527,
+          "epochs_run": 27
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 18,
+          "validation_mse": 0.9649128913879395,
+          "epochs_run": 28
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 16,
+          "validation_mse": 0.9655665755271912,
+          "epochs_run": 26
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 3,
+      "model_seed": 0,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 174,
+        "validation_mse": 0.7141643166542053,
+        "epochs_run": 204
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 27,
+          "validation_mse": 1.0152610540390015,
+          "epochs_run": 37
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 10,
+          "validation_mse": 1.022983431816101,
+          "epochs_run": 20
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 10,
+          "validation_mse": 1.0204004049301147,
+          "epochs_run": 20
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 3,
+      "model_seed": 1,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 31,
+        "validation_mse": 0.7713552117347717,
+        "epochs_run": 61
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 27,
+          "validation_mse": 1.0152610540390015,
+          "epochs_run": 37
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 10,
+          "validation_mse": 1.022983431816101,
+          "epochs_run": 20
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 10,
+          "validation_mse": 1.0204004049301147,
+          "epochs_run": 20
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 3,
+      "model_seed": 2,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 20,
+        "validation_mse": 0.7772701978683472,
+        "epochs_run": 50
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 27,
+          "validation_mse": 1.0152610540390015,
+          "epochs_run": 37
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 10,
+          "validation_mse": 1.022983431816101,
+          "epochs_run": 20
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 10,
+          "validation_mse": 1.0204004049301147,
+          "epochs_run": 20
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 4,
+      "model_seed": 0,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 36,
+        "validation_mse": 1.238567590713501,
+        "epochs_run": 66
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 5,
+          "validation_mse": 0.9982686042785645,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 7,
+          "validation_mse": 0.9961118102073669,
+          "epochs_run": 17
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 5,
+          "validation_mse": 0.9998383522033691,
+          "epochs_run": 15
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 4,
+      "model_seed": 1,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 500,
+        "validation_mse": 0.3693593442440033,
+        "epochs_run": 500
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 5,
+          "validation_mse": 0.9982686042785645,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 7,
+          "validation_mse": 0.9961118102073669,
+          "epochs_run": 17
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 5,
+          "validation_mse": 0.9998383522033691,
+          "epochs_run": 15
+        }
+      ]
+    },
+    {
+      "family": "source_only_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 4,
+      "model_seed": 2,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": null,
+      "fit": {
+        "best_epoch": 92,
+        "validation_mse": 0.632941722869873,
+        "epochs_run": 122
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 5,
+          "validation_mse": 0.9982686042785645,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 7,
+          "validation_mse": 0.9961118102073669,
+          "epochs_run": 17
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 5,
+          "validation_mse": 0.9998383522033691,
+          "epochs_run": 15
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 0,
+      "model_seed": 0,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 500,
+        "validation_mse": 0.009450783021748066,
+        "epochs_run": 500
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 2,
+          "validation_mse": 0.20062534511089325,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 1,
+          "validation_mse": 0.18882377445697784,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 1,
+          "validation_mse": 0.2076960653066635,
+          "epochs_run": 11
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 0,
+      "model_seed": 1,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 3,
+        "validation_mse": 0.15228386223316193,
+        "epochs_run": 33
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 2,
+          "validation_mse": 0.20062534511089325,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 1,
+          "validation_mse": 0.18882377445697784,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 1,
+          "validation_mse": 0.2076960653066635,
+          "epochs_run": 11
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 0,
+      "model_seed": 2,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 371,
+        "validation_mse": 0.06992911547422409,
+        "epochs_run": 401
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 2,
+          "validation_mse": 0.20062534511089325,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 1,
+          "validation_mse": 0.18882377445697784,
+          "epochs_run": 11
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 1,
+          "validation_mse": 0.2076960653066635,
+          "epochs_run": 11
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 1,
+      "model_seed": 0,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 367,
+        "validation_mse": 0.03553348407149315,
+        "epochs_run": 397
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 8,
+          "validation_mse": 0.16825881600379944,
+          "epochs_run": 18
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 12,
+          "validation_mse": 0.16842342913150787,
+          "epochs_run": 22
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 4,
+          "validation_mse": 0.1740242838859558,
+          "epochs_run": 14
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 1,
+      "model_seed": 1,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 15,
+        "validation_mse": 0.10455474257469177,
+        "epochs_run": 45
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 8,
+          "validation_mse": 0.16825881600379944,
+          "epochs_run": 18
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 12,
+          "validation_mse": 0.16842342913150787,
+          "epochs_run": 22
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 4,
+          "validation_mse": 0.1740242838859558,
+          "epochs_run": 14
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 1,
+      "model_seed": 2,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 132,
+        "validation_mse": 0.014207654632627964,
+        "epochs_run": 162
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 8,
+          "validation_mse": 0.16825881600379944,
+          "epochs_run": 18
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 12,
+          "validation_mse": 0.16842342913150787,
+          "epochs_run": 22
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 4,
+          "validation_mse": 0.1740242838859558,
+          "epochs_run": 14
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 2,
+      "model_seed": 0,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 3,
+        "validation_mse": 0.3554649353027344,
+        "epochs_run": 33
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 30,
+          "validation_mse": 0.11385461688041687,
+          "epochs_run": 40
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 38,
+          "validation_mse": 0.11404912173748016,
+          "epochs_run": 48
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 57,
+          "validation_mse": 0.11312844604253769,
+          "epochs_run": 60
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 2,
+      "model_seed": 1,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 242,
+        "validation_mse": 0.04430951178073883,
+        "epochs_run": 272
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 30,
+          "validation_mse": 0.11385461688041687,
+          "epochs_run": 40
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 38,
+          "validation_mse": 0.11404912173748016,
+          "epochs_run": 48
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 57,
+          "validation_mse": 0.11312844604253769,
+          "epochs_run": 60
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 2,
+      "model_seed": 2,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 498,
+        "validation_mse": 0.0111149363219738,
+        "epochs_run": 500
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 30,
+          "validation_mse": 0.11385461688041687,
+          "epochs_run": 40
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 38,
+          "validation_mse": 0.11404912173748016,
+          "epochs_run": 48
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 57,
+          "validation_mse": 0.11312844604253769,
+          "epochs_run": 60
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 3,
+      "model_seed": 0,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 21,
+        "validation_mse": 0.30941930413246155,
+        "epochs_run": 51
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 16,
+          "validation_mse": 0.34940865635871887,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 6,
+          "validation_mse": 0.3194805979728699,
+          "epochs_run": 16
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 7,
+          "validation_mse": 0.3302808105945587,
+          "epochs_run": 17
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 3,
+      "model_seed": 1,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 25,
+        "validation_mse": 0.17428161203861237,
+        "epochs_run": 55
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 16,
+          "validation_mse": 0.34940865635871887,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 6,
+          "validation_mse": 0.3194805979728699,
+          "epochs_run": 16
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 7,
+          "validation_mse": 0.3302808105945587,
+          "epochs_run": 17
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 3,
+      "model_seed": 2,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 189,
+        "validation_mse": 0.02793988026678562,
+        "epochs_run": 219
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 16,
+          "validation_mse": 0.34940865635871887,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 6,
+          "validation_mse": 0.3194805979728699,
+          "epochs_run": 16
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 7,
+          "validation_mse": 0.3302808105945587,
+          "epochs_run": 17
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 4,
+      "model_seed": 0,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 104,
+        "validation_mse": 0.014519969001412392,
+        "epochs_run": 134
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 3,
+          "validation_mse": 0.3940613269805908,
+          "epochs_run": 13
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 2,
+          "validation_mse": 0.40246865153312683,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 3,
+          "validation_mse": 0.410553514957428,
+          "epochs_run": 13
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 4,
+      "model_seed": 1,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 5,
+        "validation_mse": 0.21460029482841492,
+        "epochs_run": 35
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 3,
+          "validation_mse": 0.3940613269805908,
+          "epochs_run": 13
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 2,
+          "validation_mse": 0.40246865153312683,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 3,
+          "validation_mse": 0.410553514957428,
+          "epochs_run": 13
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_control",
+      "fold_id": 4,
+      "model_seed": 2,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 24,
+        "validation_mse": 0.3103387951850891,
+        "epochs_run": 54
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 3,
+          "validation_mse": 0.3940613269805908,
+          "epochs_run": 13
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 2,
+          "validation_mse": 0.40246865153312683,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 3,
+          "validation_mse": 0.410553514957428,
+          "epochs_run": 13
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 0,
+      "model_seed": 0,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 36,
+        "validation_mse": 0.18968328833580017,
+        "epochs_run": 66
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 10,
+          "validation_mse": 0.15229876339435577,
+          "epochs_run": 20
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 12,
+          "validation_mse": 0.1460203230381012,
+          "epochs_run": 22
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 7,
+          "validation_mse": 0.14976760745048523,
+          "epochs_run": 17
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 0,
+      "model_seed": 1,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 300,
+        "validation_mse": 0.027182938531041145,
+        "epochs_run": 330
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 10,
+          "validation_mse": 0.15229876339435577,
+          "epochs_run": 20
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 12,
+          "validation_mse": 0.1460203230381012,
+          "epochs_run": 22
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 7,
+          "validation_mse": 0.14976760745048523,
+          "epochs_run": 17
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 0,
+      "model_seed": 2,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 168,
+        "validation_mse": 0.10908543318510056,
+        "epochs_run": 198
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 10,
+          "validation_mse": 0.15229876339435577,
+          "epochs_run": 20
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 12,
+          "validation_mse": 0.1460203230381012,
+          "epochs_run": 22
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 7,
+          "validation_mse": 0.14976760745048523,
+          "epochs_run": 17
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 1,
+      "model_seed": 0,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 117,
+        "validation_mse": 0.1084941178560257,
+        "epochs_run": 147
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 16,
+          "validation_mse": 0.21558867394924164,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 15,
+          "validation_mse": 0.21880096197128296,
+          "epochs_run": 25
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 18,
+          "validation_mse": 0.21590739488601685,
+          "epochs_run": 28
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 1,
+      "model_seed": 1,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 353,
+        "validation_mse": 0.011579125188291073,
+        "epochs_run": 383
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 16,
+          "validation_mse": 0.21558867394924164,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 15,
+          "validation_mse": 0.21880096197128296,
+          "epochs_run": 25
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 18,
+          "validation_mse": 0.21590739488601685,
+          "epochs_run": 28
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 1,
+      "model_seed": 2,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 280,
+        "validation_mse": 0.005480247084051371,
+        "epochs_run": 310
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 16,
+          "validation_mse": 0.21558867394924164,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 15,
+          "validation_mse": 0.21880096197128296,
+          "epochs_run": 25
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 18,
+          "validation_mse": 0.21590739488601685,
+          "epochs_run": 28
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 2,
+      "model_seed": 0,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 51,
+        "validation_mse": 0.09988388419151306,
+        "epochs_run": 81
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 16,
+          "validation_mse": 0.190902978181839,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 4,
+          "validation_mse": 0.19661234319210052,
+          "epochs_run": 14
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 2,
+          "validation_mse": 0.19481995701789856,
+          "epochs_run": 12
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 2,
+      "model_seed": 1,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 21,
+        "validation_mse": 0.13264109194278717,
+        "epochs_run": 51
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 16,
+          "validation_mse": 0.190902978181839,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 4,
+          "validation_mse": 0.19661234319210052,
+          "epochs_run": 14
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 2,
+          "validation_mse": 0.19481995701789856,
+          "epochs_run": 12
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 2,
+      "model_seed": 2,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 25,
+        "validation_mse": 0.146076962351799,
+        "epochs_run": 55
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 16,
+          "validation_mse": 0.190902978181839,
+          "epochs_run": 26
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 4,
+          "validation_mse": 0.19661234319210052,
+          "epochs_run": 14
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 2,
+          "validation_mse": 0.19481995701789856,
+          "epochs_run": 12
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 3,
+      "model_seed": 0,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 494,
+        "validation_mse": 0.005606677383184433,
+        "epochs_run": 500
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 25,
+          "validation_mse": 0.1914469599723816,
+          "epochs_run": 35
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 13,
+          "validation_mse": 0.192504420876503,
+          "epochs_run": 23
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 25,
+          "validation_mse": 0.17996220290660858,
+          "epochs_run": 35
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 3,
+      "model_seed": 1,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 109,
+        "validation_mse": 0.06451926380395889,
+        "epochs_run": 139
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 25,
+          "validation_mse": 0.1914469599723816,
+          "epochs_run": 35
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 13,
+          "validation_mse": 0.192504420876503,
+          "epochs_run": 23
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 25,
+          "validation_mse": 0.17996220290660858,
+          "epochs_run": 35
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 3,
+      "model_seed": 2,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 10,
+        "validation_mse": 0.09486431628465652,
+        "epochs_run": 40
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 25,
+          "validation_mse": 0.1914469599723816,
+          "epochs_run": 35
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 13,
+          "validation_mse": 0.192504420876503,
+          "epochs_run": 23
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 25,
+          "validation_mse": 0.17996220290660858,
+          "epochs_run": 35
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 4,
+      "model_seed": 0,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 496,
+        "validation_mse": 0.009668918326497078,
+        "epochs_run": 500
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 26,
+          "validation_mse": 0.17991004884243011,
+          "epochs_run": 36
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 28,
+          "validation_mse": 0.1776852011680603,
+          "epochs_run": 38
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 27,
+          "validation_mse": 0.18232090771198273,
+          "epochs_run": 37
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 4,
+      "model_seed": 1,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 24,
+        "validation_mse": 0.15803471207618713,
+        "epochs_run": 54
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 26,
+          "validation_mse": 0.17991004884243011,
+          "epochs_run": 36
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 28,
+          "validation_mse": 0.1776852011680603,
+          "epochs_run": 38
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 27,
+          "validation_mse": 0.18232090771198273,
+          "epochs_run": 37
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_coculture",
+      "fold_id": 4,
+      "model_seed": 2,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 15,
+        "validation_mse": 0.16301539540290833,
+        "epochs_run": 45
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 26,
+          "validation_mse": 0.17991004884243011,
+          "epochs_run": 36
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 28,
+          "validation_mse": 0.1776852011680603,
+          "epochs_run": 38
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 27,
+          "validation_mse": 0.18232090771198273,
+          "epochs_run": 37
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 0,
+      "model_seed": 0,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 42,
+        "validation_mse": 0.06832420080900192,
+        "epochs_run": 72
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 23,
+          "validation_mse": 0.2384713590145111,
+          "epochs_run": 33
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 2,
+          "validation_mse": 0.24213489890098572,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 18,
+          "validation_mse": 0.21636851131916046,
+          "epochs_run": 28
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 0,
+      "model_seed": 1,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 300,
+        "validation_mse": 0.015338880009949207,
+        "epochs_run": 330
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 23,
+          "validation_mse": 0.2384713590145111,
+          "epochs_run": 33
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 2,
+          "validation_mse": 0.24213489890098572,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 18,
+          "validation_mse": 0.21636851131916046,
+          "epochs_run": 28
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 0,
+      "model_seed": 2,
+      "weight_decay": 0.001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 24,
+        "validation_mse": 0.1637241691350937,
+        "epochs_run": 54
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 23,
+          "validation_mse": 0.2384713590145111,
+          "epochs_run": 33
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 2,
+          "validation_mse": 0.24213489890098572,
+          "epochs_run": 12
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 18,
+          "validation_mse": 0.21636851131916046,
+          "epochs_run": 28
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 1,
+      "model_seed": 0,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 49,
+        "validation_mse": 0.06106242910027504,
+        "epochs_run": 79
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 14,
+          "validation_mse": 0.20962855219841003,
+          "epochs_run": 24
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 5,
+          "validation_mse": 0.21197666227817535,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 8,
+          "validation_mse": 0.20964175462722778,
+          "epochs_run": 18
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 1,
+      "model_seed": 1,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 416,
+        "validation_mse": 0.0060143438167870045,
+        "epochs_run": 446
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 14,
+          "validation_mse": 0.20962855219841003,
+          "epochs_run": 24
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 5,
+          "validation_mse": 0.21197666227817535,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 8,
+          "validation_mse": 0.20964175462722778,
+          "epochs_run": 18
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 1,
+      "model_seed": 2,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 27,
+        "validation_mse": 0.10697566717863083,
+        "epochs_run": 57
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 14,
+          "validation_mse": 0.20962855219841003,
+          "epochs_run": 24
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 5,
+          "validation_mse": 0.21197666227817535,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 8,
+          "validation_mse": 0.20964175462722778,
+          "epochs_run": 18
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 2,
+      "model_seed": 0,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 490,
+        "validation_mse": 0.023965222761034966,
+        "epochs_run": 500
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 14,
+          "validation_mse": 0.18079519271850586,
+          "epochs_run": 24
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 13,
+          "validation_mse": 0.1794733703136444,
+          "epochs_run": 23
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 13,
+          "validation_mse": 0.18534883856773376,
+          "epochs_run": 23
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 2,
+      "model_seed": 1,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 40,
+        "validation_mse": 0.11432704329490662,
+        "epochs_run": 70
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 14,
+          "validation_mse": 0.18079519271850586,
+          "epochs_run": 24
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 13,
+          "validation_mse": 0.1794733703136444,
+          "epochs_run": 23
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 13,
+          "validation_mse": 0.18534883856773376,
+          "epochs_run": 23
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 2,
+      "model_seed": 2,
+      "weight_decay": 0.0001,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 20,
+        "validation_mse": 0.08727829903364182,
+        "epochs_run": 50
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 14,
+          "validation_mse": 0.18079519271850586,
+          "epochs_run": 24
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 13,
+          "validation_mse": 0.1794733703136444,
+          "epochs_run": 23
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 13,
+          "validation_mse": 0.18534883856773376,
+          "epochs_run": 23
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 3,
+      "model_seed": 0,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 411,
+        "validation_mse": 0.05525893718004227,
+        "epochs_run": 441
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 20,
+          "validation_mse": 0.145843505859375,
+          "epochs_run": 30
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 23,
+          "validation_mse": 0.1474485844373703,
+          "epochs_run": 33
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 23,
+          "validation_mse": 0.14609985053539276,
+          "epochs_run": 33
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 3,
+      "model_seed": 1,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 41,
+        "validation_mse": 0.08373767137527466,
+        "epochs_run": 71
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 20,
+          "validation_mse": 0.145843505859375,
+          "epochs_run": 30
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 23,
+          "validation_mse": 0.1474485844373703,
+          "epochs_run": 33
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 23,
+          "validation_mse": 0.14609985053539276,
+          "epochs_run": 33
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 3,
+      "model_seed": 2,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 46,
+        "validation_mse": 0.06126973405480385,
+        "epochs_run": 76
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 20,
+          "validation_mse": 0.145843505859375,
+          "epochs_run": 30
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 23,
+          "validation_mse": 0.1474485844373703,
+          "epochs_run": 33
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 23,
+          "validation_mse": 0.14609985053539276,
+          "epochs_run": 33
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 4,
+      "model_seed": 0,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 21,
+        "validation_mse": 0.26687389612197876,
+        "epochs_run": 51
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 5,
+          "validation_mse": 0.1795085221529007,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 6,
+          "validation_mse": 0.18164876103401184,
+          "epochs_run": 16
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 3,
+          "validation_mse": 0.181709885597229,
+          "epochs_run": 13
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 4,
+      "model_seed": 1,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 494,
+        "validation_mse": 0.004023936111479998,
+        "epochs_run": 500
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 5,
+          "validation_mse": 0.1795085221529007,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 6,
+          "validation_mse": 0.18164876103401184,
+          "epochs_run": 16
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 3,
+          "validation_mse": 0.181709885597229,
+          "epochs_run": 13
+        }
+      ]
+    },
+    {
+      "family": "source_only_latent_mlp",
+      "source_environment": "frangieh_melanoma_ifng",
+      "fold_id": 4,
+      "model_seed": 2,
+      "weight_decay": 1e-05,
+      "input_pca_components": 10,
+      "target_pca_components": 32,
+      "fit": {
+        "best_epoch": 83,
+        "validation_mse": 0.05590776726603508,
+        "epochs_run": 113
+      },
+      "inner_selection": [
+        {
+          "weight_decay": 1e-05,
+          "best_epoch": 5,
+          "validation_mse": 0.1795085221529007,
+          "epochs_run": 15
+        },
+        {
+          "weight_decay": 0.0001,
+          "best_epoch": 6,
+          "validation_mse": 0.18164876103401184,
+          "epochs_run": 16
+        },
+        {
+          "weight_decay": 0.001,
+          "best_epoch": 3,
+          "validation_mse": 0.181709885597229,
+          "epochs_run": 13
+        }
+      ]
+    }
+  ],
+  "run": {
+    "device": "cuda",
+    "families": {
+      "source_only_mlp": {
+        "prediction_path": "artifacts/source_data/frangieh_source_only_mlp_predictions.npz",
+        "records": 45
+      },
+      "source_only_latent_mlp": {
+        "prediction_path": "artifacts/source_data/frangieh_source_only_latent_mlp_predictions.npz",
+        "records": 45
+      }
+    }
+  }
+}

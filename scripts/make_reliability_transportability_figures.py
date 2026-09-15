@@ -1,4 +1,4 @@
-"""Orchestrate four main and four supplementary PTL paper figures.
+"""Orchestrate four main and five supplementary PTL paper figures.
 
 Figure-specific implementations live under ``scripts/figures``. This entry
 point applies the shared style, runs the builders in the prescribed order,
@@ -38,6 +38,7 @@ from scripts.build_rank_comparator_benchmark import build as build_rank_comparat
 from scripts.build_reviewer_decision_incremental_value import build as build_reviewer_decision_incremental_value  # noqa: E402
 from scripts.run_target_audit_simulation import build as build_target_audit_simulation  # noqa: E402
 from scripts.build_scientific_upgrade_tables import build as build_scientific_upgrade_tables  # noqa: E402
+from scripts.figures.supp_upgrade_v2 import build as build_supp_upgrade_v2  # noqa: E402
 
 
 def run(root: Path = ROOT) -> dict:
@@ -79,21 +80,32 @@ def run(root: Path = ROOT) -> dict:
     for key, source_name, builder in builders:
         paths, source = builder(out_dir, manifests, registry)
         outputs[key] = {"files": paths, "source_table": write_source(root, source_name, source), "rows": int(len(source))}
+    # The V2 neural-family/simulation figure is supplementary evidence and is
+    # generated only when its explicit result artifacts are present.  This
+    # keeps the canonical four-figure build runnable before that optional
+    # extension is materialized on a fresh checkout.
+    if (manifests / "neural_family_transport_profiles.csv").is_file() and (manifests / "simulation_v2/finite_measurement_primary.csv").is_file():
+        outputs["supp_fig5"] = {"files": build_supp_upgrade_v2(), "source_table": "artifacts/manifests/neural_family_transport_profiles.csv", "rows": 216}
+        figure_order = ["problem", "atlas", "measurement_boundary", "decision_consequence", "supp_source_only_forecasting", "supp_metric_stratified_decision", "supp_mean_fidelity_control", "supp_estimand_validation", "supp_upgrade_v2"]
+        render_order = ["fig4", "fig1", "fig3", "fig2", "supp_fig1", "supp_fig2", "supp_fig3", "supp_fig4", "supp_fig5"]
+    else:
+        figure_order = ["problem", "atlas", "measurement_boundary", "decision_consequence", "supp_source_only_forecasting", "supp_metric_stratified_decision", "supp_mean_fidelity_control", "supp_estimand_validation"]
+        render_order = ["fig4", "fig1", "fig3", "fig2", "supp_fig1", "supp_fig2", "supp_fig3", "supp_fig4"]
     report = {
-        "schema_version": 4,
+        "schema_version": 5,
         "status": "executed",
-        "figure_count": 8,
-        "figure_order": ["problem", "atlas", "measurement_boundary", "decision_consequence", "supp_source_only_forecasting", "supp_metric_stratified_decision", "supp_mean_fidelity_control", "supp_estimand_validation"],
-        "render_order": ["fig4", "fig1", "fig3", "fig2", "supp_fig1", "supp_fig2", "supp_fig3", "supp_fig4"],
+        "figure_count": len(outputs),
+        "figure_order": figure_order,
+        "render_order": render_order,
         "formats": ["png", "pdf", "svg", "tiff"],
         "source_tables_directory": "results/figures/reliability_transportability/source_tables",
         "exemplar_registry": "artifacts/manifests/figure_exemplar_registry.json",
         "visual_architecture": "paper/iclr2027/FIGURE_ARCHITECTURE.md",
         "outputs": outputs,
         "data_policy": "Frozen Frangieh/Nadig data and existing matched-fixed/bootstrap summaries; unavailable prospective cells stay gray/NA; target-informed explanatory quantities never enter prospective prediction.",
-        "selection_policy": "Fig1B uses source-rank quantile exemplars from the full 243-label source-frozen surface; Fig1D is a compact count preview from the complete 243-label delta-cosine risk surface and retains the full source table; Fig4A is the unique detailed alluvial view. Supplementary Fig. S1 uses the registered 144-row source-only feature ladder U→U+G→U+G+S→U+G+S+N. S2 uses the fixed 18-point decision surface; S3 uses metric-matched full-depth risk vectors on the same fixed universes; S4 uses the canonical synthetic estimand validation.",
+        "selection_policy": "Fig1B uses source-rank quantile exemplars from the full 243-label source-frozen surface; Fig1D is a compact count preview from the complete 243-label delta-cosine risk surface and retains the full source table; Fig4A is the unique detailed alluvial view. Supplementary Fig. S1 uses the registered 144-row source-only feature ladder U→U+G→U+G+S→U+G+S+N. S2 uses the fixed 18-point decision surface; S3 uses metric-matched full-depth risk vectors on the same fixed universes; S4 uses the canonical synthetic estimand validation; S5 uses the four-family descriptive profile and the 60-condition finite-measurement primary simulation.",
         "style_policy": "Centralized ptl_figure_style.py; metric colors are stable; biological context uses position/line style; no equal-grid heatmap dominance.",
-        "anti_fabrication_checks": ["strict support >= 8", "Supplementary Fig. S1 uses 144 source-only rows", "Supplementary Fig. S2 uses exactly 18 fixed decision rows", "Supplementary Fig. S3 uses metric-specific risk rows and exact matched universes", "Supplementary Fig. S4 uses stored synthetic trials", "target_feature_leakage=False", "Nadig replication uses full-size per-label artifact", "no numeric cross-dataset prospective result", "primary intervals are 90%"],
+        "anti_fabrication_checks": ["strict support >= 8", "Supplementary Fig. S1 uses 144 source-only rows", "Supplementary Fig. S2 uses exactly 18 fixed decision rows", "Supplementary Fig. S3 uses metric-specific risk rows and exact matched universes", "Supplementary Fig. S4 uses stored synthetic trials", "target_feature_leakage=False", "Nadig replication uses full-size per-label artifact", "no numeric cross-dataset prospective result", "S5 uses executed neural-family profiles and simulation-v2 summaries", "primary intervals are 90%"],
         "data_kill_switch": validation,
     }
     (manifests / "reliability_transport_figures.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

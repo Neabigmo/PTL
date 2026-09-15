@@ -15,7 +15,7 @@ import pandas as pd
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_PYTHON = Path(r"E:\anaconda3\envs\sw_mgli\python.exe")
+DEFAULT_PYTHON = Path(os.environ.get("PTL_PYTHON", sys.executable))
 DEFAULT_MANIFEST = ROOT / "results" / "tables" / "baseline_run_matrix.csv"
 DEFAULT_LOG = ROOT / "results" / "logs" / "training" / "phase11_baseline_batch.log"
 RUN_BASELINE = ROOT / "src" / "baselines" / "run_baseline.py"

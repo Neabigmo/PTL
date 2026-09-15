@@ -39,6 +39,14 @@ latexmk -pdf -interaction=nonstopmode supplement.tex
 The manuscript records the estimand, fixed splits, measurement-depth protocol,
 and the boundary between primary evidence and supplementary diagnostics.
 
+The V2 supplementary extension is reproducible with
+`scripts/run_frangieh_source_only_neural_families.py`,
+`scripts/run_finite_measurement_simulation_v2.py --mode primary`,
+`scripts/build_neural_family_transport_profiles.py`, and
+`scripts/figures/supp_upgrade_v2.py`. It contributes the compact S5 figure and
+CSV/JSON summaries only; large prediction tensors and raw matrices remain
+excluded from this anonymized release.
+
 ## Code and data availability
 
 The canonical anonymous release is the `iclr2027-anonymous-core` branch of
