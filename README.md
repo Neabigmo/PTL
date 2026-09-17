@@ -43,10 +43,11 @@ The V2.1 supplementary extension is reproducible with the chunked
 source-only family measurement helpers under `scripts/`, the corrected
 `scripts/run_finite_measurement_simulation_v21.py --mode primary` grid,
 `scripts/merge_finite_measurement_v21.py`, and
-`scripts/figures/supp_upgrade_v2.py`. It contributes the compact S5 figure,
-the finite-depth calibration table, and canonical four-family CSV/JSON
-summaries only; large prediction tensors, bootstrap inputs, and raw matrices
-remain excluded from this anonymized release.
+`scripts/figures/supp_upgrade_v2.py`. The release also includes the strict
+five-fold source-frozen GEARS bridge, calibrated finite-measurement inference,
+the compact predictor-family figure, and canonical five-family CSV/JSON
+summaries. Large prediction tensors, bootstrap inputs, model checkpoints, and
+raw matrices remain excluded from this anonymized release.
 
 ## Code and data availability
 

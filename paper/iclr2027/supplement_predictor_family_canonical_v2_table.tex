@@ -7,14 +7,17 @@ relative to the bilinear-ridge reference and are descriptive; they do not
 establish family equivalence or superiority.}
 \label{tab:predictor-family-canonical-v2}
 \small
-\begin{tabular}{lrrrr}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrrrrr}
 \toprule
-Family & Mean $\rho$ & Min point sign & Min CI sign & Rows \\
+Family & Mean $\rho$ & Min point sign & Min CI sign & Mean $D_{\rm adj}$ & $\Delta$ mean & Rows \\
 \midrule
-Bilinear ridge & 1.000 & 1.000 & 1.000 & 6 \\
-RBF kernel ridge & 0.905 & 1.000 & 1.000 & 6 \\
-Latent-response MLP & 0.886 & 1.000 & 1.000 & 6 \\
-Direct MLP & 0.829 & 1.000 & 1.000 & 6 \\
+Bilinear ridge & 1.000 & 1.000 & 1.000 & 0.073 & 0.000 & 6 \\
+GEARS (strict source-frozen) & 0.371 & 1.000 & 1.000 & 0.119 & 0.047 & 6 \\
+RBF kernel ridge & 0.905 & 1.000 & 1.000 & 0.074 & 0.002 & 6 \\
+Latent-response MLP & 0.886 & 1.000 & 1.000 & 0.093 & 0.020 & 6 \\
+Direct MLP & 0.829 & 1.000 & 1.000 & 0.092 & 0.020 & 6 \\
 \bottomrule
 \end{tabular}
+}
 \end{table}

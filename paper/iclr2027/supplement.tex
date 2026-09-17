@@ -3,6 +3,7 @@
 \input{../../third_party/iclr2027/math_commands.tex}
 \input{generated_claims.tex}
 \input{generated_scientific_upgrade.tex}
+\input{generated_v3_claims.tex}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{array}
@@ -24,7 +25,7 @@
 \begin{document}
 \maketitle
 
-\noindent\textbf{Organization.} This appendix supplies the data and source-frozen protocol (A), estimators and uncertainty decomposition (B), extended transport and independent replication evidence (C), measurement and decision robustness (D), the prospective source-only boundary (E), additional robustness and diagnostic analyses (F), the external predictor context under matched information constraints (G), and the scientific regeneration path (H). It complements rather than repeats the main-text sequence: observed reordering $\rightarrow$ measurement-adjusted transport $\rightarrow$ independent replication $\rightarrow$ measurement boundary $\rightarrow$ decision consequence.
+\noindent\textbf{Organization.} This appendix supplies the data and source-frozen protocol (A), estimators and uncertainty decomposition (B), extended transport and independent replication evidence (C), measurement and decision robustness (D), strong comparator calibration and adaptive measurement utility, the prospective source-only boundary (E), additional robustness and diagnostic analyses (F), the external predictor context under matched information constraints (G), and the scientific regeneration path (H). It complements rather than repeats the main-text sequence: observed reordering $\rightarrow$ measurement-adjusted transport $\rightarrow$ independent replication $\rightarrow$ measurement boundary $\rightarrow$ decision consequence.
 
 \section{Data and source-frozen evaluation protocol}
 \label{app:data}
@@ -90,6 +91,31 @@ each pair law is a point mass and $D_{\rm adj}$ reduces exactly to the
 normalized Kendall inversion fraction $(1-\tau)/2$. This is a limit check,
 not a substitute for the finite-measurement estimand.
 
+\subsection{Why the finite-measurement estimand is not interchangeable with Kendall or generic MMD}
+For each perturbation pair, $D_{\rm adj}$ compares the complete categorical
+laws on $\{-1,0,+1\}$. For example, source and target laws
+$(0.9,0,0.1)$ and $(0.6,0,0.4)$ have the same modal strict order, so a
+deterministic Kendall comparison of the two mean rankings records no
+inversion. Nevertheless, their pair-state discrepancy is $0.09$: the ordering
+has become substantially less reliable in the target. This is the population
+quantity that is absent from a point-ranking comparison. Conversely, a
+generic expression-space MMD can detect distributional changes that preserve
+every risk ordering. The exact identity with one half of squared MMD holds
+only for the declared delta kernel on pair states and does not turn
+$D_{\rm adj}$ into a generic expression two-sample statistic.
+
+The U-corrected estimator is unbiased when complete measurement-seed blocks
+are independent and identically distributed within each context, the frozen
+predictor and perturbation panel do not depend on target outcomes, and the
+two contexts are evaluated with the declared resampling design. At the null
+$\pi_{a,e_1}=\pi_{a,e_2}$, its first-order influence vanishes and the
+order-2 statistic is degenerate. Ordinary percentile bootstrap intervals are
+therefore not used to decide whether transport is detectable. The calibrated
+procedure treats the 30 seed-level U-corrected contributions as independent
+units, estimates their variance directly, and uses a Student-$t$ interval for
+their mean. A complete-seed block bootstrap is retained as a sensitivity
+analysis; the two context arms are never resampled independently.
+
 \section{Extended transport evidence and independent replication}
 \label{app:extended}
 
@@ -105,6 +131,24 @@ metric panel. These counts are registry properties, not model-selected
 subsets.
 
 \input{supplement_nadig_table.tex}
+
+\subsection{Second raw-cell replication: Tian iPSC to day-7 neuron}
+
+We additionally rebuilt the full source-frozen, cell-resampled hierarchy in
+the Tian CRISPR screens~\citep{tian2019crispri}. Eligibility was frozen to the 26 single-gene
+perturbations represented by at least 80 cells in both systems. For each
+source direction, the 1,536-gene evaluation panel was chosen by variance in
+source control cells while excluding perturbation targets. Source effects
+were fitted on a disjoint half of source cells; evaluation then used 40 cells
+per perturbation and control in each of 30 seeds with two independent
+measurement replicates. Target cells were absent from panel selection and
+prediction construction. Table~\ref{tab:tian-rawcell} reports the calibrated
+Student-$t$ intervals over per-seed U-corrected contributions. Five of six
+intervals exclude zero; the iPSC-to-neuron Systema row does not. This is a
+complete raw-cell replication of the estimand and measurement floor, not an
+aggregate rank-distance audit.
+
+\input{supplement_tian_rawcell_table.tex}
 
 \section{Measurement and decision robustness}
 \label{app:robustness}
@@ -172,6 +216,29 @@ interpret the finite-sample null sign as a biological effect.
 
 \input{supplement_finite_measurement_table.tex}
 
+\subsection{Transport-aware adaptive measurement allocation}
+\label{app:adaptive}
+
+We evaluated the practical measurement-design proposal on the held-out
+Frangieh risk grid, starting from 10 cells per perturbation and comparing
+uniform, random, lowest-cell-support-first, highest-pair-state-entropy and
+transport-variance allocation. Acquisition scores were frozen at the pilot
+stage; the full-depth vectors were used only as evaluation references. The
+transport-variance policy reduced mean absolute error by only $1.28\%$ on
+average relative to uniform allocation, with gains that varied by budget and
+surface. Random allocation happened to yield a larger average reduction
+($2.46\%$), but this is not an acquisition method and was not tuned or
+promoted. Resolution rates were identical across policies at each budget
+(0\% through 40 cells, 5.6\% at 80 cells and 33.3\% at 160 cells). Thus the
+registered adaptive policy did not deliver a material or consistent cell
+saving and is retained as a negative practical-utility result rather than
+being moved into the main narrative. Supplementary Table~\ref{tab:v3-adaptive}
+and the complete 450-row ledger at
+\path{artifacts/manifests/adaptive_measurement_v1/adaptive_measurement_allocation_v1.csv}
+record the comparison.
+
+\input{supplement_v3_adaptive_table.tex}
+
 \subsection{Incremental decision value and empirical target-audit replay}
 
 To distinguish the pooled decision association from a mean-fidelity scale
@@ -229,7 +296,7 @@ The evaluation contains 18 transfer-by-metric tasks for each of continuous burde
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig1_source_only_forecasting.pdf}
+\includegraphics[width=\textwidth]{figures/supplementary/s1.pdf}
 \caption{Source-only prospective boundary. (A) The information firewall separates source-observable features from target outcomes. (B) Held-out Spearman correlation for continuous reordering burden. (C) Held-out AUPRC for high-burden classification. Each point is one transfer-by-metric task; thick marks summarize the median and interquartile range.}
 \label{fig:source-only}
 \end{figure}
@@ -249,7 +316,7 @@ are shown without a headline significance claim.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig2_metric_stratified_decision.pdf}
+\includegraphics[width=\textwidth]{figures/supplementary/s2.pdf}
 \caption{Metric-stratified decision association. The 18 fixed full-depth,
 10\% random-reference decision rows are shown in their native scale (A) and
 after within-metric rank transformation (B). The pooled within-metric interval
@@ -273,7 +340,7 @@ decomposition.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig3_mean_fidelity_control.pdf}
+\includegraphics[width=\textwidth]{figures/supplementary/s3.pdf}
 \caption{Metric-matched mean-fidelity control. Each point is one of 18
 directed transfer--metric rows. The horizontal coordinate is the absolute
 source-to-target mean-risk shift computed on the exact fixed label universe;
@@ -292,13 +359,95 @@ identity.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig4_estimand_validation.pdf}
+\includegraphics[width=\textwidth]{figures/supplementary/s4.pdf}
 \caption{Finite-sample validation of the ordering estimand. Trial-level
 sampling distributions compare the plug-in/V estimator with the order-2
 U-corrected estimator under a finite-sample null and a known alternative;
 vertical references mark the population identity.}
 \label{fig:estimand-validation}
 \end{figure}
+
+\section{Strong comparator calibration}
+\label{app:comparators-v3}
+
+The finite-measurement claim was tested against the strongest registered
+traditional alternatives, not only against an uncorrected rank statistic. The
+benchmark contains two measurement laws, five depths, two resolution settings,
+two noise scales and three inversion fractions, for 120 conditions and 120
+trials per condition. Every method uses the same perturbation-label resamples.
+The comparator set includes raw Kendall, Spearman and top-10 Jaccard, their
+label-bootstrap versions, matched-null-subtracted Kendall and Jaccard, stable
+inversion, and the U-corrected $D_{\rm adj}$. The null target is zero for the
+measurement-adjusted quantities; the raw rank metrics are retained as
+descriptive sampling-disagreement comparators rather than being relabelled as
+transport estimands.
+
+Raw Kendall, Spearman and Jaccard show high null false-transport rates because
+they compare two finite orderings without removing the same-context sampling
+component. Label bootstrap intervals quantify uncertainty around that
+comparison but do not change its target. Matched-null subtraction restores
+near-zero null false-transport for both Kendall and Jaccard and retains high
+power on the registered non-zero inversion surfaces. $D_{\rm adj}$ has the
+advantage of a single pair-state population interpretation and an explicit
+order-2 finite-replicate correction; the simulation does not support a claim
+that it universally dominates matched-null Kendall. Supplementary
+Table~\ref{tab:v3-comparator} reports false-transport rate, coverage and power
+side by side. The complete trial-level ledger is
+\path{artifacts/manifests/strong_comparator_v3/strong_comparator_v3_trials.csv}.
+
+\input{supplement_v3_comparator_table.tex}
+
+\subsection{Real-data semi-synthetic calibration}
+\label{app:realdata-semisynthetic}
+
+The known-truth simulation is complemented by a real-data semi-synthetic
+benchmark derived from the Frangieh raw-cell lineage. We used the canonical
+Control-context raw-cell pseudoreplicate risk ledger, selected the first 60
+labels in the metadata-only eligible intersection, and generated two
+independent 12-replicate pseudo-contexts by resampling the observed
+replicate pool at 10, 20, 40, 80 and 160 cells. The same-context arm has a
+known transport null ($D_{\rm adj}=0$). For the controlled alternatives, a
+single cyclic permutation of the first 5\%, 10\%, 20\% or 40\% of the frozen
+label panel was applied to the target arm. This permutation was fixed before
+any estimates were inspected and is a response-order stress test, not a
+claim of a new biological replicate.
+
+The original hierarchical percentile interval resampled the two arms
+independently. On this discrete ledger it produced a mean null
+false-transport rate of $0.548$ and coverage of $0.452$, exposing a
+nonregular boundary failure rather than a biological transport signal. We
+therefore replaced it with the inference specified in
+Sec.~\ref{app:estimators}: complete measurement-seed blocks are the independent
+units and the interval is based on the empirical variance of their
+U-corrected contributions.
+
+The replacement was evaluated in 2,880 known-truth null trials and 3,000
+Frangieh semi-synthetic null trials. The known-truth false-transport rate was
+$0.040$ and null coverage was $0.960$; the corresponding real-data
+semi-synthetic values were $0.015$ and $0.985$. Thus the replacement is mildly
+conservative, particularly on the discrete empirical ledger, rather than
+anti-conservative at the no-transport boundary. Detection power was $1.00$ at
+the registered 10\% and 40\% simulated inversion fractions; in the harder
+Frangieh semi-synthetic benchmark it was $0.162$ and $0.717$, respectively.
+Supplementary
+Fig.~\ref{fig:dadj-calibration} and Table~\ref{tab:dadj-calibration} compare
+the failed interval and calibrated replacement. The old result remains in the
+audit ledger but is not used for any detectability conclusion.
+
+\input{supplement_v3_realdata_semisynthetic_table.tex}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.96\textwidth]{figures/supplementary/dadj_inference_calibration.pdf}
+\caption{Calibration of finite-measurement $D_{\rm adj}$ inference. (A) Null
+false-transport rate and (B) null coverage for the original percentile
+interval and the seed-block variance replacement; error bars are 90\% Wilson
+intervals over trials and dashed lines mark nominal levels. (C) Detection
+power under controlled reordering alternatives.}
+\label{fig:dadj-calibration}
+\end{figure*}
+
+\input{supplement_dadj_calibration_table.tex}
 
 \section{External predictor context under matched information constraints}
 \label{app:external}
@@ -318,11 +467,27 @@ invariance nor enter the Frangieh context-shift claim lock.
 
 \input{supplement_external_gears_table.tex}
 
-An earlier one-epoch GEARS pilot used the same dataset/seed labels and frozen
-panels but produced a different set of predictions. It is retained only in the
-provenance audit (\texttt{gears\_duplicate\_run\_audit.csv}), is not pooled as
-an additional replicate, and is excluded from both external tables; the
-formal-v2 family above is the sole canonical GEARS source.
+We separately executed the stricter modern-predictor bridge required for the
+Frangieh claim lock. The official GEARS implementation was trained for 20
+epochs in five label-disjoint folds independently within each source context.
+Graph construction, validation and fitting used source cells only. Thirteen
+labels absent from the official interaction graph were removed before
+splitting, leaving 230 perturbations and 8,229 evaluation genes. The frozen
+out-of-fold vector was then passed through the same 30-seed,
+two-pseudoreplicate raw-cell bridge as the other predictor families, producing
+the complete 18-row directed transfer--metric surface.
+TxPert was treated under the same information gate: the available checkpoint
+was trained on K562 rather than a source-matched Frangieh context, and using
+target basal expression would violate the frozen-source contract. It is
+therefore not included in the predictor-family concordance. These are
+deliberate contract outcomes, not missing values imputed from a different
+experiment; the machine-readable record is
+\path{modern_families/txpert_information_contract.json}.
+
+An earlier one-epoch Frangieh GEARS pilot is retained only as engineering
+provenance and is not pooled as an additional replicate. The public-cohort
+GEARS audits above answer a different response-prediction question and are
+likewise not pooled with the strict Frangieh transport surface.
 
 Using the same frozen panels and condition-disjoint split construction, we also completed five
 non-GEARS controls (45 runs total): control mean, global perturbation delta,
@@ -373,6 +538,19 @@ generalization.
 \input{supplement_predictor_family_sensitivity_table.tex}
 \input{supplement_predictor_family_canonical_v2_table.tex}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.96\textwidth]{figures/supplementary/predictor_family_transport.pdf}
+\caption{\textbf{Matched source-frozen predictor-family transport.} (A)
+Circle, square and triangle glyphs show $D_{\rm adj}$ for delta cosine,
+Systema centroid and absolute-effect rank; area and opacity encode magnitude.
+Every family uses the same six directed transfers and raw-cell bridge. (B)
+Within-metric profile Spearman correlation with the prespecified bilinear
+reference. Positive sign agreement does not imply identical transport
+geometry or predictor superiority.}
+\label{fig:predictor-family-transport}
+\end{figure}
+
 \subsection{Neural source-only families and finite-measurement simulation}
 
 We extended the source-only sensitivity without changing the canonical
@@ -387,7 +565,7 @@ for the latent-response MLP, compared with $0.346$ for the bilinear reference
 and $0.355$ for RBF. These are adequacy and profile diagnostics, not target-
 informed model selection; the target outcomes were not loaded during fitting.
 
-The resulting four-family profile is evaluated on the same frozen labels,
+The resulting five-family profile, including strict source-frozen GEARS, is evaluated on the same frozen labels,
 genes, contexts and metrics. The canonical family comparison uses the same
 18 directed transfer--metric rows and the same full-size raw-cell estimator;
 it is a sensitivity analysis, not a predictor-superiority claim. Supplementary
@@ -410,7 +588,7 @@ pooled with the corrected grid.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig5_upgrade_v2.pdf}
+\includegraphics[width=\textwidth]{figures/supplementary/s5_upgrade_v2.pdf}
 \caption{\textbf{Source-only family and finite-measurement sensitivity.} (A)
 Mean absolute error of the corrected ordering estimate relative to the finite-
 depth pair-state truth across cell depth for Gaussian-heteroscedastic and
@@ -425,6 +603,34 @@ main-text estimand.}
 \end{figure}
 
 \input{supplement_finite_measurement_v21_table.tex}
+
+\subsection{Outcome-blind Feng multi-donor biological replication audit}
+\label{app:feng}
+
+We audited the public multi-donor human-pluripotent-stem-cell CRISPRi screen
+before inspecting any transport outcome~\citep{feng2026crispri}. Eligibility
+was frozen from metadata support: 19 lines from 10 donors, with 135 targets
+supported in every line at the primary threshold of 20 cells. The response
+file is an aggregate target-by-line LFC table rather than raw cell-level
+outcomes. We therefore froze an outcome-blind 1,000-gene panel from the file
+schema and computed target-level RMS response risk, then compared target
+rankings across same-donor/different-line and different-donor pairs.
+
+The audit is informative but not a positive replication of the full Frangieh
+$D_{\rm adj}$ hierarchy. Same-donor/different-line pairs had median Kendall
+distance $0.220$, whereas different-donor pairs had $0.227$; the corresponding
+Spearman distances were $0.124$ and $0.131$, and top-10 Jaccard distances were
+$0.818$ and $0.700$. Thus the cross-donor distance did not exceed the
+same-donor distance on this magnitude-rank surface. We retain this as neutral
+external evidence, not as a negative biological claim. A within-line cell
+resampling floor and hierarchical cell-level bootstrap could not be computed
+from the released aggregate LFC file; those analyses remain an explicit
+reopening requirement rather than an imputed result. Supplementary
+Table~\ref{tab:v3-feng} and
+\path{artifacts/manifests/external/feng_hipsci/feng_biological_replication_pairs.csv}
+contain the complete pair ledger.
+
+\input{supplement_v3_feng_table.tex}
 
 \subsection{Provenance limits on a four-context expansion}
 
@@ -463,7 +669,7 @@ the corresponding evidence and reopening requirements are listed in
 \section{Reproducibility and scientific regeneration}
 \label{app:reproducibility}
 
-The scientific regeneration path starts from the canonical manifest tables, fixed splits and resampling settings, and rebuilds the four main figures, Supplementary Figs.~S1--S5, and the compact supplementary tables. The anonymous repository documents the executable commands and data lineage. Large raw H5AD/NPZ inputs remain external to the manuscript tree; the reviewable CSV/JSON products expose the values used in figures and tables.
+The scientific regeneration path starts from the canonical manifest tables, fixed splits and resampling settings, and rebuilds the four main figures, Supplementary Figs.~S1--S5, and the compact supplementary tables. The V3 comparator, Feng and adaptive ledgers are generated from their corresponding scripts and are linked to the tables above; they do not alter the canonical main figures. The anonymous repository documents the executable commands and data lineage. Large raw H5AD/NPZ inputs remain external to the manuscript tree; the reviewable CSV/JSON products expose the values used in figures and tables.
 
 \paragraph{Code and data availability.}
 The anonymized core release is available at

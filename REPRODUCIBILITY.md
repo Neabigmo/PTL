@@ -32,6 +32,21 @@ canonical estimator contract is documented in
 
 ## Source-only family sensitivity
 
+The strict GEARS bridge uses five label-disjoint folds in each Frangieh source
+context, 20 source-only training epochs, and excludes 13 labels absent from the
+official GEARS graph before splitting. Target-context cells and outcomes are
+never available to fitting, tuning, or graph construction. The three frozen
+prediction tensors are combined and passed through the same 30-seed raw-cell
+measurement bridge used by the other families:
+
+```text
+$py = 'E:\\anaconda3\\envs\\pytorch-clean\\python.exe'
+& $py scripts/combine_gears_source_frozen_predictions.py
+& $py scripts/run_frangieh_frozen_family_measurement.py --family official_gears `
+  --prediction-path artifacts/source_data/frangieh_gears_source_frozen_predictions.npz `
+  --output-stem official_gears_measurement_fullsize --draws 2000
+```
+
 The neural family predictions are source-only and are evaluated on the same
 canonical raw-cell measurement engine as the bilinear and RBF families. The
 full-size run is deliberately split into six contiguous, non-overlapping
@@ -85,4 +100,4 @@ This ledger records bounded engineering outcomes, not biological conclusions.
 | State | Official checkout and preprocessing available; no exact frozen source-only vector was materialized. | Not pooled with transport estimates. |
 | TxPert | Cached K562 inference does not match the Nadig HepG2 source. | Not promoted to the Nadig claim. |
 | scGPT | Local torchtext extension import was incompatible. | No negative biological inference. |
-| GEARS | Vendored import did not meet the declared local compatibility boundary. | Retained only as engineering provenance. |
+| GEARS | Completed strict five-fold source-frozen prediction in all three Frangieh source contexts and evaluated on the canonical raw-cell surface. | Included as a matched predictor-family sensitivity, not as evidence of superiority. |

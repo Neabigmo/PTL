@@ -1,0 +1,22 @@
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{3.5pt}
+\caption{Strong comparator calibration in the registered 120-condition benchmark. Null false-transport and 90\% coverage average over all zero-inversion conditions; alternative power and coverage average over the 0.1 and 0.4 inversion surfaces. MAE is to each method's own declared population target and is therefore not a universal ranking of estimators.}
+\label{tab:v3-comparator}
+\begin{tabular}{lrrrrr}
+\toprule
+Method & Null FTR & Null cov. & Alt. power & Alt. cov. & Null MAE \\
+\midrule
+$D_{\rm adj}$ (U-corrected) & 0.017 & 0.921 & 1.000 & 1.000 & 0.001 \\
+Kendall & 0.952 & 0.976 & 1.000 & 1.000 & 0.003 \\
+Kendall + label bootstrap & 0.952 & 0.976 & 1.000 & 1.000 & 0.003 \\
+Kendall + matched null & 0.003 & 0.965 & 0.997 & 1.000 & 0.003 \\
+Spearman & 0.995 & 0.975 & 1.000 & 1.000 & 0.000 \\
+Top-10 Jaccard & 1.000 & 0.783 & 1.000 & 0.987 & 0.029 \\
+Jaccard + label bootstrap & 1.000 & 0.783 & 1.000 & 0.987 & 0.029 \\
+Jaccard + matched null & 0.000 & 0.960 & 0.528 & 0.993 & 0.032 \\
+Stable inversion & 0.000 & 0.500 & 0.996 & 0.999 & 0.000 \\
+\bottomrule
+\end{tabular}
+\end{table}

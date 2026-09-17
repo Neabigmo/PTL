@@ -1,0 +1,18 @@
+\begin{table}[t]
+\centering
+\caption{Independent Tian raw-cell replication. Intervals are calibrated 90\% Student-$t$ intervals over 30 independent seed-level U-corrected contributions. All rows use 26 shared perturbations, 1,536 source-selected genes and 40 cells per condition.}
+\label{tab:tian-rawcell}
+\small
+\begin{tabular}{llrrr}
+\toprule
+Source $\rightarrow$ target & Metric & $D_{\rm adj}$ & 90\% CI & Detected \\
+\midrule
+iPSC $\rightarrow$ day-7 neuron & Delta cosine & 0.032 & [0.005, 0.060] & yes \\
+iPSC $\rightarrow$ day-7 neuron & Systema centroid & 0.010 & [$-0.010$, 0.030] & no \\
+iPSC $\rightarrow$ day-7 neuron & Absolute-effect rank & 0.016 & [0.004, 0.028] & yes \\
+day-7 neuron $\rightarrow$ iPSC & Delta cosine & 0.049 & [0.018, 0.079] & yes \\
+day-7 neuron $\rightarrow$ iPSC & Systema centroid & 0.042 & [0.025, 0.060] & yes \\
+day-7 neuron $\rightarrow$ iPSC & Absolute-effect rank & 0.013 & [0.001, 0.025] & yes \\
+\bottomrule
+\end{tabular}
+\end{table}

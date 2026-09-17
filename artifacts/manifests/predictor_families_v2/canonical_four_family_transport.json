@@ -3,6 +3,7 @@
   "status": "executed",
   "families": [
     "bilinear_ridge",
+    "official_gears",
     "rbf_krr",
     "source_only_latent_mlp",
     "source_only_mlp"

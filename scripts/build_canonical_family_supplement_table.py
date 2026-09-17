@@ -1,4 +1,4 @@
-"""Render the canonical four-family transport summary for the Supplement."""
+"""Render the canonical predictor-family transport summary for the Supplement."""
 
 from __future__ import annotations
 
@@ -26,6 +26,8 @@ def main() -> int:
             mean_rho=("spearman_D_adj_vs_reference", "mean"),
             min_point_agreement=("D_adj_point_sign_agreement", "min"),
             min_ci_agreement=("D_adj_CI_sign_agreement", "min"),
+            mean_dadj=("mean_D_adj", "mean"),
+            mean_delta=("mean_D_adj_difference_vs_reference", "mean"),
             rows=("rows_compared", "min"),
         )
         .sort_values("family")
@@ -35,6 +37,7 @@ def main() -> int:
         "source_only_latent_mlp": "Latent-response MLP",
         "rbf_krr": "RBF kernel ridge",
         "source_only_mlp": "Direct MLP",
+        "official_gears": "GEARS (strict source-frozen)",
     }
     lines = []
     for row in summary.to_dict(orient="records"):
@@ -45,6 +48,8 @@ def main() -> int:
                     _fmt(float(row["mean_rho"])),
                     _fmt(float(row["min_point_agreement"])),
                     _fmt(float(row["min_ci_agreement"])),
+                    _fmt(float(row["mean_dadj"])),
+                    _fmt(float(row["mean_delta"])),
                     str(int(row["rows"])),
                 ]
             )
@@ -62,13 +67,15 @@ def main() -> int:
             "establish family equivalence or superiority.}",
             BS + "label{tab:predictor-family-canonical-v2}",
             BS + "small",
-            BS + "begin{tabular}{lrrrr}",
+            BS + "resizebox{" + BS + "linewidth}{!}{%",
+            BS + "begin{tabular}{lrrrrrr}",
             BS + "toprule",
-            "Family & Mean $" + BS + "rho$ & Min point sign & Min CI sign & Rows " + BS * 2,
+            "Family & Mean $" + BS + "rho$ & Min point sign & Min CI sign & Mean $D_{" + BS + "rm adj}$ & $" + BS + "Delta$ mean & Rows " + BS * 2,
             BS + "midrule",
             *lines,
             BS + "bottomrule",
             BS + "end{tabular}",
+            "}",
             BS + "end{table}",
             "",
         ]

@@ -3,6 +3,7 @@
 \input{../../third_party/iclr2027/math_commands.tex}
 \input{generated_claims.tex}
 \input{generated_scientific_upgrade.tex}
+\input{generated_v3_claims.tex}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{url}
@@ -28,13 +29,16 @@ Frangieh Perturb-CITE-seq dataset \citep{frangieh2021multimodal}, reliability
 rankings change across control, co-culture and IFN$\gamma$ conditions under
 three complementary risk metrics. The changes exceed same-context sampling
 baselines, become increasingly resolvable with measurement depth, and are
-reproduced in an independent HepG2--Jurkat analysis from the Nadig atlas
-\citep{nadig2025trade}. A matched source-only RBF kernel-ridge sensitivity
-preserves the transport profile despite materially different prediction
-vectors, indicating that the pattern is not specific to one linear
-parameterization. Reliability reordering also changes finite top-$k$
+reproduced in independent HepG2--Jurkat and iPSC--neuron raw-cell analyses
+\citep{nadig2025trade}. Matched source-only RBF, direct-MLP, latent-MLP and
+strict five-fold GEARS sensitivities preserve positive transport signs on the
+complete Frangieh surface, although their within-metric profiles are not
+identical. Reliability reordering also changes finite top-$k$
 experimental shortlists, although its relation to regret is metric-dependent
-and is not uniquely explained by a single transport scalar. Together, these
+and is not uniquely explained by a single transport scalar. A known-truth
+comparator audit shows why the finite-measurement correction matters: raw rank
+disagreement is spuriously positive under a same-context null, whereas
+matched-null corrections restore calibration. Together, these
 results treat predictor reliability as a context-dependent ranking object and
 provide a finite-measurement framework for deciding when apparent reordering
 is distinguishable from experimental sampling noise.
@@ -137,7 +141,7 @@ distinct statistical objects.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig1_graphical_abstract.pdf}
+  \includegraphics[width=\textwidth]{figures/fig1.pdf}
   \caption{\textbf{Reliability ordering under biological context shift.}
   The source predictor is frozen before evaluation in the target context.
   The rank braid retains all 243 background rank trajectories and highlights
@@ -225,12 +229,30 @@ $D_{\rm adj}$ reduces exactly to the normalized Kendall inversion fraction,
 $(1-\tau)/2$. Its distinct role is finite-measurement transport, where pair
 states are uncertain and the matched within-context component must be
 estimated rather than ignored.
+This distinction is not cosmetic. Consider one perturbation pair whose strict
+ordering probabilities are $(0.9,0,0.1)$ in the source and $(0.6,0,0.4)$ in
+the target. Both contexts have the same modal strict order, so Kendall applied
+to their deterministic mean rankings records no inversion, whereas
+$D_{\rm adj}(a)=\tfrac12[(0.9-0.6)^2+(0.1-0.4)^2]=0.09$. The estimand therefore
+detects transport of ordering reliability even when the mean ranking does not
+flip. Conversely, an expression-space MMD can be positive when every risk
+ordering is unchanged; it tests a different population object. Hence
+$D_{\rm adj}$ is neither renamed Kendall nor a generic distribution-shift
+score: it is the declared average separation of finite-measurement pair-state
+laws.
 For finite resampling sets, the within-context term uses the unbiased order-2
 U-statistic~\citep{hoeffding1948class}. A strict direction is declared stable when the 95\% equal-tail
 Beta(1,1) posterior credible interval excludes $0.5$, with at least eight
 non-tie observations supporting the strict comparison; otherwise the pair
 remains unresolved. This categorical state rule is separate from the 90\%
 intervals reported for effect estimates.
+At the no-transport boundary the U-statistic is degenerate, so an ordinary
+percentile bootstrap is not used as a zero-effect test. Detectability is
+instead assessed from the empirical variance of the 30 independent
+seed-level U-corrected contributions using a Student-$t$ interval. A
+complete-seed block bootstrap is retained as a sensitivity analysis. This
+preserves the registered seed as the independent unit and does not resample
+the two context arms independently.
 
 The primary Frangieh surface contains 243 shared perturbation labels across
 three contexts. Fig.~\ref{fig:framework}B selects source-rank quantile
@@ -296,7 +318,7 @@ measurement-adjusted values.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig2_transport_atlas.pdf}
+  \includegraphics[width=\textwidth]{figures/fig2.pdf}
   \caption{\textbf{Context-dependent reliability transport.} (A) Six directed
   Frangieh transfers with three metric estimates and 90\% intervals. (B)
   Stable-pair inversion fraction: fraction of pairs stable in both contexts
@@ -323,6 +345,31 @@ metric and transfer heterogeneity rather than averaging it away.
 The finite-sample estimator and tie rule are given in
 Appendix B.
 
+\subsection{Strong comparator calibration identifies the role of the correction}
+The estimator addresses a finite-measurement target, so a useful comparison is
+not only against raw rank distances but also against their strongest simple
+matched-null variants. In a registered 120-condition known-truth simulation,
+raw Kendall, Spearman and top-10 Jaccard declared transport in
+\PTLNullKendallFTR, \PTLNullSpearmanFTR and \PTLNullJaccardFTR of null
+conditions, respectively. Label bootstrapping alone did not remove this
+finite-sample effect. Subtracting a matched within-context null reduced the
+Kendall false-transport rate to \PTLNullKendallMatchedFTR and the Jaccard
+rate to \PTLNullJaccardMatchedFTR, while the U-corrected $D_{\rm adj}$ rate
+was \PTLNullDAdjFTR. At non-zero inversion fractions, detection power was
+\PTLAltDAdjPower for $D_{\rm adj}$ and \PTLAltKendallMatchedPower for
+matched-null Kendall. Thus the result is not that $D_{\rm adj}$ universally
+dominates every rank statistic: precise measurements make deterministic rank
+comparators reasonable, whereas $D_{\rm adj}$ supplies one coherent
+pair-state population estimand with an explicit finite-replicate correction.
+For the interval itself, direct variance estimation over the 30 independent
+seed-level U-corrected contributions yielded a null false-transport rate of
+$0.040$ with $0.960$ coverage in 2,880 known-truth trials, and $0.015$ with
+$0.985$ coverage in 3,000 Frangieh semi-synthetic null trials. These intervals
+are mildly conservative and replace the anti-conservative hierarchical
+percentile intervals in every detectability result.
+The full calibration table, including coverage, bias and the Jaccard
+comparison, is provided in the Supplement.
+
 The independent Nadig replication provides a different context pair and a
 larger shared perturbation universe. The macro adjusted excess is \PTLNadigDelta{} for
 delta cosine, \PTLNadigSystema{} for Systema centroid and \PTLNadigRank{} for absolute-effect rank,
@@ -331,6 +378,19 @@ with positive 90\% intervals in both source directions. This replication
   Frangieh decision association. Matched-universe sensitivity for this
   replication is reported in Appendix C, while the complete two-direction
   full-size surface remains in the figure source table.
+
+A second raw-cell replication reconstructs the complete hierarchy in the Tian
+iPSC and day-7 neuron CRISPR screens~\citep{tian2019crispri}, rather than using an aggregate rank
+audit. We froze 26 shared single-gene perturbations, a 1,536-gene panel chosen
+from source controls only, and a 40-cell budget before evaluating either
+direction. Five of six direction--metric intervals were positive. From iPSC
+to neuron, $D_{\rm adj}$ was $0.032$ [0.005, 0.060], $0.010$
+[$-0.010$, 0.030], and $0.016$ [0.004, 0.028] for delta cosine, Systema and
+absolute-effect rank, respectively; the reverse direction gave $0.049$
+[0.018, 0.079], $0.042$ [0.025, 0.060], and $0.013$ [0.001, 0.025]. This
+asymmetry is itself informative: replication supports context-dependent
+ordering transport, not a claim that every metric must detect every direction.
+The complete six-row ledger and source-frozen construction are in Appendix C.
 
 As one matched predictor-family sensitivity, we also materialized a source-only
 RBF kernel-ridge family on the same Frangieh surface. Its source-only penalty
@@ -341,6 +401,21 @@ $0.733$ in the Supplement), and adjusted-discrepancy point and interval signs
 agreed on all 18 transfer--metric rows. This is descriptive evidence that the
 profile is not an immediate artifact of one parameterization, not predictor-
 family equivalence or broader generalization.
+
+We then ran the official GEARS graph predictor under the same strict
+information contract. For each Frangieh source context, five label-disjoint
+folds and all graph construction, fitting and tuning used source cells only;
+13 labels absent from the official interaction graph were excluded before
+splitting, leaving 230 perturbations and 8,229 evaluation genes. The frozen
+out-of-fold vectors were evaluated by the same 30-seed, two-pseudoreplicate
+raw-cell bridge. All 18 directed transfer--metric rows retained positive
+adjusted-discrepancy intervals. Relative to the bilinear profile, GEARS had
+perfect point-sign agreement but lower magnitude concordance (mean
+within-metric Spearman $\rho=0.371$: $-0.086$, $1.000$ and $0.200$ for delta
+cosine, Systema centroid and absolute-effect rank). Thus a modern graph model
+reproduces the existence of transport while showing that its detailed geometry
+is predictor- and metric-dependent; it does not establish family equivalence
+or superiority. The complete surface is reported in Appendix~E.
 
 \FloatBarrier
 \subsection{Measurement depth determines when reordering is resolvable}
@@ -356,7 +431,7 @@ measurement term is not itself a same-context $D_{\rm adj}$ estimate.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig3_measurement_boundary.pdf}
+  \includegraphics[width=\textwidth]{figures/fig3.pdf}
   \caption{\textbf{Measurement depth defines an identifiability boundary.} (A)
   Signed depth trajectories for the primary Ctrl--IFN$\gamma$ contrast with
   other transfers as pale paths. (B) The six-transfer resolution map; circles
@@ -396,7 +471,7 @@ worst-oracle normalization.
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_fig4_decision_consequence.pdf}
+  \includegraphics[width=\textwidth]{figures/fig4.pdf}
   \caption{\textbf{Context-dependent ordering changes experimental priorities.}
   (A) Detailed example of delta-cosine top-$k$ replacement under the
   Ctrl-to-IFN$\gamma$ shift (6 of 25 shortlist positions are retained; 19 are
@@ -495,9 +570,14 @@ comparators remain appropriate when risks are precisely observed; the paper
 does not claim that one scalar universally predicts regret.
 
 \paragraph{Scope and testable extensions.}
-The evidence is bounded by one source-frozen bilinear-ridge predictor family,
-three reliability metrics, the Frangieh context design and one independent
-HepG2--Jurkat pair. The decision association is estimated from only three
+The primary decision surface remains anchored to the prespecified
+bilinear-ridge predictor, three reliability metrics and the Frangieh context
+design. Source-only RBF, direct-MLP, latent-MLP and official GEARS analyses
+provide matched predictor-family sensitivities but are not pooled into the
+primary decision association. Biological transport is independently examined in both the
+HepG2--Jurkat atlas and a complete iPSC--day-7-neuron raw-cell reconstruction,
+but neither replication enlarges the Frangieh decision sample. The decision
+association is therefore still estimated from only three
 unordered context-pair blocks. Matched source-only RBF and neural-family
 profiles, the finite-measurement calibration slice, the prospective feature
 ladder, the active-audit replay and external model controls are reported in the
@@ -505,6 +585,15 @@ Supplement and are not pooled into the primary claim; the
 source-only signal should not be read as a pre-experiment oracle. The direct
 next tests are replication across predictor families, contexts and modalities
 under the same source-only, label-disjoint and measurement-adjusted contract.
+The V3 external-validity audit makes this boundary explicit: conventional
+GEARS cohort runs remain response-prediction controls, whereas the separately
+executed Frangieh GEARS bridge satisfies the strict source-frozen contract.
+TxPert is not promoted because a source-matched Frangieh checkpoint and legal
+prediction vector were unavailable. An outcome-blind Feng
+multi-donor audit was neutral on the released aggregate LFC surface, so it is
+reported as a reproducibility boundary rather than a positive biological
+replication. These exclusions preserve the estimand instead of silently
+substituting a context-aware model or an incomparable dataset.
 Context diversity is increasingly recognized as important for virtual-cell
 generalization~\citep{dibaeinia2026context}; the present framework gives such
 studies a concrete ordering-level quantity to test.
@@ -517,8 +606,8 @@ and commands required to regenerate the four main
 figures, Supplementary Figs.~S1--S5, and the compact tables. Appendices A, B,
 and H specify the data, estimators, and scientific regeneration path; the
 transport decomposition, comparator benchmark, incremental decision-value,
-and target-audit ledgers are included as reviewer-facing supplementary
-artifacts. Auxiliary
+target-audit, strong-comparator, Feng external-audit and adaptive-allocation
+ledgers are included as reviewer-facing supplementary artifacts. Auxiliary
 engineering analyses are retained separately and are not used as manuscript
 evidence.
 
@@ -531,6 +620,9 @@ Nadig HepG2--Jurkat screens can be obtained from the public scPerturb v1.4
 \href{https://zenodo.org/records/13350497}{Zenodo record}); the repository
 README records the relevant file names and regeneration commands. Users should
 download the source data directly and follow the original data-set licenses.
+The Feng multi-donor screen is available from its public Cell Genomics record
+\citep{feng2026crispri}; only the outcome-blind compact audit products are
+included in the anonymous release.
 AI-assisted tools were used for language editing, literature triage, code
 organization and figure-script drafting; the authors verified citations,
 methods and results and are responsible for the final manuscript.

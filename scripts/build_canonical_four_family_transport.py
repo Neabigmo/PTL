@@ -1,4 +1,4 @@
-"""Assemble the canonical 18-transfer comparison for four frozen families."""
+"""Assemble the canonical 18-row comparison for source-frozen families."""
 
 from __future__ import annotations
 
@@ -29,6 +29,7 @@ FAMILY_CANONICAL_FILES = {
     "rbf_krr": "artifacts/manifests/frangieh_source_only_rbf_krr_d_adj_fullsize.csv",
     "source_only_mlp": "artifacts/manifests/predictor_families_v2/source_only_mlp_d_adj_fullsize.csv",
     "source_only_latent_mlp": "artifacts/manifests/predictor_families_v2/source_only_latent_mlp_d_adj_fullsize.csv",
+    "official_gears": "artifacts/manifests/predictor_families_v2/official_gears_d_adj_fullsize.csv",
 }
 EXPECTED_ROWS = 18
 METRIC_ORDER = (
@@ -104,7 +105,7 @@ def _load_surfaces() -> pd.DataFrame:
     combined = pd.concat(tables, ignore_index=True)
     keys = ["family", "source_context", "target_context", "metric"]
     if len(combined) != EXPECTED_ROWS * len(FAMILY_ENGINE_REPORT | FAMILY_CANONICAL_FILES):
-        raise RuntimeError("four-family surface has an unexpected row count")
+        raise RuntimeError("predictor-family surface has an unexpected row count")
     if combined.duplicated(keys).any():
         raise RuntimeError("four-family surface has duplicate family/transfer/metric keys")
     if (combined["source_context"] == combined["target_context"]).any():
@@ -181,6 +182,8 @@ def _compare(combined: pd.DataFrame) -> pd.DataFrame:
                     "spearman_D_adj_vs_reference": rho,
                     "D_adj_point_sign_agreement": point_agreement,
                     "D_adj_CI_sign_agreement": ci_agreement,
+                    "mean_D_adj": float(np.mean(right)),
+                    "mean_D_adj_difference_vs_reference": float(np.mean(right - left)),
                 }
             )
     return pd.DataFrame(rows)
