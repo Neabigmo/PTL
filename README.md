@@ -54,7 +54,7 @@ raw matrices remain excluded from this anonymized release.
 The canonical anonymous release is the `iclr2027-anonymous-core` branch of
 the PTL repository:
 
-https://github.com/Neabigmo/PTL/tree/iclr2027-anonymous-core
+https://anonymous.4open.science/r/PTL-B377/
 
 The Frangieh RNA screen and the Nadig HepG2/Jurkat screens are available from
 the public scPerturb v1.4 Zenodo record. See `DATA_AVAILABILITY.md` for the

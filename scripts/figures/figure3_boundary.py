@@ -1,4 +1,4 @@
-"""Figure 3: measurement depth and the resolution boundary."""
+"""Figure 3: cell budget and the resolution boundary."""
 
 from __future__ import annotations
 
@@ -53,9 +53,9 @@ def _distribution(ax: plt.Axes, values: np.ndarray, y: float, color: str, alpha:
 
 
 def figure3(out_dir: Path, manifests: Path, registry: dict) -> tuple[list[str], pd.DataFrame]:
-    depth = pd.read_csv(manifests / "reliability_transport_measurement_depth_matched_fixed_summary.csv")
+    depth = pd.read_csv(manifests / "reliability_transport_measurement_depth_calibrated_summary.csv")
     depth["cell_budget_label"] = depth["cell_budget_label"].astype(str).str.lower()
-    resolution = pd.read_csv(manifests / "reliability_transport_measurement_depth_matched_fixed_resolution.csv")
+    resolution = pd.read_csv(manifests / "reliability_transport_measurement_depth_calibrated_resolution.csv")
     seed = pd.read_csv(manifests / "measurement_seed_summary.csv")
     rows: list[dict] = []
 
@@ -89,7 +89,7 @@ def figure3(out_dir: Path, manifests: Path, registry: dict) -> tuple[list[str], 
         else:
             small.tick_params(axis="y", labelleft=False)
         for d, val, lval, hval in zip(DEPTH_ORDER, yy, lo, hi):
-            rows.append({"panel": "A", "metric": metric, "contrast": "Ctrl ↔ IFNγ", "depth": d, "identifiable_divergence": val, "ci_low": lval, "ci_high": hval, "provenance": "reliability_transport_measurement_depth_matched_fixed_summary.csv"})
+            rows.append({"panel": "A", "metric": metric, "contrast": "Ctrl ↔ IFNγ", "depth": d, "identifiable_divergence": val, "ci_low": lval, "ci_high": hval, "provenance": "reliability_transport_measurement_depth_calibrated_summary.csv"})
 
     lower = grid[1].subgridspec(1, 2, width_ratios=(.41, .59), wspace=.28)
     # B: threshold glyph matrix; circles and squares are the two distinct
@@ -106,7 +106,7 @@ def figure3(out_dir: Path, manifests: Path, registry: dict) -> tuple[list[str], 
             else: ax.scatter(5.5, y + off, s=18, marker="o", facecolor="white", edgecolor=metric_color(metric), lw=.65, zorder=3)
             if _reached(resolve): ax.scatter(_threshold_index(resolve), y + off, s=20, marker="s", facecolor=metric_color(metric), edgecolor="white", lw=.35, zorder=4)
             else: ax.scatter(5.5, y + off, s=20, marker="s", facecolor="white", edgecolor=metric_color(metric), lw=.65, zorder=4)
-            rows.append({"panel": "B", "source_environment_id": source, "direction": label, "metric": metric, "detectability_budget": detect, "detectability_status": "reached" if _reached(detect) else "NR", "resolution_budget": resolve, "resolution_status": "reached" if _reached(resolve) else "NR", "provenance": "reliability_transport_measurement_depth_matched_fixed_resolution.csv"})
+            rows.append({"panel": "B", "source_environment_id": source, "direction": label, "metric": metric, "detectability_budget": detect, "detectability_status": "reached" if _reached(detect) else "NR", "resolution_budget": resolve, "resolution_status": "reached" if _reached(resolve) else "NR", "provenance": "reliability_transport_measurement_depth_calibrated_resolution.csv"})
     ax.set_xlim(-1.7, 5.85); ax.set_ylim(-.7, len(transfers) - .3); ax.set_xticks(range(6), ["10", "20", "40", "80", "160", "NR"]); ax.tick_params(axis="x", labelsize=5.8, pad=1); ax.tick_params(axis="y", left=False, labelleft=False); ax.set_xlabel("cells per pseudoreplicate", fontsize=5.8, labelpad=2); clean_axes(ax, grid=True)
     ax.legend(handles=[Line2D([], [], marker="o", color="#6B7280", linestyle="None", ms=3.2, label="detect"), Line2D([], [], marker="s", color="#6B7280", linestyle="None", ms=3.2, label="resolve")], frameon=False, fontsize=5.1, loc="upper right", bbox_to_anchor=(.98, .98), handletextpad=.15, borderpad=.1)
 
@@ -189,7 +189,7 @@ def figure3(out_dir: Path, manifests: Path, registry: dict) -> tuple[list[str], 
         columnspacing=.55,
         borderpad=.1,
     )
-    fig.suptitle("Fig. 3   Measurement depth determines when reordering is resolvable", fontsize=10.8, fontweight="bold", x=.02, y=.985, ha="left")
+    fig.suptitle("Fig. 3   Cell budget determines when reordering is resolvable", fontsize=10.8, fontweight="bold", x=.02, y=.985, ha="left")
     return save_figure(fig, out_dir, "reliability_transportability_fig3_measurement_boundary"), pd.DataFrame(rows)
 
 

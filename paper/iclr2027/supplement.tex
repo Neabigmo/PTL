@@ -25,7 +25,7 @@
 \begin{document}
 \maketitle
 
-\noindent\textbf{Organization.} This appendix supplies the data and source-frozen protocol (A), estimators and uncertainty decomposition (B), extended transport and independent replication evidence (C), measurement and decision robustness (D), strong comparator calibration and adaptive measurement utility, the prospective source-only boundary (E), additional robustness and diagnostic analyses (F), the external predictor context under matched information constraints (G), and the scientific regeneration path (H). It complements rather than repeats the main-text sequence: observed reordering $\rightarrow$ measurement-adjusted transport $\rightarrow$ independent replication $\rightarrow$ measurement boundary $\rightarrow$ decision consequence.
+\noindent\textbf{Organization.} This appendix supplies the data and source-frozen protocol (A), estimators and uncertainty decomposition (B), extended transport and independent replication evidence (C), measurement and decision robustness (D), source-only prospective analyses (E), additional robustness and diagnostics (F), calibrated inference (G), external predictors and biological audits (H), and scientific regeneration (I). It complements rather than repeats the main-text sequence: observed reordering $\rightarrow$ measurement-adjusted transport $\rightarrow$ independent replication $\rightarrow$ measurement boundary $\rightarrow$ decision consequence.
 
 \section{Data and source-frozen evaluation protocol}
 \label{app:data}
@@ -55,9 +55,9 @@ Major context confounding & no obvious context-linked batch confound & none iden
 \section{Measurement-adjusted reliability transport}
 \label{app:estimators}
 
-Pairwise risk comparisons retain ties as an explicit ordering state rather than coercing them into a strict direction. Separately, exact/tolerance ties are excluded from the strict-sign Beta posterior used for the stable-direction diagnostic. A strict direction is declared stable when the 95\% equal-tail Beta(1,1) posterior credible interval excludes $0.5$, with at least eight non-tie observations supporting the strict comparison; otherwise the pair remains unresolved.
+Pairwise risk comparisons retain ties as an explicit ordering state rather than coercing them into a strict direction. Separately, exact/tolerance ties are excluded from the strict-sign Beta posterior used for the stable-direction diagnostic. A strict direction is declared stable when the 95\% equal-tail Beta(1,1) posterior credible interval excludes $0.5$, with at least eight non-tie Monte Carlo resampling outcomes supporting the strict comparison; otherwise the pair remains unresolved. This threshold diagnoses state-estimation stability and is not a minimum number of biological replicates.
 
-We report the finite-sampling floor, the measurement-adjusted discrepancy, and a conservative joint-floor stress test separately. Effect-estimate intervals resample matched perturbation labels together with the declared measurement-seed and model-member resampling units. The decision-link association is descriptive over 18 directed source--target surface rows; its dependence-aware sensitivity resamples three unordered context-pair blocks while preserving both directions and all metric rows. No target labels or target-derived features enter the source-frozen predictor.
+We report the finite-sampling floor, the measurement-adjusted discrepancy, and a conservative joint-floor stress test separately. Final detectability intervals use the empirical variance of complete seed-level U-corrected contributions and a Student-$t$ reference distribution; label/member bootstrap intervals are retained only where explicitly marked as descriptive sensitivity analyses. The decision-link association is descriptive over 18 directed source--target surface rows; its dependence-aware sensitivity resamples three unordered context-pair blocks while preserving both directions and all metric rows. No target labels or target-derived features enter the source-frozen predictor.
 
 For a finite set of $M$ resampling replicates, let $Z_r$ denote the
 tie-aware state for one perturbation pair in replicate $r$. The within-context
@@ -95,7 +95,7 @@ not a substitute for the finite-measurement estimand.
 For each perturbation pair, $D_{\rm adj}$ compares the complete categorical
 laws on $\{-1,0,+1\}$. For example, source and target laws
 $(0.9,0,0.1)$ and $(0.6,0,0.4)$ have the same modal strict order, so a
-deterministic Kendall comparison of the two mean rankings records no
+deterministic Kendall comparison after collapsing both laws to their modal orders records no
 inversion. Nevertheless, their pair-state discrepancy is $0.09$: the ordering
 has become substantially less reliable in the target. This is the population
 quantity that is absent from a point-ranking comparison. Conversely, a
@@ -105,7 +105,10 @@ only for the declared delta kernel on pair states and does not turn
 $D_{\rm adj}$ into a generic expression two-sample statistic.
 
 The U-corrected estimator is unbiased when complete measurement-seed blocks
-are independent and identically distributed within each context, the frozen
+are independent across seeds and identically distributed within each context.
+The two pseudoreplicates and three predictor members inside a seed are dependent
+subunits and are aggregated before variance estimation; shared controls remain
+inside the same seed block. The frozen
 predictor and perturbation panel do not depend on target outcomes, and the
 two contexts are evaluated with the declared resampling design. At the null
 $\pi_{a,e_1}=\pi_{a,e_2}$, its first-order influence vanishes and the
@@ -201,7 +204,7 @@ at every depth, but their magnitudes differ substantially; in particular,
 top-10 Jaccard has the largest full-depth margin whereas $D_{\rm adj}$ is the
 finite-measurement pair-state formulation, not a universally dominant rank
 summary. The stable-inversion comparator has lower evaluable coverage at low
-depth and is interpreted accordingly. In addition, we materialized a separate
+depth and is interpreted accordingly. In addition, we computed a separate
 matched-unit audit for all five comparator families. Each aligned
 two-replicate seed block is collapsed to one block-level vector for the rank
 comparators; $D_{\rm adj}$ is U-corrected within each aligned block and
@@ -282,7 +285,7 @@ cost, false reuse was eliminated relative to the legacy PTL boundary, but the
 policy did not exceed the source-uncertainty baseline in correct revision. The
 realized evaluation-pool regret is invariant under the frozen-shortlist replay
 by construction and is reported only as a policy-invariant reference. The
-kill-switch therefore demotes this policy to a negative supplementary result
+prespecified comparison therefore retains this policy as a negative supplementary result
 rather than a main-text contribution.
 
 \input{supplement_regret_bound_critical_table.tex}
@@ -290,14 +293,14 @@ rather than a main-text contribution.
 \section{Can reordering be anticipated from source-only information?}
 \label{app:prospective}
 
-This analysis asks a narrower prospective question than the transport study: can a source-only feature ladder anticipate future reordering burden? The legal feature sets are cumulative uncertainty ($U$), geometry ($U+G$), support ($U+G+S$), and novelty ($U+G+S+N$). Target outcomes, target risk, and the measurement-adjusted transport value are excluded by an information firewall. The source-only task-specific usable universe contains approximately 28--44 labels; the 243-label universe belongs to the full-size shortlist surface.
+This analysis asks a narrower prospective question than the transport study: can a source-only feature ladder anticipate future reordering burden? The prespecified feature sets are cumulative uncertainty ($U$), geometry ($U+G$), support ($U+G+S$), and novelty ($U+G+S+N$). Target outcomes, target risk, and the measurement-adjusted transport value are unavailable to the predictor and excluded from the design matrix. The source-only task-specific usable universe contains approximately 28--44 labels; the 243-label universe belongs to the full-size shortlist surface.
 
 The evaluation contains 18 transfer-by-metric tasks for each of continuous burden and high-burden classification. It uses ten repeats of five label-disjoint folds with nested ridge selection. Every source row records \texttt{target\_feature\_leakage=False}. Supplementary Fig.~\ref{fig:source-only} shows held-out task-level performance directly; it intentionally does not recycle the earlier deployment-gate analysis or an unreconstructible chance baseline.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/supplementary/s1.pdf}
-\caption{Source-only prospective boundary. (A) The information firewall separates source-observable features from target outcomes. (B) Held-out Spearman correlation for continuous reordering burden. (C) Held-out AUPRC for high-burden classification. Each point is one transfer-by-metric task; thick marks summarize the median and interquartile range.}
+\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig1_source_only_forecasting.pdf}
+\caption{Source-only prospective boundary. (A) The information boundary separates source-observable features from target outcomes reserved for evaluation. (B) Held-out Spearman correlation for continuous reordering burden. (C) Held-out AUPRC for high-burden classification. Each point is one transfer-by-metric task; thick marks summarize the median and interquartile range.}
 \label{fig:source-only}
 \end{figure}
 
@@ -316,7 +319,7 @@ are shown without a headline significance claim.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/supplementary/s2.pdf}
+\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig2_metric_stratified_decision.pdf}
 \caption{Metric-stratified decision association. The 18 fixed full-depth,
 10\% random-reference decision rows are shown in their native scale (A) and
 after within-metric rank transformation (B). The pooled within-metric interval
@@ -340,7 +343,7 @@ decomposition.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/supplementary/s3.pdf}
+\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig3_mean_fidelity_control.pdf}
 \caption{Metric-matched mean-fidelity control. Each point is one of 18
 directed transfer--metric rows. The horizontal coordinate is the absolute
 source-to-target mean-risk shift computed on the exact fixed label universe;
@@ -359,7 +362,7 @@ identity.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/supplementary/s4.pdf}
+\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig4_estimand_validation.pdf}
 \caption{Finite-sample validation of the ordering estimand. Trial-level
 sampling distributions compare the plug-in/V estimator with the order-2
 U-corrected estimator under a finite-sample null and a known alternative;
@@ -438,7 +441,7 @@ audit ledger but is not used for any detectability conclusion.
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.96\textwidth]{figures/supplementary/dadj_inference_calibration.pdf}
+\includegraphics[width=0.96\textwidth]{../../results/figures/reliability_transportability/dadj_inference_calibration.pdf}
 \caption{Calibration of finite-measurement $D_{\rm adj}$ inference. (A) Null
 false-transport rate and (B) null coverage for the original percentile
 interval and the seed-block variance replacement; error bars are 90\% Wilson
@@ -521,7 +524,7 @@ Frangieh transport claim. The corresponding machine-readable ledgers are
 \subsection{Source-only predictor-family sensitivity on the Frangieh surface}
 
 To test whether the transport profile is tied to the primary bilinear-ridge
-parameterization, we materialized a source-only RBF kernel-ridge family on the
+parameterization, we evaluated a source-only RBF kernel-ridge family on the
 same Frangieh labels, gene panel, three metrics, six directed transfers and
 full-size minimum-20 measurement surface. The target outcomes were loaded
 only after source-only prediction materialization; they were not visible during
@@ -558,16 +561,18 @@ bilinear-ridge estimand. Two additional families were fit on the frozen
 Frangieh surface: a direct MLP and a latent-response MLP. In every outer fold,
 the ten-dimensional input basis and, for the latent family, the 32-dimensional
 response basis were fit on source training conditions only. The models used
-the preregistered $256$--$512$ GELU architecture, dropout $0.1$, AdamW and a
+the prespecified $256$--$512$ GELU architecture, dropout $0.1$, AdamW and a
 source-only inner selection of weight decay. Across the three source contexts,
 the macro source-side OOF fidelity was $0.363$ for the direct MLP and $0.366$
 for the latent-response MLP, compared with $0.346$ for the bilinear reference
 and $0.355$ for RBF. These are adequacy and profile diagnostics, not target-
 informed model selection; the target outcomes were not loaded during fitting.
 
-The resulting five-family profile, including strict source-frozen GEARS, is evaluated on the same frozen labels,
-genes, contexts and metrics. The canonical family comparison uses the same
-18 directed transfer--metric rows and the same full-size raw-cell estimator;
+The resulting predictor-family profiles, including strict source-frozen GEARS,
+use the same contexts, metrics and raw-cell bridge. Bilinear, RBF, direct-MLP
+and latent-MLP use the 243-label eligible panel; GEARS uses the verified
+230-label intersection supported by its official interaction graph. Each
+family contributes 18 directed transfer--metric rows on its declared panel;
 it is a sensitivity analysis, not a predictor-superiority claim. Supplementary
 Fig.~\ref{fig:upgrade-v2} shows this profile together with the corrected
 finite-measurement calibration: two generative laws, 960 registered
@@ -588,7 +593,7 @@ pooled with the corrected grid.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/supplementary/s5_upgrade_v2.pdf}
+\includegraphics[width=\textwidth]{../../results/figures/reliability_transportability/reliability_transportability_supp_fig5_upgrade_v2.pdf}
 \caption{\textbf{Source-only family and finite-measurement sensitivity.} (A)
 Mean absolute error of the corrected ordering estimate relative to the finite-
 depth pair-state truth across cell depth for Gaussian-heteroscedastic and
@@ -620,9 +625,10 @@ The audit is informative but not a positive replication of the full Frangieh
 $D_{\rm adj}$ hierarchy. Same-donor/different-line pairs had median Kendall
 distance $0.220$, whereas different-donor pairs had $0.227$; the corresponding
 Spearman distances were $0.124$ and $0.131$, and top-10 Jaccard distances were
-$0.818$ and $0.700$. Thus the cross-donor distance did not exceed the
-same-donor distance on this magnitude-rank surface. We retain this as neutral
-external evidence, not as a negative biological claim. A within-line cell
+$0.818$ and $0.700$. The contrasts are small and metric-dependent: cross-donor
+distance was slightly higher for Kendall and Spearman but lower for top-10
+Jaccard. We retain this as a neutral aggregate rank audit, not as a negative
+biological claim or a predictor-risk replication. A within-line cell
 resampling floor and hierarchical cell-level bootstrap could not be computed
 from the released aggregate LFC file; those analyses remain an explicit
 reopening requirement rather than an imputed result. Supplementary
@@ -655,7 +661,7 @@ scPerturb3 file using observation and variable metadata only. The three
 candidate cell-line contexts (A549, MCF7 and K562) share 189 perturbations and
 753 matched dose--time units per pair, with a median of at least 213 cells per
 matched unit. However, all 52 plates are unique to one cell line, so every
-cell is on a context-unique plate. This fails the preregistered
+cell is on a context-unique plate. This fails the prespecified
 no-unique-plate-confounding requirement. The source-only predictor was
 therefore not run on these contexts, and this audit is reported as a
 provenance boundary rather than as a negative biological result. The complete
@@ -669,11 +675,11 @@ the corresponding evidence and reopening requirements are listed in
 \section{Reproducibility and scientific regeneration}
 \label{app:reproducibility}
 
-The scientific regeneration path starts from the canonical manifest tables, fixed splits and resampling settings, and rebuilds the four main figures, Supplementary Figs.~S1--S5, and the compact supplementary tables. The V3 comparator, Feng and adaptive ledgers are generated from their corresponding scripts and are linked to the tables above; they do not alter the canonical main figures. The anonymous repository documents the executable commands and data lineage. Large raw H5AD/NPZ inputs remain external to the manuscript tree; the reviewable CSV/JSON products expose the values used in figures and tables.
+The scientific regeneration path starts from the canonical manifest tables, fixed splits and resampling settings, and rebuilds the four main figures, Supplementary Figs.~S1--S7, and the compact supplementary tables. Comparator, Feng and adaptive-allocation ledgers are generated from their corresponding scripts and are linked to the tables above; they do not alter the canonical main figures. The anonymous repository documents the executable commands, software versions, public accession records and data lineage. Large raw H5AD/NPZ inputs remain external to the manuscript tree; the reviewable CSV/JSON products expose the values used in figures and tables.
 
 \paragraph{Code and data availability.}
 The anonymized core release is available at
-\url{https://github.com/Neabigmo/PTL/tree/iclr2027-anonymous-core} and contains
+\url{https://anonymous.4open.science/r/PTL-B377/} and contains
 the source code, repository-relative configurations, manuscript sources,
 publication figures, and compact reviewable data products. Raw single-cell
 matrices are not redistributed. The Frangieh RNA screen and the Nadig

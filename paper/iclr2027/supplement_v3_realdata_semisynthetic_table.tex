@@ -2,17 +2,20 @@
 \centering
 \small
 \setlength{\tabcolsep}{3pt}
-\caption{Real-data semi-synthetic calibration derived from the Frangieh raw-cell
-lineage. The same-context null resamples the Control-context canonical risk
-replicates; alternatives apply one frozen cyclic ordering shift to 5--40\% of
-the 60-label metadata-only panel. Values average over five cell depths and
-common hierarchical replicate-plus-label bootstrap intervals.}
+\caption{Legacy real-data semi-synthetic comparator audit derived from the
+Frangieh raw-cell lineage. The same-context null resamples the Control-context
+canonical risk replicates; alternatives cyclically permute 5--40\% of the
+60-label panel (the horizontal levels denote the fraction of labels permuted,
+not the realized fraction of pair inversions). Values average over five cell
+budgets. The $D_{\rm adj}$ interval in this table is the failed hierarchical
+percentile procedure and is not used for any detectability conclusion; final
+seed-block inference is reported separately in Table~\ref{tab:dadj-calibration}.}
 \label{tab:v3-realdata-semisynthetic}
 \begin{tabular}{lrrrrrr}
 \toprule
 Method & Null FTR & Null cov. & 5\% power & 10\% power & 20\% power & 40\% power \\
 \midrule
-$D_{\rm adj}$ (U-corrected) & 0.548 & 0.452 & 0.854 & 0.909 & 0.980 & 0.999 \\
+$D_{\rm adj}$ (legacy percentile interval; invalid) & 0.548 & 0.452 & 0.854 & 0.909 & 0.980 & 0.999 \\
 Kendall & 1.000 & 0.000 & 1.000 & 1.000 & 1.000 & 1.000 \\
 Kendall + matched null & 0.038 & 0.961 & 0.150 & 0.254 & 0.500 & 0.771 \\
 Spearman & 1.000 & 0.000 & 1.000 & 1.000 & 1.000 & 1.000 \\
